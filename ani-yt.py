@@ -416,7 +416,8 @@ class Main:
 
 class ArgsHandler:
 	def __init__(self):
-		self.parser = argparse.ArgumentParser(description='Note: Arguments, if provided, will be processed sequentially in the order they are listed below.')
+		self.parser = argparse.ArgumentParser(description='Note: Options, if provided, will be processed sequentially in the order they are listed below.')
+
 		self.parser.add_argument('-c', '--channel', type=str, help='Create or Update Playlist Data from Link, Channel ID, or Channel Handle.')
 		self.parser.add_argument('--mpv-player', type=str, choices=['auto', 'android'], default='auto', help='MPV player mode.')
 		self.parser.add_argument('--clear-cache', action='store_const', const='clear_cache', help='Clear cache.')
@@ -425,6 +426,11 @@ class ArgsHandler:
 		self.parser.add_argument('-v', '--viewed-mode', action='store_const', const='viewed-mode', help='Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.')
 		self.parser.add_argument('-r', '--resume', action='store_const', const='resume', help='View last viewed video.')
 		self.parser.add_argument('-s', '--search', type=str, help='Search for a playlist.')
+
+		self.subparsers = self.parser.add_subparsers(dest='command', help='Note: To avoid incorrect handling, positional arguments should be placed after all options.')
+		self.download_parsers = self.subparsers.add_parser('download', help='Download video and skip sponsors using SponsorBlock.')
+		self.download_parsers.add_argument('-u', '--url', type=str, required=True, help='Video url.')
+		self.download_parsers.add_argument('-cat', '--category', type=str, default='all', help='See https://wiki.sponsor.ajay.app/w/Types#Category.')
 
 		self.args = self.parser.parse_args()
 
@@ -456,6 +462,9 @@ class ArgsHandler:
 
 		if action := self.args.search:
 			self.main.search(action)
+
+		if self.args.command == 'download':
+			YT_DLP.download(self.args.url, self.args.category)
 
 def main():
 	ArgsHandler().listener()
