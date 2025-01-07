@@ -221,10 +221,10 @@ class Player:
 		self.command = ['mpv'] + self.args + [url]
 		
 		self.android_command = [
-			'am start',
+			'am', 'start',
 			'-a', 'android.intent.action.VIEW',
 			'-t', 'video/any',
-			'-p', 'is.xyz.mpv',
+			'-p', 'is.xyz.mpv.ytdl',
 			'-d', url,
 		]
 
