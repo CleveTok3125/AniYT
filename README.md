@@ -37,7 +37,7 @@ cd AniYT
 pip install -r requirements.txt
 ```
 # Usage
-```python
+```bash
 python ani-yt.py -h
 ```
 # About additional/generated files
