@@ -45,3 +45,7 @@ python ani-yt.py -h
 - `playlists.json`: stores playlist information.\
 Mainly to reduce repeated calls to YT-DLP API which slows down retrieval significantly when the channel has many playlists.
 - `history.json`: store viewing history.
+
+# Additional options
+- Use SponsorBlock plugin for MPV to skip OP/EN
+- For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)
