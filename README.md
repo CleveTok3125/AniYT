@@ -30,6 +30,26 @@ Select: 1
 
 ![Demo](./demo.png)
 
+# Key Features
+
+1. **Update Playlist from YouTube Channel**  
+   Update playlists from a YouTube channel using its URL, ID, or Handle.
+
+2. **Browse Playlists and Videos**  
+   Browse through playlists and videos in the saved playlists with pagination for easier navigation.
+
+3. **Search Playlists**  
+   Search for playlists by keyword.
+
+4. **History Tracking**  
+   Continue watching previously viewed videos through the watch history and history tracking
+
+5. **Play Videos with MPV**  
+   Play videos using the MPV player (supports both Android and auto modes).
+
+6. **Download Videos with SponsorBlock**  
+   Download videos and automatically skip sponsors using SponsorBlock.
+
 # Installation
 ```bash
 git clone https://github.com/CleveTok3125/AniYT/
@@ -40,6 +60,7 @@ pip install -r requirements.txt
 ```bash
 python ani-yt.py -h
 ```
+
 # About additional/generated files
 - `custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration
 - `playlists.json`: stores playlist information.\

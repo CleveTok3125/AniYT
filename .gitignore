@@ -169,3 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Other
+playlists.json
+history.json
+to-do.txt
