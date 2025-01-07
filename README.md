@@ -38,7 +38,7 @@ pip install -r requirements.txt
 ```
 # Usage
 ```python
-ani-yt.py -h
+python ani-yt.py -h
 ```
 # About additional/generated files
 - `custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration
