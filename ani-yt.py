@@ -184,6 +184,9 @@ class BookmarkingHandler:
 		with open(self.filename, 'w', encoding=self.encoding) as f:
 			json.dump(content, f, indent=4)
 
+	def delete_bookmark(self):
+		OSManager.delete_file(self.filename)
+
 class YT_DLP_Options:
 	def __init__(self, quiet=True, no_warnings=True):
 		self.ydl_opts = {
@@ -305,17 +308,19 @@ class Display:
 		total_items = (self.opts.items_per_list * (len_data - 1)) + len_last_item
 
 		pages_opts = ['(N) Next page', '(P) Previous page', '(P:integer) Jump to the specified page']
-		page_opts = ['(U) Show link','(B:integer) Add/remove specified item to bookmark', '(Q) Quit']
+		page_opts = ['(U) Toggle link', '(B) Toggle bookmark', '(B:integer) Add/remove specified item to bookmark', '(Q) Quit']
 		pages_opts = '\n'.join(pages_opts)
 		page_opts = '\n'.join(page_opts)
 
-		RESET = "\033[0m"
-		YELLOW = "\033[33m"
+		RESET = '\033[0m'
+		YELLOW = '\033[33m'
+		LIGHT_GRAY = '\033[38;5;247m'
 
 		bookmarking_handler = BookmarkingHandler()
 
 		index_item = 0
 		show_link = False
+		bookmark = True
 		while True:
 			self.clscr()
 
@@ -326,15 +331,15 @@ class Display:
 				index_item = len_data-1
 
 			if len_data > 1:
-				print(pages_opts + '\n' + page_opts)
+				print(f'{pages_opts}\n{page_opts}\n')
 			else:
-				print(page_opts)
+				print(page_opts + '\n')
 
 			len_data_items = len(splited_data[index_item])
 			print(f'Page: {index_item+1}/{len_data} ({len_data_items + index_item*self.opts.items_per_list}/{total_items})\n')
 
 			for index in range(len_data_items):
-				print(f'{YELLOW if bookmarking_handler.is_bookmarked(splited_data[index_item][index][1]) else RESET}({index_item*self.opts.items_per_list + index + 1}){'*' if len(splited_data[index_item][index]) >= 3 and splited_data[index_item][index][2].lower() == 'viewed' else ''} {splited_data[index_item][index][0]}' + (f'\n\t{splited_data[index_item][index][1]}' if show_link else '') + RESET)
+				print(f'{RESET}{LIGHT_GRAY if len(splited_data[index_item][index]) >= 3 and splited_data[index_item][index][2].lower() == 'viewed' else ''}{YELLOW if bookmark and bookmarking_handler.is_bookmarked(splited_data[index_item][index][1]) else ''}({index_item*self.opts.items_per_list + index + 1}) {splited_data[index_item][index][0]}' + (f'\n\t{splited_data[index_item][index][1]}' if show_link else '') + RESET)
 
 			self.user_input = input('\nSelect: ')
 
@@ -362,6 +367,8 @@ class Display:
 				index_item -= 1
 			elif self.user_input.upper() == 'U':
 				show_link = not show_link
+			elif self.user_input.upper() == 'B':
+				bookmark = not bookmark
 			elif self.user_input.upper() == 'Q':
 				OSManager.exit()
 			else:
@@ -383,6 +390,7 @@ class Main:
 		self.dlp = YT_DLP(channel_url, self.ydl_options)
 		self.file_handler = FileHandler()
 		self.history_handler = HistoryHandler()
+		self.bookmarking_handler = BookmarkingHandler()
 		self.dp = DataProcessing
 		self.query = Query()
 		self.display_opts = Display(Display_Options())
@@ -419,6 +427,9 @@ class Main:
 
 	def delete_history(self):
 		self.history_handler.delete_history()
+
+	def delete_bookmark(self):
+		self.bookmarking_handler.delete_bookmark()
 
 	def load_playlist(self):
 		try:
@@ -487,8 +498,9 @@ class ArgsHandler:
 		self.parser.add_argument('--mpv-player', type=str, choices=['auto', 'android'], default='auto', help='MPV player mode.')
 		self.parser.add_argument('--clear-cache', action='store_const', const='clear_cache', help='Clear cache.')
 		self.parser.add_argument('--delete-history', action='store_const', const='delete_history', help='Delete history.')
+		self.parser.add_argument('--delete-bookmark', action='store_const', const='delete_bookmark', help='Delete bookmark.')
 		self.parser.add_argument('-l', '--list', action='store_const', const='list', help='Browse all cached playlists.')
-		self.parser.add_argument('-v', '--viewed-mode', action='store_const', const='viewed-mode', help='Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.')
+		self.parser.add_argument('-v', '--viewed-mode', action='store_const', const='viewed_mode', help='Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.')
 		self.parser.add_argument('-r', '--resume', action='store_const', const='resume', help='View last viewed video.')
 		self.parser.add_argument('-s', '--search', type=str, help='Search for a playlist.')
 
@@ -506,8 +518,9 @@ class ArgsHandler:
 		self.actions = {
 			'clear_cache': self.main.clear_cache,
 			'delete_history': self.main.delete_history,
+			'delete_bookmark': self.main.delete_bookmark,
 			'list': self.main.list,
-			'viewed-mode': self.main.loop,
+			'viewed_mode': self.main.loop,
 			'resume': self.main.resume
 		}
 

@@ -1,13 +1,16 @@
 # AniYT
 A cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube.
 
+# Demo
 ```
 $ /path/to/project/AniYT/ani-yt -c MuseAsia -l
 
 (N) Next page
 (P) Previous page
-(U) Show link
-(P:integer) Jump to the specified page.
+(P:integer) Jump to the specified page
+(U) Toggle link
+(B) Toggle bookmark
+(B:integer) Add/remove specified item to bookmark
 (Q) Quit
 
 Page: 1/35 (12/417)
