@@ -51,13 +51,17 @@ class DataProcessing:
 		return sorted(lst, key=key, reverse=reverse)
 
 	@staticmethod
-	def merge_list(old_list, new_list):
+	def merge_list(old_list, new_list, truncate=True):
 		mapping = {v: k for k, v in new_list}
-		existing_values = {sublist[1] for sublist in old_list}
 
-		for sublist in old_list:
-			if sublist[1] in mapping:
-				sublist[0] = mapping[sublist[1]]
+		if truncate:
+			old_list = [sublist for sublist in old_list if sublist[1] in mapping.keys()]
+
+		for index in range(len(old_list)):
+			if old_list[index][1] in mapping:
+				old_list[index][0] = mapping[old_list[index][1]]
+
+		existing_values = {sublist[1] for sublist in old_list}
 
 		for k, v in new_list:
 			if v not in existing_values:
