@@ -88,9 +88,6 @@ class Query:
 			if score > 0:
 				result.append((title, url, score))
 		DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
-		if not result:
-			print('No matching playlist found.')
-			OSManager.exit(404)
 		return [(title, url) for title, url, _ in result]
 
 class FileHandler:
@@ -289,6 +286,7 @@ class Display:
 	def __init__(self, opts: Display_Options):
 		self.opts = opts
 		self.user_input = ''
+		self.show_opts = False
 
 	@staticmethod
 	def search():
@@ -301,14 +299,19 @@ class Display:
 		else:
 			os.system("clear")
 
-	def choose_menu(self, data):
+	def pagination(self, data):
 		splited_data = DataProcessing.split_list(data, self.opts.items_per_list)
 		len_data = len(splited_data)
 		len_last_item = len(splited_data[len_data - 1])
 		total_items = (self.opts.items_per_list * (len_data - 1)) + len_last_item
+		return splited_data, len_data, len_last_item, total_items
 
-		pages_opts = ['(N) Next page', '(P) Previous page', '(P:integer) Jump to the specified page']
-		page_opts = ['(U) Toggle link', '(B) Toggle bookmark', '(B:integer) Add/remove specified item to bookmark', '(Q) Quit']
+	def choose_menu(self, data):
+		splited_data, len_data, len_last_item, total_items = self.pagination(data)
+
+		no_opts = ['(O) Hide all options', '(O) Show all options']
+		pages_opts = ['(N) Next page', '(P) Previous page', '(P:<integer>) Jump to page']
+		page_opts = [no_opts[0], '(U) Toggle link', '(B) Toggle bookmark', '(B:<integer>) Add/remove bookmark', '(I:<integer>) number of items per page', '(Q) Quit']
 		pages_opts = '\n'.join(pages_opts)
 		page_opts = '\n'.join(page_opts)
 
@@ -330,10 +333,13 @@ class Display:
 			if index_item == -1:
 				index_item = len_data-1
 
-			if len_data > 1:
-				print(f'{pages_opts}\n{page_opts}\n')
+			if self.show_opts:
+				if len_data > 1:
+					print(f'{pages_opts}\n{page_opts}\n')
+				else:
+					print(page_opts + '\n')
 			else:
-				print(page_opts + '\n')
+				print(no_opts[1] + '\n')
 
 			len_data_items = len(splited_data[index_item])
 			print(f'Page: {index_item+1}/{len_data} ({len_data_items + index_item*self.opts.items_per_list}/{total_items})\n')
@@ -341,15 +347,19 @@ class Display:
 			for index in range(len_data_items):
 				print(f'{RESET}{LIGHT_GRAY if len(splited_data[index_item][index]) >= 3 and splited_data[index_item][index][2].lower() == 'viewed' else ''}{YELLOW if bookmark and bookmarking_handler.is_bookmarked(splited_data[index_item][index][1]) else ''}({index_item*self.opts.items_per_list + index + 1}) {splited_data[index_item][index][0]}' + (f'\n\t{splited_data[index_item][index][1]}' if show_link else '') + RESET)
 
-			self.user_input = input('\nSelect: ')
+			try:
+				self.user_input = input('\nSelect: ')
+			except KeyboardInterrupt:
+				OSManager.exit(0)
 
 			if len(self.user_input) >= 3 and (x := self.user_input[2:]).isdigit():
-				if self.user_input[:2].lower() == 'p:':
-					index_item = int(x) - 1
+				x = int(x)
+				if self.user_input[:2].upper() == 'P:':
+					index_item = x - 1
 					continue
-				if self.user_input[:2].lower() == 'b:':
+				if self.user_input[:2].upper() == 'B:':
 					try:
-						if bookmarking_handler.is_bookmarked((y := data[int(x) - 1])[1]):
+						if bookmarking_handler.is_bookmarked((y := data[x - 1])[1]):
 							bookmarking_handler.remove_bookmark(y[1])
 						else:
 							bookmarking_handler.update(y)
@@ -360,8 +370,14 @@ class Display:
 						input('IndexError: The requested item is not listed.\n')
 						pass
 					continue
+				if self.user_input[:2].upper() == 'I:':
+					self.opts.items_per_list = x if x > 0 else total_items if x > total_items else 1
+					splited_data, len_data, len_last_item, total_items = self.pagination(data)
+					continue
 
-			if self.user_input.upper() == 'N':
+			if self.user_input.upper() == 'O':
+				self.show_opts = not self.show_opts
+			elif self.user_input.upper() == 'N':
 				index_item += 1
 			elif self.user_input.upper() == 'P':
 				index_item -= 1
@@ -376,7 +392,7 @@ class Display:
 					ans = data[int(self.user_input) - 1]
 					return ans[0], ans[1]
 				except ValueError:
-					input('ValueError: only N, P, U, Q and non-negative integers are accepted.\n')
+					input('ValueError: only options and non-negative integers are accepted.\n')
 					pass
 				except IndexError:
 					input('IndexError: The requested item is not listed.\n')
@@ -488,6 +504,9 @@ class Main:
 	def search(self, inp):
 		playlist = self.load_playlist()
 		playlist = self.query.search(playlist, inp)
+		if not playlist:
+			print('No matching playlist found.')
+			return
 		self.menu(playlist)
 
 class ArgsHandler:
