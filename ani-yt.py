@@ -4,7 +4,6 @@ import subprocess
 import os
 import sys
 import argparse
-from itertools import zip_longest
 
 import yt_dlp
 
@@ -48,28 +47,23 @@ class DataProcessing:
 		return [lst[i:i + n] for i in range(0, len(lst), n)]
 
 	@staticmethod
-	def sort(lst, reverse=False):
-		return sorted(lst, reverse=reverse)
+	def sort(lst, key=lambda x: x[0], reverse=False):
+		return sorted(lst, key=key, reverse=reverse)
 
 	@staticmethod
 	def merge_list(old_list, new_list):
-		updated_list = []
-		if not isinstance(old_list, list) and not isinstance(new_list, list):
-			return updated_list
-		for old_item, new_item in zip_longest(old_list, new_list, fillvalue=None):
-			if old_item != new_item:
-				if old_item and new_item and len(old_item) < len(new_item):
-					old_item[:2] = new_item[:2]
-					old_item.extend(new_item[2:])
-				elif old_item and new_item:
-					old_item[:2] = new_item[:2]
-					updated_list.append(old_item)
-				#elif old_item and not new_item:
-				elif not old_item and new_item:
-					updated_list.append(new_item)
-		if not updated_list:
-			print('Warning: do not merge two lists with different structures.')
-		return updated_list
+		mapping = {v: k for k, v in new_list}
+		existing_values = {sublist[1] for sublist in old_list}
+
+		for sublist in old_list:
+			if sublist[1] in mapping:
+				sublist[0] = mapping[sublist[1]]
+
+		for k, v in new_list:
+			if v not in existing_values:
+				old_list.append([k, v])
+
+		return DataProcessing.sort(old_list)
 
 class Query:
 	def __init__(self, CASE=False):
@@ -89,7 +83,7 @@ class Query:
 			score = self.calculate_match_score(title if self.case else title.lower(), query)
 			if score > 0:
 				result.append((title, url, score))
-		result.sort(key=lambda x: x[2], reverse=True)
+		DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
 		if not result:
 			print('No matching playlist found.')
 			OSManager.exit(404)
@@ -145,6 +139,46 @@ class HistoryHandler:
 
 	def delete_history(self):
 		OSManager.delete_file(self.filename)
+
+class BookmarkingHandler:
+	def __init__(self):
+		self.filename = 'bookmark.json'
+		self.encoding = 'utf-8'
+
+	def is_bookmarking(self):
+		return OSManager.exists(self.filename)
+
+	def load(self):
+		with open(self.filename, 'r', encoding=self.encoding) as f:
+			return json.load(f)
+
+	def update(self, data):
+		if self.is_bookmarking():
+			content = self.load()
+		else:
+			content = {}
+
+		content[data[0]] = data[1]
+
+		with open(self.filename, 'w', encoding=self.encoding) as f:
+			json.dump(content, f, indent=4)
+
+	def is_bookmarked(self, url):
+		if not self.is_bookmarking():
+			return False
+		content = self.load()
+		return url in content.values()
+
+	def remove_bookmark(self, url):
+		if not self.is_bookmarking():
+			return
+		content = self.load()
+		for key, value in list(content.items()):
+			if value == url:
+				del content[key]
+				break
+		with open(self.filename, 'w', encoding=self.encoding) as f:
+			json.dump(content, f, indent=4)
 
 class YT_DLP_Options:
 	def __init__(self, quiet=True, no_warnings=True):
@@ -266,6 +300,16 @@ class Display:
 		len_last_item = len(splited_data[len_data - 1])
 		total_items = (self.opts.items_per_list * (len_data - 1)) + len_last_item
 
+		pages_opts = ['(N) Next page', '(P) Previous page', '(P:integer) Jump to the specified page']
+		page_opts = ['(U) Show link','(B:integer) Add/remove specified item to bookmark', '(Q) Quit']
+		pages_opts = '\n'.join(pages_opts)
+		page_opts = '\n'.join(page_opts)
+
+		RESET = "\033[0m"
+		YELLOW = "\033[33m"
+
+		bookmarking_handler = BookmarkingHandler()
+
 		index_item = 0
 		show_link = False
 		while True:
@@ -278,19 +322,37 @@ class Display:
 				index_item = len_data-1
 
 			if len_data > 1:
-				print('(N) Next page\n(P) Previous page\n(U) Show link\n(P:integer) Jump to the specified page.\n(Q) Quit\n')
+				print(pages_opts + '\n' + page_opts)
+			else:
+				print(page_opts)
 
 			len_data_items = len(splited_data[index_item])
 			print(f'Page: {index_item+1}/{len_data} ({len_data_items + index_item*self.opts.items_per_list}/{total_items})\n')
 
 			for index in range(len_data_items):
-				print(f'({index_item*self.opts.items_per_list + index + 1}){'*' if len(splited_data[index_item][index]) >= 3 and splited_data[index_item][index][2].lower() == 'viewed' else ''} {splited_data[index_item][index][0]}' + (f'\n\t{splited_data[index_item][index][1]}' if show_link else '') )
+				print(f'{YELLOW if bookmarking_handler.is_bookmarked(splited_data[index_item][index][1]) else RESET}({index_item*self.opts.items_per_list + index + 1}){'*' if len(splited_data[index_item][index]) >= 3 and splited_data[index_item][index][2].lower() == 'viewed' else ''} {splited_data[index_item][index][0]}' + (f'\n\t{splited_data[index_item][index][1]}' if show_link else '') + RESET)
 
 			self.user_input = input('\nSelect: ')
 
-			if len(self.user_input) >= 3 and self.user_input[:2].lower() == 'p:' and (x := self.user_input[2:]).isdigit():
-				index_item = int(x) - 1
-			elif self.user_input.upper() == 'N':
+			if len(self.user_input) >= 3 and (x := self.user_input[2:]).isdigit():
+				if self.user_input[:2].lower() == 'p:':
+					index_item = int(x) - 1
+					continue
+				if self.user_input[:2].lower() == 'b:':
+					try:
+						if bookmarking_handler.is_bookmarked((y := data[int(x) - 1])[1]):
+							bookmarking_handler.remove_bookmark(y[1])
+						else:
+							bookmarking_handler.update(y)
+					except ValueError:
+						input('ValueError: only non-negative integers are accepted.\n')
+						pass
+					except IndexError:
+						input('IndexError: The requested item is not listed.\n')
+						pass
+					continue
+
+			if self.user_input.upper() == 'N':
 				index_item += 1
 			elif self.user_input.upper() == 'P':
 				index_item -= 1
@@ -343,7 +405,6 @@ class Main:
 		new_playlist = self.dlp.get_video(list(history['playlist'].values())[0])
 		print('Saving...')
 		new_playlist = self.dp.omit(new_playlist)
-		new_playlist = self.dp.sort(new_playlist)
 		new_playlist = self.dp.merge_list(history['videos'], new_playlist)
 		self.history_handler.update(history['current'], history['playlist'], new_playlist)
 		print('Done!')
