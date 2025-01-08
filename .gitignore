@@ -173,4 +173,5 @@ cython_debug/
 # Other
 playlists.json
 history.json
+bookmark.json
 to-do.txt

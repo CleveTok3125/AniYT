@@ -42,12 +42,15 @@ Select: 1
    Search for playlists by keyword.
 
 4. **History Tracking**  
-   Continue watching previously viewed videos through the watch history and history tracking
+   Continue watching previously viewed videos through the watch history and history tracking.
 
-5. **Play Videos with MPV**  
+5. **Bookmarking**
+   Bookmark favorite videos or playlists.
+
+6. **Play Videos with MPV**  
    Play videos using the MPV player (supports both Android and auto modes).
 
-6. **Download Videos with SponsorBlock**  
+7. **Download Videos with SponsorBlock**  
    Download videos and automatically skip sponsors using SponsorBlock.
 
 # Installation
@@ -66,6 +69,7 @@ python ani-yt.py -h
 - `playlists.json`: stores playlist information.\
 Mainly to reduce repeated calls to YT-DLP API which slows down retrieval significantly when the channel has many playlists.
 - `history.json`: store viewing history.
+- `bookmark.json`: store bookmark
 
 # Additional options
 - Use SponsorBlock plugin for MPV to skip OP/EN
