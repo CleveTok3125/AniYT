@@ -6,6 +6,7 @@ import sys
 import argparse
 
 import yt_dlp
+from rapidfuzz import process
 
 class MissingChannelUrl(Exception):
 	pass
@@ -80,15 +81,37 @@ class Query:
 		return score
 
 	def search(self, data, query):
-		query = query.lower()
+		if not self.case:
+			query = query.lower()
 		query = set(query.split())
 		result = []
 		for title, url in data:
 			score = self.calculate_match_score(title if self.case else title.lower(), query)
 			if score > 0:
 				result.append((title, url, score))
-		DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
+  result = DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
 		return [(title, url) for title, url, _ in result]
+
+	def fuzzysearch(self, data, query, score=50):
+		if not self.case:
+			query = query.lower()
+		result = process.extract(query, [item[0] if self.case else item[0].lower() for item in data], limit=None)
+
+		results_with_data = []
+		for match in result:
+			matched_name = match[0]
+			matched_score = match[1]
+
+			matched_item = next(
+				(item for item in data if
+					(item[0] if self.case else item[0].lower()) == matched_name and matched_score > score),
+				None
+			)
+
+			if matched_item:
+				results_with_data.append((matched_item[0], matched_item[1], matched_score))
+  result = DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
+		return results_with_data
 
 class FileHandler:
 	def __init__(self):
@@ -461,7 +484,6 @@ class Main:
 		self.history_handler = HistoryHandler()
 		self.bookmarking_handler = BookmarkingHandler()
 		self.dp = DataProcessing
-		self.query = Query()
 		self.display_opts = Display_Options()
 		self.display_menu = DisplayMenu(self.display_opts)
 		self.url = ''
@@ -555,9 +577,15 @@ class Main:
 		self.start_player()
 		self.loop()
 
-	def search(self, inp):
+	def search(self, inp, case_sensitive=False, fuzzy=False, score=50):
+		query = Query(CASE=case_sensitive)
 		playlist = self.load_playlist()
-		playlist = self.query.search(playlist, inp)
+		
+		if fuzzy:
+			playlist = query.fuzzysearch(playlist, inp, score)
+		else:
+			playlist = query.search(playlist, inp)
+		
 		if not playlist:
 			print('No matching playlist found.')
 			return
@@ -575,12 +603,17 @@ class ArgsHandler:
 		self.parser.add_argument('-l', '--list', action='store_const', const='list', help='Browse all cached playlists.')
 		self.parser.add_argument('-v', '--viewed-mode', action='store_const', const='viewed_mode', help='Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.')
 		self.parser.add_argument('-r', '--resume', action='store_const', const='resume', help='View last viewed video.')
-		self.parser.add_argument('-s', '--search', type=str, help='Search for a playlist.')
 
 		self.subparsers = self.parser.add_subparsers(dest='command', help='Note: To avoid incorrect handling, positional arguments should be placed after all options.')
 		self.download_parsers = self.subparsers.add_parser('download', help='Download video and skip sponsors using SponsorBlock.')
-		self.download_parsers.add_argument('-u', '--url', type=str, required=True, help='Video url.')
+		self.download_parsers.add_argument('url', type=str, help='Video url.')
 		self.download_parsers.add_argument('-cat', '--category', type=str, default='all', help='See https://wiki.sponsor.ajay.app/w/Types#Category.')
+
+		self.search_parsers = self.subparsers.add_parser('search', help='Search for a playlist.')
+		self.search_parsers.add_argument('query', type=str, help='Search content.')
+		self.search_parsers.add_argument('-C', '--case-sensitive', action='store_true', help='Case sensitive.')
+		self.search_parsers.add_argument('-fs', '--fuzzysearch', action='store_true', help='Fuzzy search.')
+		self.search_parsers.add_argument('-s', '--score', type=int, default=50, help='The accuracy of fuzzy search.')
 
 		self.args = self.parser.parse_args()
 
@@ -611,8 +644,8 @@ class ArgsHandler:
 			if action:
 				self.run_main(action)
 
-		if action := self.args.search:
-			self.main.search(action)
+		if self.args.command == 'search':
+			self.main.search(self.args.query, self.args.case_sensitive, fuzzy=self.args.fuzzysearch, score=self.args.score)
 
 		if self.args.command == 'download':
 			YT_DLP.download(self.args.url, self.args.category)
