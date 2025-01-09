@@ -89,7 +89,7 @@ class Query:
 			score = self.calculate_match_score(title if self.case else title.lower(), query)
 			if score > 0:
 				result.append((title, url, score))
-  result = DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
+		result = DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
 		return [(title, url) for title, url, _ in result]
 
 	def fuzzysearch(self, data, query, score=50):
@@ -110,8 +110,9 @@ class Query:
 
 			if matched_item:
 				results_with_data.append((matched_item[0], matched_item[1], matched_score))
-  result = DataProcessing.sort(result, key=lambda x: x[2], reverse=True)
-		return results_with_data
+		results_with_data = DataProcessing.sort(results_with_data, key=lambda x: x[2], reverse=True)
+
+		return [(title, url) for title, url, _ in results_with_data]
 
 class FileHandler:
 	def __init__(self):
