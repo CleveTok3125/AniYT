@@ -55,11 +55,11 @@ class DataProcessing:
 		mapping = {v: k for k, v in new_list}
 
 		if truncate:
-			old_list = [sublist for sublist in old_list if sublist[1] in mapping.keys()]
+			old_list = [sublist for sublist in old_list if sublist[1] in set(mapping.keys())]
 
-		for index in range(len(old_list)):
-			if old_list[index][1] in mapping:
-				old_list[index][0] = mapping[old_list[index][1]]
+		for old_list_item in old_list:
+			if old_list_item[1] in mapping:
+				old_list_item[0] = mapping[old_list_item[1]]
 
 		existing_values = {sublist[1] for sublist in old_list}
 
@@ -267,10 +267,18 @@ class Player:
 		]
 
 	def run_mpv(self): # optional: use sponsorblock for mpv to automatically skip op/en
-		subprocess.run(self.command)
+		try:
+			result = subprocess.run(self.command)
+		except FileNotFoundError:
+			print('Error running command: MPV is not installed.')
+			OSManager.exit(127)
 
 	def run_mpv_android(self): # require https://github.com/mpv-android/mpv-android/pull/58
-		subprocess.run(self.android_command)
+		try:
+			subprocess.run(self.android_command)
+		except FileNotFoundError:
+			print('Error running command: Current OS may not be Android.')
+			OSManager.exit(127)
 
 	def start(self):
 		if OSManager.android_check():
@@ -281,13 +289,9 @@ class Player:
 class Display_Options:
 	def __init__(self, items_per_list=12):
 		self.items_per_list = items_per_list
-
-class Display:
-	def __init__(self, opts: Display_Options):
-		self.opts = opts
-		self.user_input = ''
 		self.show_opts = False
 
+class Display:
 	@staticmethod
 	def search():
 		return str(input('Search: '))
@@ -299,104 +303,153 @@ class Display:
 		else:
 			os.system("clear")
 
-	def pagination(self, data):
-		splited_data = DataProcessing.split_list(data, self.opts.items_per_list)
-		len_data = len(splited_data)
-		len_last_item = len(splited_data[len_data - 1])
-		total_items = (self.opts.items_per_list * (len_data - 1)) + len_last_item
-		return splited_data, len_data, len_last_item, total_items
+class DisplayMenu(Display):
+	def __init__(self, opts: Display_Options):
+		self.bookmarking_handler = BookmarkingHandler()
+
+		self.opts = opts
+		self.user_input = ''
+		self.data = []
+		self.splited_data = []
+		self.len_data = 0
+		self.len_last_item = 0
+		self.total_items = 0
+		self.len_data_items = 0
+
+		self.no_opts = ['(O) Hide all options', '(O) Show all options']
+		self.pages_opts = ['(N) Next page', '(P) Previous page', '(P:<integer>) Jump to page']
+		self.page_opts = [self.no_opts[0], '(U) Toggle link', '(B) Toggle bookmark', '(B:<integer>) Add/remove bookmark', '(I:<integer>) number of items per page', '(Q) Quit']
+		self.pages_opts = '\n'.join(self.pages_opts)
+		self.page_opts = '\n'.join(self.page_opts)
+
+		self.RESET = '\033[0m'
+		self.YELLOW = '\033[33m'
+		self.LIGHT_GRAY = '\033[38;5;247m'
+
+		self.index_item = 0
+		self.show_link = False
+		self.bookmark = True
+
+	def pagination(self):
+		self.splited_data = DataProcessing.split_list(self.data, self.opts.items_per_list)
+		self.len_data = len(self.splited_data)
+		self.len_last_item = len(self.splited_data[self.len_data - 1])
+		self.total_items = (self.opts.items_per_list * (self.len_data - 1)) + self.len_last_item
+		self.splited_data_items = self.splited_data[self.index_item]
+
+	def print_option(self):
+		if self.opts.show_opts:
+			if self.len_data > 1:
+				output = f'{self.pages_opts}\n{self.page_opts}'
+			else:
+				output = self.page_opts
+		else:
+			output = self.no_opts[1]
+		print(f'{output}\n')
+
+	def print_page_indicator(self):
+		showed_item = self.len_data_items + self.index_item*self.opts.items_per_list
+		print(f'Page: {self.index_item+1}/{self.len_data} ({showed_item}/{self.total_items})\n')
+
+	def print_menu(self):
+		for index in range(self.len_data_items):
+			item = self.splited_data_items[index]
+			item_title = item[0]
+			item_url = item[1]
+
+			color_viewed = self.LIGHT_GRAY if len(item) >= 3 and item[2].lower() == 'viewed' else ''
+			color_bookmarked = self.YELLOW if self.bookmark and self.bookmarking_handler.is_bookmarked(item_url) else ''
+
+			item_number = self.index_item*self.opts.items_per_list + index + 1
+			link = f'\n\t{item_url}' if self.show_link else ''
+
+			print(f'{self.RESET}{color_viewed}{color_bookmarked}({item_number}) {item_title}{link}{self.RESET}')
+		print()
+
+	def print_user_input(self):
+		try:
+			self.user_input = input('Select: ')
+		except KeyboardInterrupt:
+			OSManager.exit(0)
+
+	def bookmark_processing(self, user_int):
+		try:
+			if self.bookmarking_handler.is_bookmarked((item := self.data[user_int - 1])[1]):
+				self.bookmarking_handler.remove_bookmark(item[1])
+			else:
+				self.bookmarking_handler.update(item)
+		except ValueError:
+			input('ValueError: only non-negative integers are accepted.\n')
+		except IndexError:
+			input('IndexError: The requested item is not listed.\n')
+
+	def advanced_options(self):
+		if len(self.user_input) >= 3 and (user_int := self.user_input[2:]).isdigit():
+			user_int = int(user_int)
+			user_input = self.user_input[:2].upper()
+			if user_input == 'P:':
+				self.index_item = user_int - 1
+			elif user_input == 'B:':
+				self.bookmark_processing(user_int)
+			elif user_input == 'I:':
+				self.opts.items_per_list = user_int if user_int > 0 else self.total_items if user_int > self.total_items else 1
+				self.pagination()
+			else:
+				return False
+			return True
+		return False
+
+	def standard_options(self):
+		user_input = self.user_input.upper()
+		if user_input == 'O':
+			self.opts.show_opts = not self.opts.show_opts
+		elif user_input == 'N':
+			self.index_item += 1
+		elif user_input == 'P':
+			self.index_item -= 1
+		elif user_input == 'U':
+			self.show_link = not self.show_link
+		elif user_input == 'B':
+			self.bookmark = not self.bookmark
+		elif user_input == 'Q':
+			OSManager.exit(0)
+		else:
+			try:
+				ans = self.data[int(self.user_input) - 1]
+				return ans[0], ans[1]
+			except ValueError:
+				input('ValueError: only options and non-negative integers are accepted.\n')
+			except IndexError:
+				input('IndexError: The requested item is not listed.\n')
+		return
 
 	def choose_menu(self, data):
-		splited_data, len_data, len_last_item, total_items = self.pagination(data)
+		self.data = data
+		self.pagination()
 
-		no_opts = ['(O) Hide all options', '(O) Show all options']
-		pages_opts = ['(N) Next page', '(P) Previous page', '(P:<integer>) Jump to page']
-		page_opts = [no_opts[0], '(U) Toggle link', '(B) Toggle bookmark', '(B:<integer>) Add/remove bookmark', '(I:<integer>) number of items per page', '(Q) Quit']
-		pages_opts = '\n'.join(pages_opts)
-		page_opts = '\n'.join(page_opts)
-
-		RESET = '\033[0m'
-		YELLOW = '\033[33m'
-		LIGHT_GRAY = '\033[38;5;247m'
-
-		bookmarking_handler = BookmarkingHandler()
-
-		index_item = 0
-		show_link = False
-		bookmark = True
 		while True:
 			self.clscr()
 
-			if index_item >= len_data:
-				index_item = 0
+			if self.index_item >= self.len_data:
+				self.index_item = 0
 
-			if index_item == -1:
-				index_item = len_data-1
+			if self.index_item == -1:
+				self.index_item = self.len_data-1
 
-			if self.show_opts:
-				if len_data > 1:
-					print(f'{pages_opts}\n{page_opts}\n')
-				else:
-					print(page_opts + '\n')
+			self.len_data_items = len(self.splited_data_items)
+
+			self.print_option()
+			self.print_page_indicator()
+			self.print_menu()
+			self.print_user_input()
+
+			if self.advanced_options():
+				continue
+
+			if ans := self.standard_options():
+				return ans
 			else:
-				print(no_opts[1] + '\n')
-
-			len_data_items = len(splited_data[index_item])
-			print(f'Page: {index_item+1}/{len_data} ({len_data_items + index_item*self.opts.items_per_list}/{total_items})\n')
-
-			for index in range(len_data_items):
-				print(f'{RESET}{LIGHT_GRAY if len(splited_data[index_item][index]) >= 3 and splited_data[index_item][index][2].lower() == 'viewed' else ''}{YELLOW if bookmark and bookmarking_handler.is_bookmarked(splited_data[index_item][index][1]) else ''}({index_item*self.opts.items_per_list + index + 1}) {splited_data[index_item][index][0]}' + (f'\n\t{splited_data[index_item][index][1]}' if show_link else '') + RESET)
-
-			try:
-				self.user_input = input('\nSelect: ')
-			except KeyboardInterrupt:
-				OSManager.exit(0)
-
-			if len(self.user_input) >= 3 and (x := self.user_input[2:]).isdigit():
-				x = int(x)
-				if self.user_input[:2].upper() == 'P:':
-					index_item = x - 1
-					continue
-				if self.user_input[:2].upper() == 'B:':
-					try:
-						if bookmarking_handler.is_bookmarked((y := data[x - 1])[1]):
-							bookmarking_handler.remove_bookmark(y[1])
-						else:
-							bookmarking_handler.update(y)
-					except ValueError:
-						input('ValueError: only non-negative integers are accepted.\n')
-						pass
-					except IndexError:
-						input('IndexError: The requested item is not listed.\n')
-						pass
-					continue
-				if self.user_input[:2].upper() == 'I:':
-					self.opts.items_per_list = x if x > 0 else total_items if x > total_items else 1
-					splited_data, len_data, len_last_item, total_items = self.pagination(data)
-					continue
-
-			if self.user_input.upper() == 'O':
-				self.show_opts = not self.show_opts
-			elif self.user_input.upper() == 'N':
-				index_item += 1
-			elif self.user_input.upper() == 'P':
-				index_item -= 1
-			elif self.user_input.upper() == 'U':
-				show_link = not show_link
-			elif self.user_input.upper() == 'B':
-				bookmark = not bookmark
-			elif self.user_input.upper() == 'Q':
-				OSManager.exit()
-			else:
-				try:
-					ans = data[int(self.user_input) - 1]
-					return ans[0], ans[1]
-				except ValueError:
-					input('ValueError: only options and non-negative integers are accepted.\n')
-					pass
-				except IndexError:
-					input('IndexError: The requested item is not listed.\n')
-					pass
+				continue
 
 ###
 
@@ -409,7 +462,8 @@ class Main:
 		self.bookmarking_handler = BookmarkingHandler()
 		self.dp = DataProcessing
 		self.query = Query()
-		self.display_opts = Display(Display_Options())
+		self.display_opts = Display_Options()
+		self.display_menu = DisplayMenu(self.display_opts)
 		self.url = ''
 		self.opts = opts.lower()
 
@@ -468,7 +522,7 @@ class Main:
 	def loop(self):
 		history = HistoryHandler().load()
 		videos = history['videos']
-		title, self.url = self.display_opts.choose_menu(videos)
+		title, self.url = self.display_menu.choose_menu(videos)
 		self.start_player()
 		index = self.history_handler.search(self.url, history)
 		videos[index] += ('viewed',)
@@ -476,11 +530,11 @@ class Main:
 		self.loop()
 
 	def menu(self, video):
-		playlist_title, url = self.display_opts.choose_menu(video)
+		playlist_title, url = self.display_menu.choose_menu(video)
 		video = self.dlp.get_video(url)
 		video = self.dp.omit(video)
 		videos = self.dp.sort(video)
-		title, self.url = self.display_opts.choose_menu(videos)
+		title, self.url = self.display_menu.choose_menu(videos)
 		self.history_handler.update({title:self.url}, {playlist_title: url}, videos)
 		self.start_player()
 		history = HistoryHandler().load()
