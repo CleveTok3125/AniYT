@@ -630,6 +630,13 @@ class Main:
 			return
 		self.menu(playlist)
 
+	def playlist_from_url(self, url):
+		video = self.dlp.get_video(url)
+		video = self.dp.omit(video)
+		videos = self.dp.sort(video)
+		_, self.url = self.display_menu.choose_menu(videos)
+		self.start_player()
+
 class ArgsHandler:
 	def __init__(self):
 		self.parser = argparse.ArgumentParser(description='Note: Options, if provided, will be processed sequentially in the order they are listed below.')
@@ -654,6 +661,9 @@ class ArgsHandler:
 		self.search_parsers.add_argument('-C', '--case-sensitive', action='store_true', help='Case sensitive.')
 		self.search_parsers.add_argument('-fs', '--fuzzysearch', action='store_true', help='Fuzzy search.')
 		self.search_parsers.add_argument('-s', '--score', type=int, default=50, help='The accuracy of fuzzy search (0-100).')
+
+		self.playlist_parsers = self.subparsers.add_parser('playlist', help='Open playlist from URL')
+		self.playlist_parsers.add_argument('url', type=str)
 
 		self.args = self.parser.parse_args()
 
@@ -685,11 +695,14 @@ class ArgsHandler:
 			if action:
 				self.run_main(action)
 
+		if self.args.command == 'download':
+			YT_DLP.download(self.args.url, self.args.category)
+		
 		if self.args.command == 'search':
 			self.main.search(self.args.query, self.args.case_sensitive, fuzzy=self.args.fuzzysearch, score=self.args.score)
 
-		if self.args.command == 'download':
-			YT_DLP.download(self.args.url, self.args.category)
+		if self.args.command == 'playlist':
+			self.main.playlist_from_url(self.args.url)
 
 def main():
 	ArgsHandler().listener()
