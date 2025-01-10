@@ -7,28 +7,30 @@ $ /path/to/project/AniYT/ani-yt -c MuseAsia -l
 
 (N) Next page
 (P) Previous page
-(P:integer) Jump to the specified page
+(P:<integer>) Jump to page
+(O) Hide all options
 (U) Toggle link
 (B) Toggle bookmark
-(B:integer) Add/remove specified item to bookmark
+(B:<integer>) Add/remove bookmark
+(I:<integer>) number of items per page
 (Q) Quit
 
-Page: 1/35 (12/417)
+Page: 1/35 (12/419)
 
 (1) Cells at Work! [English Sub]
 (2) BanG Dream! Ave Mujica [English Sub]
 (3) MOMENTARY LILY [English Sub]
-(4) I Want to Escape from Princess Lessons [English Sub]
-(5) Beheneko: The Elf-Girl’s Cat is Secretly an S-Ranked Monster! [English Sub]
-(6) (Limited time only) Attack on Titan [English Sub]
-(7) HAIGAKURA [English Sub]
-(8) (Full Series) Re:ZERO -Starting Life in Another World- [English Sub]
-(9) Re:ZERO -Starting Life in Another World- Season 3 [English Sub]
-(10) The Most Notorious “Talker” Runs the World’s Greatest Clan [English Sub]
-(11) Let This Grieving Soul Retire [English Sub]
-(12) Aniplex Online Fest 2024
+(4) Even Given the Worthless "Appraiser" Class, I'm Actually the Strongest [English Sub]
+(5) From Bureaucrat to Villainess: Dad's Been Reincarnated! [English Sub]
+(6) I Want to Escape from Princess Lessons [English Sub]
+(7) Beheneko: The Elf-Girl’s Cat is Secretly an S-Ranked Monster! [English Sub]
+(8) (Limited time only) Attack on Titan [English Sub]
+(9) HAIGAKURA [English Sub]
+(10) (Full Series) Re:ZERO -Starting Life in Another World- [English Sub]
+(11) Re:ZERO -Starting Life in Another World- Season 3 [English Sub]
+(12) The Most Notorious “Talker” Runs the World’s Greatest Clan [English Sub]
 
-Select: 1
+Select: 3
 ```
 
 ![Demo](./demo.png)
