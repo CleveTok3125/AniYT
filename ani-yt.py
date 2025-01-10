@@ -111,7 +111,6 @@ class Query:
 			if matched_item:
 				results_with_data.append((matched_item[0], matched_item[1], matched_score))
 		results_with_data = DataProcessing.sort(results_with_data, key=lambda x: x[2], reverse=True)
-
 		return [(title, url) for title, url, _ in results_with_data]
 
 class FileHandler:
@@ -330,6 +329,7 @@ class Display:
 class DisplayMenu(Display):
 	def __init__(self, opts: Display_Options):
 		self.bookmarking_handler = BookmarkingHandler()
+		self.cache = []
 
 		self.opts = opts
 		self.user_input = ''
@@ -417,7 +417,6 @@ class DisplayMenu(Display):
 				self.bookmark_processing(user_int)
 			elif user_input == 'I:':
 				self.opts.items_per_list = user_int if user_int > 0 else self.total_items if user_int > self.total_items else 1
-				self.pagination()
 			else:
 				return False
 			return True
@@ -453,6 +452,8 @@ class DisplayMenu(Display):
 
 		while True:
 			self.clscr()
+			self.splited_data_items = self.splited_data[self.index_item]
+			self.len_data_items = len(self.splited_data_items)
 
 			if self.index_item >= self.len_data:
 				self.index_item = 0
@@ -460,7 +461,6 @@ class DisplayMenu(Display):
 			if self.index_item == -1:
 				self.index_item = self.len_data-1
 
-			self.len_data_items = len(self.splited_data_items)
 
 			self.print_option()
 			self.print_page_indicator()
