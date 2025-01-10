@@ -111,7 +111,6 @@ class Query:
 			if matched_item:
 				results_with_data.append((matched_item[0], matched_item[1], matched_score))
 		results_with_data = DataProcessing.sort(results_with_data, key=lambda x: x[2], reverse=True)
-
 		return [(title, url) for title, url, _ in results_with_data]
 
 class FileHandler:
@@ -331,6 +330,8 @@ class DisplayMenu(Display):
 	def __init__(self, opts: Display_Options):
 		self.bookmarking_handler = BookmarkingHandler()
 
+		# Variable
+		# These values are always created new each time the class is called or are always overwritten.
 		self.opts = opts
 		self.user_input = ''
 		self.data = []
@@ -340,21 +341,49 @@ class DisplayMenu(Display):
 		self.total_items = 0
 		self.len_data_items = 0
 
+		# Constant
 		self.no_opts = ['(O) Hide all options', '(O) Show all options']
 		self.pages_opts = ['(N) Next page', '(P) Previous page', '(P:<integer>) Jump to page']
 		self.page_opts = [self.no_opts[0], '(U) Toggle link', '(B) Toggle bookmark', '(B:<integer>) Add/remove bookmark', '(I:<integer>) number of items per page', '(Q) Quit']
 		self.pages_opts = '\n'.join(self.pages_opts)
 		self.page_opts = '\n'.join(self.page_opts)
 
+		# Constant
 		self.RESET = '\033[0m'
 		self.YELLOW = '\033[33m'
 		self.LIGHT_GRAY = '\033[38;5;247m'
 
+		# Variable
+		self._init_loop_values_()
+
+	def _init_loop_values_(self):
+		'''
+		These values are used to process in the while loop.
+		Whenever the while loop exits, these values need to be reset if the associated function is to be reused.
+		
+		def example(lst):
+			index_item = 0
+			show_link = False
+			bookmark = True
+			while index_item < 10:
+				print(lst[index_item] + 'link' if show_link else lst[index_item] + 'bookmark' if bookmark else lst[index_item])
+
+		The values of index_item, show_link and bookmark will always be reset each time the function is called.
+		Calling the class every time will not have the problem of instance attributes but will have performance problems.
+		'''
 		self.index_item = 0
 		self.show_link = False
 		self.bookmark = True
 
+	def valid_index_item(self):
+		if self.index_item >= self.len_data:
+			self.index_item = 0
+		elif self.index_item <= -1:
+			self.index_item = self.len_data-1
+
 	def pagination(self):
+		self.valid_index_item()
+
 		self.splited_data = DataProcessing.split_list(self.data, self.opts.items_per_list)
 		self.len_data = len(self.splited_data)
 		self.len_last_item = len(self.splited_data[self.len_data - 1])
@@ -417,7 +446,6 @@ class DisplayMenu(Display):
 				self.bookmark_processing(user_int)
 			elif user_input == 'I:':
 				self.opts.items_per_list = user_int if user_int > 0 else self.total_items if user_int > self.total_items else 1
-				self.pagination()
 			else:
 				return False
 			return True
@@ -451,29 +479,29 @@ class DisplayMenu(Display):
 		self.data = data
 		self.pagination()
 
-		while True:
-			self.clscr()
+		try:
+			while True:
+				self.clscr()
 
-			if self.index_item >= self.len_data:
-				self.index_item = 0
+				self.valid_index_item()
 
-			if self.index_item == -1:
-				self.index_item = self.len_data-1
+				self.splited_data_items = self.splited_data[self.index_item]
+				self.len_data_items = len(self.splited_data_items)
 
-			self.len_data_items = len(self.splited_data_items)
+				self.print_option()
+				self.print_page_indicator()
+				self.print_menu()
+				self.print_user_input()
 
-			self.print_option()
-			self.print_page_indicator()
-			self.print_menu()
-			self.print_user_input()
+				if self.advanced_options():
+					continue
 
-			if self.advanced_options():
-				continue
-
-			if ans := self.standard_options():
-				return ans
-			else:
-				continue
+				if ans := self.standard_options():
+					return ans
+				else:
+					continue
+		finally:
+			self._init_loop_values_()
 
 ###
 
@@ -614,7 +642,7 @@ class ArgsHandler:
 		self.search_parsers.add_argument('query', type=str, help='Search content.')
 		self.search_parsers.add_argument('-C', '--case-sensitive', action='store_true', help='Case sensitive.')
 		self.search_parsers.add_argument('-fs', '--fuzzysearch', action='store_true', help='Fuzzy search.')
-		self.search_parsers.add_argument('-s', '--score', type=int, default=50, help='The accuracy of fuzzy search.')
+		self.search_parsers.add_argument('-s', '--score', type=int, default=50, help='The accuracy of fuzzy search (0-100).')
 
 		self.args = self.parser.parse_args()
 
