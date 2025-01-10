@@ -310,8 +310,9 @@ class Player:
 			self.run_mpv()
 
 class Display_Options:
-	def __init__(self, items_per_list=12):
+	def __init__(self, items_per_list=12, max_cache=100):
 		self.items_per_list = items_per_list
+		self._max_cache_ = max_cache
 		self.show_opts = False
 		self.show_link = False
 		self.bookmark = True
@@ -448,6 +449,7 @@ class DisplayMenu(Display):
 				self.bookmark_processing(user_int)
 			elif user_input == 'I:':
 				self.opts.items_per_list = user_int if user_int > 0 else self.total_items if user_int > self.total_items else 1
+				self.pagination()
 			else:
 				return False
 			return True
@@ -475,6 +477,7 @@ class DisplayMenu(Display):
 				input('ValueError: only options and non-negative integers are accepted.\n')
 			except IndexError:
 				input('IndexError: The requested item is not listed.\n')
+			return
 		return
 
 	def choose_menu(self, data):
@@ -493,6 +496,7 @@ class DisplayMenu(Display):
 				self.print_option()
 				self.print_page_indicator()
 				self.print_menu()
+
 				self.print_user_input()
 
 				if self.advanced_options():
@@ -597,6 +601,11 @@ class Main:
 		self.history_handler.update({title:self.url}, None, videos)
 		self.loop()
 
+	def show_bookmark(self):
+		bms = self.bookmarking_handler.load()
+		for key, value in bms.items():
+			print(f'{self.display_menu.YELLOW}{key}{self.display_menu.RESET}\n\t{value}')
+
 	def list(self):
 		playlist = self.load_playlist()
 		self.menu(playlist)
@@ -631,6 +640,7 @@ class ArgsHandler:
 		self.parser.add_argument('--clear-cache', action='store_const', const='clear_cache', help='Clear cache.')
 		self.parser.add_argument('--delete-history', action='store_const', const='delete_history', help='Delete history.')
 		self.parser.add_argument('--delete-bookmark', action='store_const', const='delete_bookmark', help='Delete bookmark.')
+		self.parser.add_argument('-b', '--bookmark', action='store_const', const='bookmark', help='Show bookmark.')
 		self.parser.add_argument('-l', '--list', action='store_const', const='list', help='Browse all cached playlists.')
 		self.parser.add_argument('-v', '--viewed-mode', action='store_const', const='viewed_mode', help='Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.')
 		self.parser.add_argument('-r', '--resume', action='store_const', const='resume', help='View last viewed video.')
@@ -656,6 +666,7 @@ class ArgsHandler:
 			'clear_cache': self.main.clear_cache,
 			'delete_history': self.main.delete_history,
 			'delete_bookmark': self.main.delete_bookmark,
+			'bookmark': self.main.show_bookmark,
 			'list': self.main.list,
 			'viewed_mode': self.main.loop,
 			'resume': self.main.resume
