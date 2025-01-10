@@ -310,9 +310,8 @@ class Player:
 			self.run_mpv()
 
 class Display_Options:
-	def __init__(self, items_per_list=12, max_cache=100):
+	def __init__(self, items_per_list=12):
 		self.items_per_list = items_per_list
-		self._max_cache_ = max_cache
 		self.show_opts = False
 		self.show_link = False
 		self.bookmark = True
