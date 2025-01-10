@@ -313,6 +313,8 @@ class Display_Options:
 	def __init__(self, items_per_list=12):
 		self.items_per_list = items_per_list
 		self.show_opts = False
+		self.show_link = False
+		self.bookmark = True
 
 class Display:
 	@staticmethod
@@ -372,8 +374,8 @@ class DisplayMenu(Display):
 		Calling the class every time will not have the problem of instance attributes but will have performance problems.
 		'''
 		self.index_item = 0
-		self.show_link = False
-		self.bookmark = True
+		self.show_link = self.opts.show_link
+		self.bookmark = self.opts.bookmark
 
 	def valid_index_item(self):
 		if self.index_item >= self.len_data:
