@@ -31,10 +31,6 @@ class OSManager:
 				print(e)
 
 	@staticmethod
-	def normpath(path):
-		return os.path.normpath(path)
-
-	@staticmethod
 	def android_check():
 		return True if os.name == 'posix' and 'android' in os.uname().release.lower() else False
 
@@ -651,10 +647,14 @@ class Main:
 	def download(self, url, category, mpv):
 		capture_output = (mpv == 'mpv')
 		result = YT_DLP.download(url, category, capture_output=capture_output)
+		
+		if not OSManager.android_check():
+			return
+
 		if result and capture_output:
 			result = result.decode().split('\r')[-1].strip()
 			self.start_player(result)
-		elif result:
+		elif not result and not capture_output:
 			pass
 		else:
 			print('No data returned. There was an error downloading the video or it was already downloaded.')
