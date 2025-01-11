@@ -648,7 +648,7 @@ class Main:
 		capture_output = (mpv == 'mpv')
 		result = YT_DLP.download(url, category, capture_output=capture_output)
 		
-		if not OSManager.android_check():
+		if OSManager.android_check():
 			return
 
 		if result and capture_output:
