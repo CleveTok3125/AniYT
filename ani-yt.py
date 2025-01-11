@@ -31,6 +31,10 @@ class OSManager:
 				print(e)
 
 	@staticmethod
+	def normpath(path):
+		return os.path.normpath(path)
+
+	@staticmethod
 	def android_check():
 		return True if os.name == 'posix' and 'android' in os.uname().release.lower() else False
 
@@ -253,13 +257,15 @@ class YT_DLP:
 		return (formats['requested_formats'][0]['url'], formats['requested_formats'][1]['url'])
 
 	@staticmethod
-	def download(url, cats='all', extra_args=[], args=None):
+	def download(url, cats='all', extra_args=[], args=None, capture_output=False):
 		if args is None:
 			args = [
 				'--no-warnings',
 				'--progress',
 				'--sponsorblock-remove', cats,
-				url
+				url,
+				'--output', os.path.join(os.getcwd(), '%(title)s [%(id)s].%(ext)s'),
+				'--print', 'after_move:filepath'
 				]
 
 		if extra_args:
@@ -269,7 +275,8 @@ class YT_DLP:
 				args += extra_args
 
 		command = ['yt-dlp'] + args
-		subprocess.run(command)
+		result = subprocess.run(command, capture_output=capture_output)
+		return result.stdout
 
 class Player:
 	def __init__(self, url, args=None):
@@ -291,7 +298,7 @@ class Player:
 
 	def run_mpv(self): # optional: use sponsorblock for mpv to automatically skip op/en
 		try:
-			result = subprocess.run(self.command)
+			subprocess.run(self.command)
 		except FileNotFoundError:
 			print('Error running command: MPV is not installed.')
 			OSManager.exit(127)
@@ -565,7 +572,9 @@ class Main:
 			playlist = self.file_handler.load()
 		return playlist
 
-	def start_player(self):
+	def start_player(self, url=None):
+		if url:
+			self.url = url
 		player = Player(self.url)
 
 		if self.opts == 'auto':
@@ -619,7 +628,7 @@ class Main:
 	def search(self, inp, case_sensitive=False, fuzzy=False, score=50):
 		query = Query(CASE=case_sensitive)
 		playlist = self.load_playlist()
-		
+
 		if fuzzy:
 			playlist = query.fuzzysearch(playlist, inp, score)
 		else:
@@ -636,6 +645,18 @@ class Main:
 		videos = self.dp.sort(video)
 		_, self.url = self.display_menu.choose_menu(videos)
 		self.start_player()
+
+	def download(self, url, category, mpv):
+		capture_output = (mpv == 'mpv')
+		result = YT_DLP.download(url, category, capture_output=capture_output)
+		if result and capture_output:
+			result = result.decode().splitlines()[0]
+			result = OSManager.normpath(result)
+			self.start_player(result)
+
+	def open_with_mpv(self, inp):
+		inp = OSManager.normpath(inp)
+		self.start_player(inp)
 
 class ArgsHandler:
 	def __init__(self):
@@ -655,6 +676,10 @@ class ArgsHandler:
 		self.download_parsers = self.subparsers.add_parser('download', help='Download video and skip sponsors using SponsorBlock.')
 		self.download_parsers.add_argument('url', type=str, help='Video url.')
 		self.download_parsers.add_argument('-cat', '--category', type=str, default='all', help='See https://wiki.sponsor.ajay.app/w/Types#Category.')
+		self.download_parsers.add_argument('-m', '--mpv', action='store_const', const='mpv', help='Open downloaded video with MPV. Download progress will not be displayed.')
+
+		self.mpv_parsers = self.subparsers.add_parser('mpv', help='Open with MPV.')
+		self.mpv_parsers.add_argument('input', type=str, help='Video url or file path.')
 
 		self.search_parsers = self.subparsers.add_parser('search', help='Search for a playlist.')
 		self.search_parsers.add_argument('query', type=str, help='Search content.')
@@ -696,8 +721,11 @@ class ArgsHandler:
 				self.run_main(action)
 
 		if self.args.command == 'download':
-			YT_DLP.download(self.args.url, self.args.category)
-		
+			self.main.download(self.args.url, self.args.category, self.args.mpv)
+
+		if self.args.command == 'mpv':
+			self.main.open_with_mpv(self.args.input)
+
 		if self.args.command == 'search':
 			self.main.search(self.args.query, self.args.case_sensitive, fuzzy=self.args.fuzzysearch, score=self.args.score)
 
