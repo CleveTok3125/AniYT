@@ -31,10 +31,6 @@ class OSManager:
 				print(e)
 
 	@staticmethod
-	def normpath(path):
-		return os.path.normpath(path)
-
-	@staticmethod
 	def android_check():
 		return True if os.name == 'posix' and 'android' in os.uname().release.lower() else False
 
@@ -293,7 +289,7 @@ class Player:
 			'-a', 'android.intent.action.VIEW',
 			'-t', 'video/any',
 			'-p', 'is.xyz.mpv.ytdl',
-			'-d', url,
+			'-d', url
 		]
 
 	def run_mpv(self): # optional: use sponsorblock for mpv to automatically skip op/en
@@ -573,6 +569,7 @@ class Main:
 		return playlist
 
 	def start_player(self, url=None):
+		print('Playing...')
 		if url:
 			self.url = url
 		player = Player(self.url)
@@ -590,7 +587,8 @@ class Main:
 		title, self.url = self.display_menu.choose_menu(videos)
 		self.start_player()
 		index = self.history_handler.search(self.url, history)
-		videos[index] += ('viewed',)
+		if len(videos[index]) == 2:
+			videos[index] += ('viewed',)
 		self.history_handler.update({title:self.url}, None, videos)
 		self.loop()
 
@@ -649,13 +647,19 @@ class Main:
 	def download(self, url, category, mpv):
 		capture_output = (mpv == 'mpv')
 		result = YT_DLP.download(url, category, capture_output=capture_output)
+		
+		if not OSManager.android_check():
+			return
+
 		if result and capture_output:
-			result = result.decode().splitlines()[0]
-			result = OSManager.normpath(result)
+			result = result.decode().split('\r')[-1].strip()
 			self.start_player(result)
+		elif not result and not capture_output:
+			pass
+		else:
+			print('No data returned. There was an error downloading the video or it was already downloaded.')
 
 	def open_with_mpv(self, inp):
-		inp = OSManager.normpath(inp)
 		self.start_player(inp)
 
 class ArgsHandler:
@@ -679,7 +683,7 @@ class ArgsHandler:
 		self.download_parsers.add_argument('-m', '--mpv', action='store_const', const='mpv', help='Open downloaded video with MPV. Download progress will not be displayed.')
 
 		self.mpv_parsers = self.subparsers.add_parser('mpv', help='Open with MPV.')
-		self.mpv_parsers.add_argument('input', type=str, help='Video url or file path.')
+		self.mpv_parsers.add_argument('input', type=str, help='Video url or file path. File path are currently not supported on Android.')
 
 		self.search_parsers = self.subparsers.add_parser('search', help='Search for a playlist.')
 		self.search_parsers.add_argument('query', type=str, help='Search content.')
