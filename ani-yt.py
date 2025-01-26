@@ -37,7 +37,9 @@ class OSManager:
 
 	@staticmethod
 	def temporary_session():
-		return mkdtemp(prefix='AniYT_')
+		temp_path = mkdtemp(prefix='AniYT_')
+		os.chdir(temp_path)
+		return temp_path
 
 class DataProcessing:
 	@staticmethod
