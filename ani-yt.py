@@ -4,6 +4,7 @@ import subprocess
 import os
 import sys
 import argparse
+from tempfile import mkdtemp
 
 import yt_dlp
 from rapidfuzz import process
@@ -33,6 +34,10 @@ class OSManager:
 	@staticmethod
 	def android_check():
 		return True if os.name == 'posix' and 'android' in os.uname().release.lower() else False
+
+	@staticmethod
+	def temporary_session():
+		return mkdtemp(prefix='AniYT_')
 
 class DataProcessing:
 	@staticmethod
@@ -345,6 +350,11 @@ class DisplayMenu(Display):
 		self.len_last_item = 0
 		self.total_items = 0
 		self.len_data_items = 0
+		self.clear_choosed_item = False
+
+		# Variable
+		# These are variables that are manually cleared for caching purposes. Remember to clear these variables when running functions in the class multiple times.
+		self.choosed_item = False
 
 		# Constant
 		self.no_opts = ['(O) Hide all options', '(O) Show all options']
@@ -426,7 +436,7 @@ class DisplayMenu(Display):
 
 	def print_user_input(self):
 		try:
-			self.user_input = input('Select: ')
+			self.user_input = input('Select: ').strip()
 		except KeyboardInterrupt:
 			OSManager.exit(0)
 
@@ -457,6 +467,25 @@ class DisplayMenu(Display):
 			return True
 		return False
 
+	def choose_item_option(self):
+		try:
+			if self.clear_choosed_item:
+				self.choosed_item = False
+
+			if self.user_input == '':
+				self.choosed_item += 1
+				self.user_input = self.choosed_item
+				return self.choose_item_option()
+
+			self.choosed_item = int(self.user_input)
+			ans = self.data[self.choosed_item - 1]
+			return ans[0], ans[1]
+		except ValueError:
+			input('ValueError: only options and non-negative integers are accepted.\n')
+		except IndexError:
+			input('IndexError: The requested item is not listed.\n')
+		return
+
 	def standard_options(self):
 		user_input = self.user_input.upper()
 		if user_input == 'O':
@@ -472,18 +501,12 @@ class DisplayMenu(Display):
 		elif user_input == 'Q':
 			OSManager.exit(0)
 		else:
-			try:
-				ans = self.data[int(self.user_input) - 1]
-				return ans[0], ans[1]
-			except ValueError:
-				input('ValueError: only options and non-negative integers are accepted.\n')
-			except IndexError:
-				input('IndexError: The requested item is not listed.\n')
-			return
+			return self.choose_item_option()
 		return
 
-	def choose_menu(self, data):
+	def choose_menu(self, data, clear_choosed_item=False):
 		self.data = data
+		self.clear_choosed_item = clear_choosed_item
 		self.pagination()
 
 		try:
@@ -597,7 +620,7 @@ class Main:
 		video = self.dlp.get_video(url)
 		video = self.dp.omit(video)
 		videos = self.dp.sort(video)
-		title, self.url = self.display_menu.choose_menu(videos)
+		title, self.url = self.display_menu.choose_menu(videos, clear_choosed_item=True)
 		self.history_handler.update({title:self.url}, {playlist_title: url}, videos)
 		self.start_player()
 		history = HistoryHandler().load()
@@ -648,7 +671,7 @@ class Main:
 		capture_output = (mpv == 'mpv')
 		result = YT_DLP.download(url, category, capture_output=capture_output)
 		
-		if not OSManager.android_check():
+		if OSManager.android_check():
 			return
 
 		if result and capture_output:
@@ -666,6 +689,7 @@ class ArgsHandler:
 	def __init__(self):
 		self.parser = argparse.ArgumentParser(description='Note: Options, if provided, will be processed sequentially in the order they are listed below.')
 
+		self.parser.add_argument('-t', '--temp', action='store_const', const='store_true', help='Use temporary folder.')
 		self.parser.add_argument('-c', '--channel', type=str, help='Create or Update Playlist Data from Link, Channel ID, or Channel Handle.')
 		self.parser.add_argument('--mpv-player', type=str, choices=['auto', 'android'], default='auto', help='MPV player mode.')
 		self.parser.add_argument('--clear-cache', action='store_const', const='clear_cache', help='Clear cache.')
@@ -695,6 +719,10 @@ class ArgsHandler:
 		self.playlist_parsers.add_argument('url', type=str)
 
 		self.args = self.parser.parse_args()
+
+		if self.args.temp:
+			temp_path = OSManager.temporary_session()
+			print(temp_path)
 
 		self.main = Main(self.args.channel, self.args.mpv_player)
 		if self.args.channel:
