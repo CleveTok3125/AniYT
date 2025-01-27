@@ -393,6 +393,9 @@ class DisplayMenu(Display):
 		self.bookmark = self.opts.bookmark
 
 	def valid_index_item(self):
+		if self.choosed_item >= self.len_data:
+			self.choosed_item = False
+
 		if self.index_item >= self.len_data:
 			self.index_item = 0
 		elif self.index_item <= -1:
@@ -422,15 +425,24 @@ class DisplayMenu(Display):
 		print(f'Page: {self.index_item+1}/{self.len_data} ({showed_item}/{self.total_items})\n')
 
 	def print_menu(self):
+		skip_choose_item = False
+
 		for index in range(self.len_data_items):
 			item = self.splited_data_items[index]
 			item_title = item[0]
 			item_url = item[1]
 
-			color_viewed = self.LIGHT_GRAY if len(item) >= 3 and item[2].lower() == 'viewed' else ''
+			item_number = self.index_item*self.opts.items_per_list + index + 1 
+
+			color_viewed = ''
+			if len(item) >= 3 and item[2].lower() == 'viewed': 
+				color_viewed = self.LIGHT_GRAY
+			elif not skip_choose_item:
+				skip_choose_item = True
+				self.choosed_item = item_number - 1
+
 			color_bookmarked = self.YELLOW if self.bookmark and self.bookmarking_handler.is_bookmarked(item_url) else ''
 
-			item_number = self.index_item*self.opts.items_per_list + index + 1
 			link = f'\n\t{item_url}' if self.show_link else ''
 
 			print(f'{self.RESET}{color_viewed}{color_bookmarked}({item_number}) {item_title}{link}{self.RESET}')
@@ -507,6 +519,22 @@ class DisplayMenu(Display):
 		return
 
 	def choose_menu(self, data, clear_choosed_item=False):
+		'''
+		How auto-select (guessing user choices) feature works
+		1. __init__()
+		Initialize self.choosed_item
+		2. print_menu()
+		Assign a default value to self.choosed_item
+		This value is the index of the latest episode the user has watched
+		If not, self.choosed_item retains its initial value
+		3. choose_item_option()
+		If the user specifies a specific number (for self.user_input), it overwrites the default value of self.choosed_item
+		If not, self.choosed_item is incremented by 1 (the index of the next episode) and overwrites self.user_input
+		When the value of self.choosed_item is the initial value, it is automatically processed as index 0 and returns a value of 1 (the first episode in the list)
+		4. valid_index_item()
+		In case self.choosed_item exceeds the valid limit, it will be set to its initial value.
+		'''
+
 		self.data = data
 		self.clear_choosed_item = clear_choosed_item
 		self.pagination()
