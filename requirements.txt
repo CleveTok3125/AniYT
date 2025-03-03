@@ -1,2 +1,5 @@
-yt-dlp==2024.12.23
+yt-dlp
 RapidFuzz==3.11.0
+
+# Extension
+requests==2.32.3
