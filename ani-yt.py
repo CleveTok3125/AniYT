@@ -9,12 +9,36 @@ from tempfile import mkdtemp
 import yt_dlp
 from rapidfuzz import process
 
+# Extension
+import requests
+
+class Extension:
+	class CheckModuleUpdate:
+		@staticmethod
+		def check_yt_dlp(name='yt-dlp'):
+			old_ver = subprocess.check_output(['yt-dlp', '--version']).decode('utf-8').strip()
+			old_ver = '.'.join(str(int(part)) for part in old_ver.split('.'))
+			new_ver = requests.get('https://pypi.org/pypi/yt-dlp/json').json()['info']['version']
+			return (old_ver == new_ver, name, old_ver, new_ver)
+
+		@staticmethod
+		def print_notice(update_info):
+			if not update_info[0]:
+				print(f'\n[\033[34mnotice]\033[0m A new release of {update_info[1]} is available: \033[31m{update_info[2]}\033[0m -> \033[32m{update_info[3]}\033[0m')
+				print(f'[\033[34mnotice]\033[0m To update, run: \033[32mpython.exe -m pip install --upgrade {update_info[1]}\033[0m')
+
+	@staticmethod
+	def check_module_update():
+		yt_dlp_update_info = Extension.CheckModuleUpdate.check_yt_dlp()
+		Extension.CheckModuleUpdate.print_notice(yt_dlp_update_info)
+
 class MissingChannelUrl(Exception):
 	pass
 
 class OSManager:
 	@staticmethod
 	def exit(n=0):
+		Extension.check_module_update()
 		os._exit(n)
 
 	@staticmethod
@@ -793,6 +817,8 @@ class ArgsHandler:
 
 		if self.args.command == 'playlist':
 			self.main.playlist_from_url(self.args.url)
+
+		OSManager.exit(0)
 
 def main():
 	ArgsHandler().listener()
