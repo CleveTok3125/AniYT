@@ -24,8 +24,8 @@ class Extension:
 		@staticmethod
 		def print_notice(update_info):
 			if not update_info[0]:
-				print(f'\n[\033[34mnotice]\033[0m A new release of {update_info[1]} is available: \033[31m{update_info[2]}\033[0m -> \033[32m{update_info[3]}\033[0m')
-				print(f'[\033[34mnotice]\033[0m To update, run: \033[32mpython -m pip install --upgrade {update_info[1]}\033[0m')
+				print(f'\n\033[34m[notice]\033[0m A new release of {update_info[1]} is available: \033[31m{update_info[2]}\033[0m -> \033[32m{update_info[3]}\033[0m')
+				print(f'\033[34m[notice]\033[0m To update, run: \033[32mpython -m pip install --upgrade {update_info[1]}\033[0m')
 
 	@staticmethod
 	def check_module_update(func):
@@ -659,6 +659,13 @@ class Main:
 			player.start()
 		elif self.opts == 'android':
 			player.run_mpv_android()
+		elif self.opts == 'ssh':
+			print('Copy one of the commands below:')
+			print(f'MPV: \n\n\t{' '.join(player.command)}\n\nMPV Android: \n\n\t{' '.join(player.android_command)}\n\n')
+			try:
+				input('Press Enter to continue...\t')
+			except KeyboardInterrupt:
+				pass
 		else:
 			player.run_mpv()
 
@@ -749,7 +756,7 @@ class ArgsHandler:
 
 		self.parser.add_argument('-t', '--temp', action='store_const', const='store_true', help='Use temporary folder.')
 		self.parser.add_argument('-c', '--channel', type=str, help='Create or Update Playlist Data from Link, Channel ID, or Channel Handle.')
-		self.parser.add_argument('--mpv-player', type=str, choices=['auto', 'android'], default='auto', help='MPV player mode.')
+		self.parser.add_argument('--mpv-player', type=str, choices=['auto', 'default', 'android', 'ssh'], default='auto', help='MPV player mode.')
 		self.parser.add_argument('--clear-cache', action='store_const', const='clear_cache', help='Clear cache.')
 		self.parser.add_argument('--delete-history', action='store_const', const='delete_history', help='Delete history.')
 		self.parser.add_argument('--delete-bookmark', action='store_const', const='delete_bookmark', help='Delete bookmark.')
@@ -805,6 +812,10 @@ class ArgsHandler:
 
 	def listener(self):
 		action_lst = [getattr(self.args, item, None) for item in list(self.actions.keys())]
+
+		if not any(action_lst) and not self.args.command:
+			self.parser.print_help()
+			OSManager.exit(0)
 
 		for action in action_lst:
 			if action:
