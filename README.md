@@ -12,52 +12,62 @@ $ /path/to/project/AniYT/ani-yt -c MuseAsia -l
 (U) Toggle link
 (B) Toggle bookmark
 (B:<integer>) Add/remove bookmark
+(T:<integer>) View thumbnail
 (I:<integer>) number of items per page
 (Q) Quit
 
-Page: 1/35 (12/419)
+Page: 2/35 (24/420)
 
-(1) Cells at Work! [English Sub]
-(2) BanG Dream! Ave Mujica [English Sub]
-(3) MOMENTARY LILY [English Sub]
-(4) Even Given the Worthless "Appraiser" Class, I'm Actually the Strongest [English Sub]
-(5) From Bureaucrat to Villainess: Dad's Been Reincarnated! [English Sub]
-(6) I Want to Escape from Princess Lessons [English Sub]
-(7) Beheneko: The Elf-Girl’s Cat is Secretly an S-Ranked Monster! [English Sub]
-(8) (Limited time only) Attack on Titan [English Sub]
-(9) HAIGAKURA [English Sub]
-(10) (Full Series) Re:ZERO -Starting Life in Another World- [English Sub]
-(11) Re:ZERO -Starting Life in Another World- Season 3 [English Sub]
-(12) The Most Notorious “Talker” Runs the World’s Greatest Clan [English Sub]
+(13) MOMENTARY LILY [English Sub]
+(14) Even Given the Worthless "Appraiser" Class, I'm Actually the Strongest [English Sub]
+(15) From Bureaucrat to Villainess: Dad's Been Reincarnated! [English Sub]
+(16) I Want to Escape from Princess Lessons [English Sub]
+(17) I Left my A-Rank Party to Help My Former Students Reach the Dungeon Depths! [English Sub]
+(18) Beheneko: The Elf-Girl’s Cat is Secretly an S-Ranked Monster! [English Sub]
+(19) (Limited time only) Attack on Titan [English Sub]
+(20) HAIGAKURA [English Sub]
+(21) (Full Series) Re:ZERO -Starting Life in Another World- [English Sub]
+(22) Re:ZERO -Starting Life in Another World- Season 3 [English Sub]
+(23) The Most Notorious “Talker” Runs the World’s Greatest Clan [English Sub]
+(24) Let This Grieving Soul Retire [English Sub]
 
-Select: 3
+Select: 13
 ```
+
+___
+Command line interface (old version)
 
 ![Demo](./demo.png)
 
 # Key Features
 
-1. **Update Playlist from YouTube Channel**  
+1. **Update Playlist from YouTube Channel**
    Update playlists from a YouTube channel using its URL, ID, or Handle.
 
-2. **Browse Playlists and Videos**  
+2. **Browse Playlists and Videos**
    Browse through playlists and videos in the saved playlists with pagination for easier navigation.
 
-3. **Search Playlists**  
+3. **Search Playlists**
    Search for playlists by keyword.
 
-4. **History Tracking**  
+4. **History Tracking**
    Continue watching previously viewed videos through the watch history and history tracking.
 
 5. **Bookmarking**
    Bookmark favorite videos or playlists.
 
-6. **Play Videos with MPV**  
+6. **Play Videos with MPV**
    Play videos using the MPV player (supports both Android and auto modes).
 
-7. **Download Videos with SponsorBlock**  
+7. **View Thumbnail**
+   View thumbnails with MPV player
+   
+8. **Download Videos with SponsorBlock**
    Download videos and automatically skip sponsors using SponsorBlock.
 
+9. **Automatically check for yt-dlp updates**
+   Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
+   
 # Installation
 ```bash
 git clone https://github.com/CleveTok3125/AniYT/

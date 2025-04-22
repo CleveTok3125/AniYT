@@ -275,13 +275,22 @@ class YT_DLP:
 		except yt_dlp.utils.DownloadError:
 			OSManager.exit(404)
 
-	def get_video(self, url):
+	@staticmethod
+	def standalone_get_video(url, opts):
 		try:
-			with yt_dlp.YoutubeDL(self.ydl_options.ydl_opts) as ydl:
-				result = ydl.extract_info(url, download=False)
-			return result
+			with yt_dlp.YoutubeDL(opts) as ydl:
+				info = ydl.extract_info(url, download=False)
+			return info
 		except yt_dlp.utils.DownloadError:
 			OSManager.exit(404)
+
+	def get_video(self, url):
+		return YT_DLP.standalone_get_video(url, self.ydl_options.ydl_opts)
+
+	@staticmethod
+	def standalone_get_thumbnail(url, opts):
+		info = YT_DLP.standalone_get_video(url, opts)
+		return info['thumbnails'][-1]['url']
 
 	def get_stream(self, url):
 		formats = self.get_video(url)
@@ -347,6 +356,26 @@ class Player:
 		else:
 			self.run_mpv()
 
+	@staticmethod
+	def start_with_mode(url, opts='auto'):
+		print('Playing...')
+
+		player = Player(url)
+
+		if opts == 'auto':
+			player.start()
+		elif opts == 'android':
+			player.run_mpv_android()
+		elif opts == 'ssh':
+			print('Copy one of the commands below:')
+			print(f'MPV: \n\n\t{' '.join(player.command)}\n\nMPV Android: \n\n\t{' '.join(player.android_command)}\n\n')
+			try:
+				input('Press Enter to continue...\t')
+			except KeyboardInterrupt:
+				pass
+		else:
+			player.run_mpv()
+
 class Display_Options:
 	def __init__(self, items_per_list=12):
 		self.items_per_list = items_per_list
@@ -367,8 +396,9 @@ class Display:
 			os.system("clear")
 
 class DisplayMenu(Display):
-	def __init__(self, opts: Display_Options):
+	def __init__(self, opts: Display_Options, extra_opts = {}):
 		self.bookmarking_handler = BookmarkingHandler()
+		self.extra_opts = extra_opts # Some features require additional settings, use it to pass in user settings
 
 		# Variable
 		# These values are always created new each time the class is called or are always overwritten.
@@ -389,7 +419,7 @@ class DisplayMenu(Display):
 		# Constant
 		self.no_opts = ['(O) Hide all options', '(O) Show all options']
 		self.pages_opts = ['(N) Next page', '(P) Previous page', '(P:<integer>) Jump to page']
-		self.page_opts = [self.no_opts[0], '(U) Toggle link', '(B) Toggle bookmark', '(B:<integer>) Add/remove bookmark', '(I:<integer>) number of items per page', '(Q) Quit']
+		self.page_opts = [self.no_opts[0], '(U) Toggle link', '(B) Toggle bookmark', '(B:<integer>) Add/remove bookmark', '(T:<integer>) View thumbnail', '(I:<integer>) number of items per page', '(Q) Quit']
 		self.pages_opts = '\n'.join(self.pages_opts)
 		self.page_opts = '\n'.join(self.page_opts)
 
@@ -493,6 +523,16 @@ class DisplayMenu(Display):
 		except IndexError:
 			input('IndexError: The requested item is not listed.\n')
 
+	def open_image_with_mpv(self, url):
+		Player.start_with_mode(url=url, opts=self.extra_opts.get('mode', 'auto'))
+
+	def show_thumbnail(self, user_int):
+		url = self.data[user_int - 1][1]
+		extra_yt_dlp_opts = self.extra_opts.get('yt-dlp', None)
+		if extra_yt_dlp_opts:
+			thumbnail_url = YT_DLP.standalone_get_thumbnail(url, extra_yt_dlp_opts.ydl_opts)
+			self.open_image_with_mpv(thumbnail_url)
+
 	def advanced_options(self):
 		if len(self.user_input) >= 3 and (user_int := self.user_input[2:]).isdigit():
 			user_int = int(user_int)
@@ -504,6 +544,8 @@ class DisplayMenu(Display):
 			elif user_input == 'I:':
 				self.opts.items_per_list = user_int if user_int > 0 else self.total_items if user_int > self.total_items else 1
 				self.pagination()
+			elif user_input == 'T:':
+				self.show_thumbnail(user_int)
 			else:
 				return False
 			return True
@@ -596,6 +638,7 @@ class DisplayMenu(Display):
 
 class Main:
 	def __init__(self, channel_url, opts='auto'):
+		self.opts = opts.lower()
 		self.ydl_options = YT_DLP_Options()
 		self.dlp = YT_DLP(channel_url, self.ydl_options)
 		self.file_handler = FileHandler()
@@ -603,9 +646,10 @@ class Main:
 		self.bookmarking_handler = BookmarkingHandler()
 		self.dp = DataProcessing
 		self.display_opts = Display_Options()
-		self.display_menu = DisplayMenu(self.display_opts)
+		self.display_menu = DisplayMenu(self.display_opts, extra_opts={
+			'yt-dlp': self.ydl_options,
+			'mode': self.opts})
 		self.url = ''
-		self.opts = opts.lower()
 
 	def update(self):
 		print('Getting playlist...')
@@ -650,35 +694,20 @@ class Main:
 		return playlist
 
 	def start_player(self, url=None):
-		print('Playing...')
 		if url:
 			self.url = url
-		player = Player(self.url)
-
-		if self.opts == 'auto':
-			player.start()
-		elif self.opts == 'android':
-			player.run_mpv_android()
-		elif self.opts == 'ssh':
-			print('Copy one of the commands below:')
-			print(f'MPV: \n\n\t{' '.join(player.command)}\n\nMPV Android: \n\n\t{' '.join(player.android_command)}\n\n')
-			try:
-				input('Press Enter to continue...\t')
-			except KeyboardInterrupt:
-				pass
-		else:
-			player.run_mpv()
+		Player.start_with_mode(url=self.url, opts=self.opts)
 
 	def loop(self):
-		history = HistoryHandler().load()
-		videos = history['videos']
-		title, self.url = self.display_menu.choose_menu(videos)
-		self.start_player()
-		index = self.history_handler.search(self.url, history)
-		if len(videos[index]) == 2:
-			videos[index] += ('viewed',)
-		self.history_handler.update({title:self.url}, None, videos)
-		self.loop()
+		while True:
+			history = HistoryHandler().load()
+			videos = history['videos']
+			title, self.url = self.display_menu.choose_menu(videos)
+			self.start_player()
+			index = self.history_handler.search(self.url, history)
+			if len(videos[index]) == 2:
+				videos[index] += ('viewed',)
+			self.history_handler.update({title:self.url}, None, videos)
 
 	def menu(self, video):
 		playlist_title, url = self.display_menu.choose_menu(video)
