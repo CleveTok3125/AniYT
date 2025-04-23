@@ -395,10 +395,56 @@ class Display:
 		else:
 			os.system("clear")
 
-class DisplayMenu(Display):
+class DisplayExtension:
+	def _inject_dependencies(self): # Only used when want to declare an instance, other values ​​like str, int, list, etc can be taken directly from extra_opts
+		self.bookmarking_handler = self._get_dependencies('bookmark', BookmarkingHandler)
+		self.yt_dlp_opts = self._get_dependencies('yt-dlp', YT_DLP_Options)
+
+	def _init_extra_opts(self, extra_opts):
+		self.extra_opts = extra_opts
+
+		if not isinstance(extra_opts, dict):
+			raise TypeError(f"The parameter passed should be a dictionary, but got {type(extra_opts)}")
+
+	def _get_dependencies(self, requirement: object, requirement_suggestion: type):
+		dependency = self.extra_opts.get(requirement)
+
+		if not dependency:
+			raise ValueError(f"Missing required dependency: '{requirement}' is not provided. Need instance of class {requirement_suggestion}")
+		elif not isinstance(dependency, requirement_suggestion):
+			raise TypeError(f"Instance {dependency} is not an instance of class {requirement_suggestion}")
+		elif isinstance(dependency, type):
+			raise TypeError(f"The dependency '{requirement}' should be an instance, but got a class: {dependency}")
+		elif dependency.__class__.__module__ == "builtins":
+			raise TypeError(f"The dependency '{requirement}' should be an instance of a user-defined class, but got built-in type: {type(dependency)}")
+
+		return dependency
+
+	def bookmark_processing(self, user_int):
+		try:
+			if self.bookmarking_handler.is_bookmarked((item := self.data[user_int - 1])[1]):
+				self.bookmarking_handler.remove_bookmark(item[1])
+			else:
+				self.bookmarking_handler.update(item)
+		except ValueError:
+			input('ValueError: only non-negative integers are accepted.\n')
+		except IndexError:
+			input('IndexError: The requested item is not listed.\n')
+
+	def open_image_with_mpv(self, url):
+		Player.start_with_mode(url=url, opts=self.extra_opts.get('mode', 'auto'))
+
+	def show_thumbnail(self, user_int):
+		url = self.data[user_int - 1][1]
+
+		thumbnail_url = YT_DLP.standalone_get_thumbnail(url, self.yt_dlp_opts.ydl_opts)
+		self.open_image_with_mpv(thumbnail_url)
+
+class DisplayMenu(Display, DisplayExtension):
 	def __init__(self, opts: Display_Options, extra_opts = {}):
-		self.bookmarking_handler = BookmarkingHandler()
-		self.extra_opts = extra_opts # Some features require additional settings, use it to pass in user settings
+		# Dependencies
+		self._init_extra_opts(extra_opts) # Some features require additional settings, use it to pass in user settings. Related features should be implemented in DisplayExtension.
+		self._inject_dependencies()
 
 		# Variable
 		# These values are always created new each time the class is called or are always overwritten.
@@ -512,27 +558,6 @@ class DisplayMenu(Display):
 		except KeyboardInterrupt:
 			OSManager.exit(0)
 
-	def bookmark_processing(self, user_int):
-		try:
-			if self.bookmarking_handler.is_bookmarked((item := self.data[user_int - 1])[1]):
-				self.bookmarking_handler.remove_bookmark(item[1])
-			else:
-				self.bookmarking_handler.update(item)
-		except ValueError:
-			input('ValueError: only non-negative integers are accepted.\n')
-		except IndexError:
-			input('IndexError: The requested item is not listed.\n')
-
-	def open_image_with_mpv(self, url):
-		Player.start_with_mode(url=url, opts=self.extra_opts.get('mode', 'auto'))
-
-	def show_thumbnail(self, user_int):
-		url = self.data[user_int - 1][1]
-		extra_yt_dlp_opts = self.extra_opts.get('yt-dlp', None)
-		if extra_yt_dlp_opts:
-			thumbnail_url = YT_DLP.standalone_get_thumbnail(url, extra_yt_dlp_opts.ydl_opts)
-			self.open_image_with_mpv(thumbnail_url)
-
 	def advanced_options(self):
 		if len(self.user_input) >= 3 and (user_int := self.user_input[2:]).isdigit():
 			user_int = int(user_int)
@@ -558,12 +583,16 @@ class DisplayMenu(Display):
 
 			if self.user_input == '':
 				self.choosed_item += 1
-				self.user_input = self.choosed_item
+				self.user_input = str(self.choosed_item)
 				return self.choose_item_option()
+
+			if not self.user_input.isdigit():
+				raise ValueError()
 
 			self.choosed_item = int(self.user_input)
 			ans = self.data[self.choosed_item - 1]
 			return ans[0], ans[1]
+
 		except ValueError:
 			input('ValueError: only options and non-negative integers are accepted.\n')
 		except IndexError:
@@ -648,7 +677,8 @@ class Main:
 		self.display_opts = Display_Options()
 		self.display_menu = DisplayMenu(self.display_opts, extra_opts={
 			'yt-dlp': self.ydl_options,
-			'mode': self.opts})
+			'mode': self.opts,
+			'bookmark': self.bookmarking_handler})
 		self.url = ''
 
 	def update(self):
