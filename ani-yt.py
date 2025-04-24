@@ -5,6 +5,7 @@ import os
 import sys
 import argparse
 from tempfile import mkdtemp
+from time import sleep
 
 import yt_dlp
 from rapidfuzz import process
@@ -395,10 +396,43 @@ class Display:
 		else:
 			os.system("clear")
 
+class DisplayExtensionFallback:
+	# Ensures the program still works even if the extension cannot be loaded
+
+    @staticmethod
+    def fallback_bookmark_handler():
+        # Mock BookmarkingHandler for fallback purposes
+        class MockBookmarkingHandler(BookmarkingHandler):
+            def __init__(self):
+                pass  # No need to reinitialize attributes, just override methods as needed
+
+            def is_bookmarked(self, url):
+                # Override the method to always return False (or any desired value for mock)
+                return False
+
+            def remove_bookmark(self, url):
+                # Mock the behavior of removing a bookmark
+                print(f"[Mock] Removed bookmark for: {url}")
+
+            def update(self, data):
+                # Mock the behavior of updating a bookmark
+                print(f"[Mock] Updated bookmark: {data}")
+
+        return MockBookmarkingHandler()
+
+    @staticmethod
+    def fallback_yt_dlp_opts():
+        return YT_DLP_Options(quiet=True, no_warnings=True)
+
 class DisplayExtension:
-	def _inject_dependencies(self): # Only used when want to declare an instance, other values ​​like str, int, list, etc can be taken directly from extra_opts
-		self.bookmarking_handler = self._get_dependencies('bookmark', BookmarkingHandler)
-		self.yt_dlp_opts = self._get_dependencies('yt-dlp', YT_DLP_Options)
+	def _inject_dependencies(self): # Only used when you want to declare an instance, other values ​​like str, int, list, etc can be taken directly from extra_opts
+		self.bookmarking_handler = self._get_dependencies(
+			'bookmark1', BookmarkingHandler,
+			fallback_factory=DisplayExtensionFallback.fallback_bookmark_handler)
+
+		self.yt_dlp_opts = self._get_dependencies(
+			'yt-dlp1', YT_DLP_Options,
+			fallback_factory=DisplayExtensionFallback.fallback_yt_dlp_opts)
 
 	def _init_extra_opts(self, extra_opts):
 		self.extra_opts = extra_opts
@@ -406,9 +440,7 @@ class DisplayExtension:
 		if not isinstance(extra_opts, dict):
 			raise TypeError(f"The parameter passed should be a dictionary, but got {type(extra_opts)}")
 
-	def _get_dependencies(self, requirement: object, requirement_suggestion: type):
-		dependency = self.extra_opts.get(requirement)
-
+	def _get_dependencies_errors(self, requirement, requirement_suggestion, dependency):
 		if not dependency:
 			raise ValueError(f"Missing required dependency: '{requirement}' is not provided. Need instance of class {requirement_suggestion}")
 		elif not isinstance(dependency, requirement_suggestion):
@@ -417,6 +449,43 @@ class DisplayExtension:
 			raise TypeError(f"The dependency '{requirement}' should be an instance, but got a class: {dependency}")
 		elif dependency.__class__.__module__ == "builtins":
 			raise TypeError(f"The dependency '{requirement}' should be an instance of a user-defined class, but got built-in type: {type(dependency)}")
+
+	def _get_dependencies(self, requirement: object, requirement_suggestion: type, fallback_factory=None):
+		dependency = self.extra_opts.get(requirement)
+		strict_mode = self.extra_opts.get('strict_mode', False)
+		default_warning_time = 1
+		warning_time = self.extra_opts.get('warning_time', default_warning_time)
+
+		if not isinstance(strict_mode, bool):
+			strict_mode = False
+
+		if isinstance(warning_time, str):
+			warning_time = int(warning_time) if warning_time.isdigit() else default_warning_time
+		elif not isinstance(warning_time, int):
+			warning_time = default_warning_time
+
+		if strict_mode:
+			print(f"[StrictMode] Checking '{requirement}' strictly.")
+			self._get_dependencies_errors(requirement, requirement_suggestion, dependency)
+		else:
+			try:
+				self._get_dependencies_errors(requirement, requirement_suggestion, dependency)
+			except (ValueError, TypeError) as e:
+				if fallback_factory:
+					print(f"{type(e).__name__}: {e}")
+					fallback = fallback_factory()
+
+					if not isinstance(fallback, requirement_suggestion):
+						raise TypeError(f"Fallback for '{requirement}' is not valid instance of {requirement_suggestion}")
+
+					print(f"[WARN] Using fallback for '{requirement}': {fallback.__class__.__name__}")
+					self.extra_opts[requirement] = fallback
+					dependency = fallback
+
+					if warning_time == -1:
+						input()
+					else:
+						sleep(warning_time)
 
 		return dependency
 
