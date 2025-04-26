@@ -1,0 +1,18 @@
+[project]
+name = "AniYT"
+version = "0.1.0"
+description = "A cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube."
+authors = [
+    { name = "CleveTok3125", email = "CleveTok3125@gmail.com" }
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "yt-dlp",
+    "RapidFuzz",
+    "requests" # Extension
+]
+
+[project.scripts]
+    ani-yt = "ani_yt:main"

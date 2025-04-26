@@ -321,7 +321,7 @@ class YT_DLP:
 
 class Player:
 	def __init__(self, url, args=None):
-		if args is None:
+		if args is None and OSManager.exists('custom.conf'):
 			self.args = [
 				'--input-conf=custom.conf'
 				]
@@ -427,11 +427,11 @@ class DisplayExtensionFallback:
 class DisplayExtension:
 	def _inject_dependencies(self): # Only used when you want to declare an instance, other values ​​like str, int, list, etc can be taken directly from extra_opts
 		self.bookmarking_handler = self._get_dependencies(
-			'bookmark1', BookmarkingHandler,
+			'bookmark', BookmarkingHandler,
 			fallback_factory=DisplayExtensionFallback.fallback_bookmark_handler)
 
 		self.yt_dlp_opts = self._get_dependencies(
-			'yt-dlp1', YT_DLP_Options,
+			'yt-dlp', YT_DLP_Options,
 			fallback_factory=DisplayExtensionFallback.fallback_yt_dlp_opts)
 
 	def _init_extra_opts(self, extra_opts):

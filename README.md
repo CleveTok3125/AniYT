@@ -3,7 +3,7 @@ A cli tool to browse and watch videos in YouTube playlists. Specially designed f
 
 # Demo
 ```
-$ /path/to/project/AniYT/ani-yt -c MuseAsia -l
+$ /path/to/project/AniYT/ani_yt -c MuseAsia -l
 
 (N) Next page
 (P) Previous page
@@ -68,15 +68,34 @@ Command line interface (old version)
 9. **Automatically check for yt-dlp updates**
    Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
    
-# Installation
+# Run from source
 ```bash
 git clone https://github.com/CleveTok3125/AniYT/
 cd AniYT
 pip install -r requirements.txt
+python ani_yt.py -h
 ```
-# Usage
+
+# Installation
+## Install from Source
 ```bash
-python ani-yt.py -h
+git clone https://github.com/CleveTok3125/AniYT/
+cd AniYT
+pip install .
+```
+## Install from Remote
+```bash
+pip install git+https://github.com/CleveTok3125/AniYT.git
+```
+
+# Usage
+## Use with Python Module
+```bash
+python -m ani-yt -h
+```
+## Use with CLI Directly
+```bash
+ani-yt -h
 ```
 
 # About additional/generated files
@@ -85,6 +104,8 @@ python ani-yt.py -h
 Mainly to reduce repeated calls to YT-DLP API which slows down retrieval significantly when the channel has many playlists.
 - `history.json`: store viewing history.
 - `bookmark.json`: store bookmark
+
+*If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 
 # Additional options
 - Use SponsorBlock plugin for MPV to skip OP/EN
