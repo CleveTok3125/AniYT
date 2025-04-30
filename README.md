@@ -69,10 +69,22 @@ Command line interface (old version)
    Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
    
 # Run from source
+## Clone repo
 ```bash
 git clone https://github.com/CleveTok3125/AniYT/
 cd AniYT
+```
+## Install requirements
+```bash
 pip install -r requirements.txt
+pip install setuptools cython
+```
+## Compile Cython
+```bash
+python setup.py build_ext --inplace
+```
+## Run
+```bash
 python ani_yt.py -h
 ```
 
@@ -96,6 +108,11 @@ python -m ani-yt -h
 ## Use with CLI Directly
 ```bash
 ani-yt -h
+```
+
+# Uninstall
+```bash
+python -m pip uninstall AniYT
 ```
 
 # About additional/generated files
