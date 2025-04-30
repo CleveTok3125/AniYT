@@ -18,6 +18,8 @@ import requests
 
 
 class Extension:
+    check_update_enabled = True
+
     class CheckModuleUpdate:
         @staticmethod
         def check_yt_dlp(name="yt-dlp"):
@@ -43,8 +45,11 @@ class Extension:
     @staticmethod
     def check_module_update(func):
         def wrapper(*args, **kwargs):
-            yt_dlp_update_info = Extension.CheckModuleUpdate.check_yt_dlp()
-            Extension.CheckModuleUpdate.print_notice(yt_dlp_update_info)
+            check_update = Extension.check_update_enabled
+
+            if check_update:
+                yt_dlp_update_info = Extension.CheckModuleUpdate.check_yt_dlp()
+                Extension.CheckModuleUpdate.print_notice(yt_dlp_update_info)
 
             return func(*args, **kwargs)
 
@@ -1046,6 +1051,13 @@ class ArgsHandler:
             help="Use temporary folder.",
         )
         self.parser.add_argument(
+            "-neu",
+            "--no-extension-update",
+            action="store_const",
+            const="store_true",
+            help="Disable extension update.",
+        )
+        self.parser.add_argument(
             "-c",
             "--channel",
             type=str,
@@ -1160,9 +1172,13 @@ class ArgsHandler:
 
         self.args = self.parser.parse_args()
 
+        # Parameters that need to be processed immediately upon launch
         if self.args.temp:
             temp_path = OSManager.temporary_session()
             print(temp_path)
+
+        if self.args.no_extension_update:
+            Extension.check_update_enabled = False
 
         self.main = Main(self.args.channel, self.args.mpv_player)
         if self.args.channel:
@@ -1205,6 +1221,10 @@ class ArgsHandler:
             self.main.open_with_mpv(self.args.input)
 
         if self.args.command == "search":
+            if not self.args.query:
+                print("Query parameter is empty or invalid.")
+                OSManager.exit(0)
+
             self.main.search(
                 self.args.query,
                 self.args.case_sensitive,

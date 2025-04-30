@@ -7,7 +7,7 @@ cdef float calculate_word_score(str word, list title_words, int min_length, int 
         if len(word) >= min_length:
             if word == title_word:
                 return 1.0
-        if word in title_word:
+        if longest_word > 0 and word in title_word:
             match_percentage = len(word) / longest_word
             score += match_percentage
     return score
@@ -18,6 +18,11 @@ cpdef float calculate_match_score(str title, set query, int min_length=3):
     cdef list title_words = title.split()
     cdef str word
     cdef int longest_word
+
+    if not query:
+        raise ValueError(f'{calculate_match_score.__name__}: query is empty.')
+    if not title_words:
+        raise ValueError(f'{calculate_match_score.__name__}: title is empty.')
 
     longest_word = 0
     for word in title_words:
