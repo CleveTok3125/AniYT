@@ -64,11 +64,17 @@ class OSManager:
     @Extension.check_module_update
     @staticmethod
     def exit(n=0):
-        os._exit(n)
+        sys.exit(n)
 
     @staticmethod
     def exists(path):
         if os.path.exists(path):
+            return True
+        return False
+
+    @staticmethod
+    def isdir(directory):
+        if os.path.isdir(directory):
             return True
         return False
 
@@ -93,6 +99,13 @@ class OSManager:
         temp_path = mkdtemp(prefix="AniYT_")
         os.chdir(temp_path)
         return temp_path
+
+    @staticmethod
+    def working_directory(directory):
+        if not OSManager.isdir(directory):
+            return None
+        os.chdir(directory)
+        return directory
 
 
 class DataProcessing:
@@ -391,8 +404,11 @@ class YT_DLP:
 
 class Player:
     def __init__(self, url, args=None):
-        if args is None and OSManager.exists("custom.conf"):
+        custom_config_exists = OSManager.exists("custom.conf")
+        if args is None and custom_config_exists:
             self.args = ["--input-conf=custom.conf"]
+        elif args is None and not custom_config_exists:
+            self.args = []
         else:
             self.args = args
         self.command = ["mpv"] + self.args + [url]
@@ -996,9 +1012,12 @@ class Main:
         self.loop()
 
     def search(self, inp, case_sensitive=False, fuzzy=False, score=50):
+        if not inp.strip():
+            print("Empty search query.")
+            OSManager.exit(0)
+
         query = Query(CASE=case_sensitive)
         playlist = self.load_playlist()
-
         if fuzzy:
             playlist = query.fuzzysearch(playlist, inp, score)
         else:
@@ -1048,7 +1067,13 @@ class ArgsHandler:
             "--temp",
             action="store_const",
             const="store_true",
-            help="Use temporary folder.",
+            help="Use temporary folder (incompatible with -dir/--directory).",
+        )
+        self.parser.add_argument(
+            "-dir",
+            "--directory",
+            type=str,
+            help="Specify working directory (incompatible with -t/--temp).",
         )
         self.parser.add_argument(
             "-neu",
@@ -1172,15 +1197,34 @@ class ArgsHandler:
 
         self.args = self.parser.parse_args()
 
+        self._argument_preprocessing()
+
+    def _argument_preprocessing(self):
         # Parameters that need to be processed immediately upon launch
+
+        if self.args.temp and self.args.directory:
+            print(
+                "Error: Cannot use both -t/--temp and -dir/--directory at the same time."
+            )
+            OSManager.exit(1)
+
         if self.args.temp:
             temp_path = OSManager.temporary_session()
-            print(temp_path)
+            print(f"[Temp Mode] Using temporary directory: {temp_path}")
+
+        if self.args.directory:
+            directory = OSManager.working_directory(self.args.directory)
+            if directory:
+                print(f"[Custom Directory] Working directory set to: {directory}")
+            else:
+                print("The specified path is not a directory or does not exist.")
+                OSManager.exit(404)
 
         if self.args.no_extension_update:
             Extension.check_update_enabled = False
 
         self.main = Main(self.args.channel, self.args.mpv_player)
+
         if self.args.channel:
             self.main.update()
 
@@ -1221,10 +1265,6 @@ class ArgsHandler:
             self.main.open_with_mpv(self.args.input)
 
         if self.args.command == "search":
-            if not self.args.query:
-                print("Query parameter is empty or invalid.")
-                OSManager.exit(0)
-
             self.main.search(
                 self.args.query,
                 self.args.case_sensitive,
