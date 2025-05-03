@@ -67,26 +67,6 @@ Command line interface (old version)
 
 9. **Automatically check for yt-dlp updates**
    Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
-   
-# Run from source
-## Clone repo
-```bash
-git clone https://github.com/CleveTok3125/AniYT/
-cd AniYT
-```
-## Install requirements
-```bash
-pip install -r requirements.txt
-pip install setuptools cython
-```
-## Compile Cython
-```bash
-python setup.py build_ext --inplace
-```
-## Run
-```bash
-python ani_yt.py -h
-```
 
 # Installation
 ## Install from Source
@@ -109,10 +89,38 @@ python -m ani-yt -h
 ```bash
 ani-yt -h
 ```
+## Example
+```bash
+ani-yt -c MuseAsia   # Update/Create new list of playlists from specified channel
+ani-yt -l   # List all available playlists
+ani-yt search "Attack on Titan"  # Search and return matching playlists
+```
 
 # Uninstall
 ```bash
 python -m pip uninstall AniYT
+```
+
+# Run from source
+## Clone repo
+```bash
+git clone https://github.com/CleveTok3125/AniYT/
+cd AniYT
+```
+## Install requirements
+```bash
+pip install -r requirements.txt
+pip install setuptools cython
+```
+## Compile Cython
+```bash
+python setup.py build_ext --inplace
+```
+## Run
+```bash
+cd src/ani_yt/ # Go to package directory
+python ani_yt.py -dir ../../ -h  # Use the -dir/--directory argument to set the working directory as the project root directory
+cd ../../   # Return to the project root directory
 ```
 
 # About additional/generated files

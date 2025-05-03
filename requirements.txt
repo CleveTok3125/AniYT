@@ -4,13 +4,15 @@
 #
 #    pip-compile pyproject.toml
 #
+argparse==1.4.0
+    # via AniYT (pyproject.toml)
 certifi==2025.4.26
     # via requests
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via requests
 idna==3.10
     # via requests
-rapidfuzz==3.11.0
+rapidfuzz==3.13.0
     # via AniYT (pyproject.toml)
 requests==2.32.3
     # via AniYT (pyproject.toml)
@@ -18,5 +20,5 @@ ujson==5.10.0
     # via AniYT (pyproject.toml)
 urllib3==2.4.0
     # via requests
-yt-dlp==2025.3.31
+yt-dlp==2025.4.30
     # via AniYT (pyproject.toml)

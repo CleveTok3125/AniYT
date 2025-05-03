@@ -16,8 +16,12 @@ dependencies = [
     "yt-dlp",
     "RapidFuzz",
     "ujson",
+    "argparse",
     "requests" # Extension
 ]
 
 [project.scripts]
-    ani-yt = "ani_yt:main"
+ani-yt = "ani_yt.ani_yt:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
