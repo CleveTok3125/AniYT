@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 
 # Custom lib
 # from extension import Extension
@@ -338,9 +339,11 @@ class ArgsHandler:
             print(f"[Temp Mode] Using temporary directory: {temp_path}")
 
         if self.args.directory:
-            directory = OSManager.working_directory(self.args.directory)
-            if directory:
-                print(f"[Custom Directory] Working directory set to: {directory}")
+            directory, abs_path = OSManager.working_directory(self.args.directory)
+            if abs_path:
+                print(
+                    f"[Custom Directory] Working directory set to: {directory} ({abs_path})"
+                )
             else:
                 print("The specified path is not a directory or does not exist.")
                 OSManager.exit(404)
@@ -375,8 +378,8 @@ class ArgsHandler:
             getattr(self.args, item, None) for item in list(self.actions.keys())
         ]
 
-        if not any(action_lst) and not self.args.command:
-            self.parser.print_help()
+        if len(sys.argv) == 1:
+            parser.print_help()
             OSManager.exit(0)
 
         for action in action_lst:

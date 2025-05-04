@@ -9,6 +9,8 @@ class Extension:
     class CheckModuleUpdate:
         @staticmethod
         def check_yt_dlp(name="yt-dlp"):
+            print("[Extension] Checking for yt-dlp update...")
+
             old_ver = (
                 subprocess.check_output(["yt-dlp", "--version"]).decode("utf-8").strip()
             )

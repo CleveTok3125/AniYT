@@ -48,7 +48,8 @@ class OSManager:
 
     @staticmethod
     def working_directory(directory):
-        if not OSManager.isdir(directory):
-            return None
-        os.chdir(directory)
-        return directory
+        abs_path = os.path.abspath(os.path.normpath(directory))
+        if not OSManager.isdir(abs_path):
+            return None, None
+        os.chdir(abs_path)
+        return directory, abs_path
