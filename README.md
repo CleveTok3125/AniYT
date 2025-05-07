@@ -135,3 +135,8 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 # Additional options
 - Use SponsorBlock plugin for MPV to skip OP/EN
 - For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)
+
+# Non-project-related notification
+_This notification is for the anime fan community, not related to this project._
+
+Currently, channels that provide free high-quality copyrighted anime on YouTube such as MuseAsia are removing some old anime and moving them to other platforms (usually paid platforms). You can refer to alternative solutions such as [ani-cli](https://github.com/pystardust/ani-cli) or [AnimeVsub](https://github.com/anime-vsub) for Vietsub (no dub yet).
