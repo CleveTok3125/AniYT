@@ -119,7 +119,7 @@ python setup.py build_ext --inplace
 ## Run
 ```bash
 cd src/ani_yt/ # Go to package directory
-python ani_yt.py -dir ../../ -h  # Use the -dir/--directory argument to set the working directory as the project root directory
+PYTHONPATH=src python -m ani_yt.ani_yt -dir ../../ -h  # Use the -dir/--directory argument to set the working directory as the project root directory
 cd ../../   # Return to the project root directory
 ```
 

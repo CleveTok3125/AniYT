@@ -3,11 +3,11 @@ import sys
 from time import sleep
 
 # Custom lib
-from yt_dlp_handler import YT_DLP_Options, YT_DLP
-from bookmarking_handler import BookmarkingHandler
-from player import Player
-from data_processing import DataProcessing
-from os_manager import OSManager
+from .yt_dlp_handler import YT_DLP_Options, YT_DLP
+from .bookmarking_handler import BookmarkingHandler
+from .player import Player
+from .data_processing import DataProcessing
+from .os_manager import OSManager
 
 
 class Display_Options:

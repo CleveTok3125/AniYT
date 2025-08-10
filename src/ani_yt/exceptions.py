@@ -1,5 +1,5 @@
 # Custom lib
-from os_manager import OSManager
+from .os_manager import OSManager
 
 
 class MissingChannelUrl(Exception):

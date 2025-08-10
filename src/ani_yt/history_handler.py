@@ -1,8 +1,8 @@
 import ujson as json
 
 # Custom lib
-from os_manager import OSManager
-from exceptions import InvalidHistoryFile
+from .os_manager import OSManager
+from .exceptions import InvalidHistoryFile
 
 
 class HistoryHandler:

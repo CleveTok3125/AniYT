@@ -3,7 +3,7 @@ import sys
 from tempfile import mkdtemp
 
 # Custom lib
-from extension import Extension
+from .extension import Extension
 
 
 class OSManager:

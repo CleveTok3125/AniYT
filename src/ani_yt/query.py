@@ -1,8 +1,8 @@
 from rapidfuzz import process
 
 # Custom lib
-from data_processing import DataProcessing
-import _query
+from .data_processing import DataProcessing
+from . import _query
 
 
 class Query:

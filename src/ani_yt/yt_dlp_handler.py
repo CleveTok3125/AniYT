@@ -6,8 +6,8 @@ import ujson as json
 import yt_dlp
 
 # Custom lib
-from os_manager import OSManager
-from exceptions import MissingChannelUrl
+from .os_manager import OSManager
+from .exceptions import MissingChannelUrl
 
 
 class YT_DLP_Options:
