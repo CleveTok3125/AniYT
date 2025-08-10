@@ -16,10 +16,9 @@ class HistoryHandler:
             try:
                 result = func(self, *args, **kwargs)
 
-
                 if not isinstance(result, dict):
                     raise InvalidHistoryFile(self.filename)
-                if not self.required_keys.issubset(result.keys()):
+                if not all(key in result for key in self.required_keys):
                     raise InvalidHistoryFile(self.filename)
                 return result
             except (FileNotFoundError, json.JSONDecodeError, OSError):
@@ -51,11 +50,14 @@ class HistoryHandler:
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(content, f, indent=4)
 
-    @safe_history_load
     def search(self, curr_url, history):
-        history = history["videos"]
-        for index in range(len(history)):
-            if history[index][1] == curr_url:
+        if not isinstance(history, dict):
+            raise InvalidHistoryFile(self.filename)
+        if "videos" not in history or not isinstance(history["videos"], list):
+            raise InvalidHistoryFile(self.filename)
+
+        for index, video in enumerate(history["videos"]):
+            if len(video) > 1 and video[1] == curr_url:
                 return index
         return -1
 
