@@ -42,7 +42,7 @@ Command line interface (old version)
 # Key Features
 
 1. **Update Playlist from YouTube Channel**
-   Update playlists from a YouTube channel using its URL, ID, or Handle.
+   Update playlists from a YouTube channel using its URL, ID, or Handle. Support updating and combining playlists from multiple sources.
 
 2. **Browse Playlists and Videos**
    Browse through playlists and videos in the saved playlists with pagination for easier navigation.
@@ -61,7 +61,7 @@ Command line interface (old version)
 
 7. **View Thumbnail**
    View thumbnails with MPV player
-   
+
 8. **Download Videos with SponsorBlock**
    Download videos and automatically skip sponsors using SponsorBlock.
 
@@ -124,11 +124,12 @@ cd ../../   # Return to the project root directory
 ```
 
 # About additional/generated files
-- `custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration
+- `custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration.
 - `playlists.json`: stores playlist information.\
 Mainly to reduce repeated calls to YT-DLP API which slows down retrieval significantly when the channel has many playlists.
 - `history.json`: store viewing history.
-- `bookmark.json`: store bookmark
+- `bookmark.json`: store bookmark.
+- `channel_sources.txt`: list of channel sources.
 
 *If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 
