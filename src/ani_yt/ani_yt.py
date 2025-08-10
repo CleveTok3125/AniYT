@@ -99,9 +99,7 @@ class Main:
                 dlp = YT_DLP(ch_url, self.ydl_options)
                 playlist = dlp.get_playlist()
                 playlist = self.dp.omit(playlist)
-                merged_playlist = self.dp.merge_list(
-                    merged_playlist, playlist, truncate=False
-                )
+                merged_playlist = self.dp.merge_list_preserve_order(merged_playlist, playlist)
             except MissingChannelUrl:
                 print(f"Channel not found: {ch_url}")
                 continue

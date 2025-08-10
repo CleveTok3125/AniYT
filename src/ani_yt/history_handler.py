@@ -9,13 +9,20 @@ class HistoryHandler:
     def __init__(self):
         self.filename = "history.json"
         self.encoding = "utf-8"
+        self.required_keys = {"current", "playlist", "videos"}
 
     def safe_history_load(func):
         def helper(self, *args, **kwargs):
             try:
                 result = func(self, *args, **kwargs)
+
+
+                if not isinstance(result, dict):
+                    raise InvalidHistoryFile(self.filename)
+                if not self.required_keys.issubset(result.keys()):
+                    raise InvalidHistoryFile(self.filename)
                 return result
-            except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
+            except (FileNotFoundError, json.JSONDecodeError, OSError):
                 raise InvalidHistoryFile(self.filename)
 
         return helper

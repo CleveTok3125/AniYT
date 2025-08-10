@@ -33,3 +33,12 @@ class DataProcessing:
         old_list.extend([k, v] for k, v in new_list if v not in existing_values)
 
         return DataProcessing.sort(old_list)
+
+    @staticmethod
+    def merge_list_preserve_order(old_list, new_list):
+        existing_urls = {item[1] for item in old_list}
+        for item in new_list:
+            if item[1] not in existing_urls:
+                old_list.append(item)
+                existing_urls.add(item[1])
+        return old_list
