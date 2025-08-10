@@ -4,11 +4,11 @@ import sys
 
 # Custom lib
 # from extension import Extension
-from exceptions import MissingChannelUrl
+from exceptions import MissingChannelUrl, InvalidHistoryFile
 from os_manager import OSManager
 from data_processing import DataProcessing
 from query import Query
-from file_handler import FileHandler
+from file_handler import FileHandler, FileSourceHandler
 from history_handler import HistoryHandler
 from bookmarking_handler import BookmarkingHandler
 from yt_dlp_handler import YT_DLP_Options, YT_DLP
@@ -42,6 +42,26 @@ class Main:
         )
         self.url = ""
 
+    def source_add(self, *urls):
+        added = FileSourceHandler().add_sources(*urls)
+        print(f"\nSource Manager: Added {added} new sources.\n")
+
+    def source_remove(self, *urls):
+        removed = FileSourceHandler().remove_sources(*urls)
+        print(f"\nSource Manager: Removed {removed} sources.\n")
+
+    def source_template(self):
+        FileSourceHandler().placeholder()
+        print("\nSource Manager: Template created.\n")
+
+    def source_update(self):
+        fsh = FileSourceHandler()
+        sources = fsh.load()
+        if not sources:
+            print("\nSource Manager: No sources to update.\n")
+            return
+        self.update_multiple(sources)
+
     def update(self):
         print("Getting playlist...")
         try:
@@ -70,6 +90,24 @@ class Main:
         )
         print("Done!")
         return
+
+    def update_multiple(self, channel_urls):
+        print("Getting playlist from multiple channels...")
+        merged_playlist = []
+        for ch_url in channel_urls:
+            try:
+                dlp = YT_DLP(ch_url, self.ydl_options)
+                playlist = dlp.get_playlist()
+                playlist = self.dp.omit(playlist)
+                merged_playlist = self.dp.merge_list(
+                    merged_playlist, playlist, truncate=False
+                )
+            except MissingChannelUrl:
+                print(f"Channel not found: {ch_url}")
+                continue
+        print("Saving merged playlist...")
+        self.file_handler.dump(merged_playlist)
+        print("Done!")
 
     def clear_cache(self):
         self.file_handler.clear_cache()
@@ -215,6 +253,12 @@ class ArgsHandler:
             help="Create or Update Playlist Data from Link, Channel ID, or Channel Handle.",
         )
         self.parser.add_argument(
+            "-mc",
+            "--merge-channels",
+            nargs="+",
+            help="Merge playlists from multiple channels (URL, Channel ID, or handle).",
+        )
+        self.parser.add_argument(
             "--mpv-player",
             type=str,
             choices=["auto", "default", "android", "ssh"],
@@ -320,6 +364,30 @@ class ArgsHandler:
             "playlist", help="Open playlist from URL"
         )
         self.playlist_parsers.add_argument("url", type=str)
+        self.sources_parsers = self.subparsers.add_parser(
+            "source", help="Manage channel source list."
+        )
+        self.sources_subparsers = self.sources_parsers.add_subparsers(
+            dest="source_command"
+        )
+
+        add_parser = self.sources_subparsers.add_parser("add")
+        add_parser.add_argument(
+            "urls", nargs="+", help="One or more channel URLs or IDs to add"
+        )
+
+        remove_parser = self.sources_subparsers.add_parser("remove")
+        remove_parser.add_argument(
+            "urls", nargs="+", help="One or more channel URLs or IDs to remove"
+        )
+
+        self.sources_subparsers.add_parser(
+            "template", help="Create placeholder source file."
+        )
+
+        self.sources_subparsers.add_parser(
+            "update", help="Update playlist from all saved sources."
+        )
 
         self.args = self.parser.parse_args()
 
@@ -356,6 +424,9 @@ class ArgsHandler:
         if self.args.channel:
             self.main.update()
 
+        if self.args.merge_channels:
+            self.main.update_multiple(self.args.merge_channels)
+
         self.actions = {
             "clear_cache": self.main.clear_cache,
             "delete_history": self.main.delete_history,
@@ -379,8 +450,19 @@ class ArgsHandler:
         ]
 
         if len(sys.argv) == 1:
-            parser.print_help()
+            self.parser.print_help()
             OSManager.exit(0)
+
+        if self.args.command == "source":
+            actions = {
+                "add": lambda: self.main.source_add(*self.args.urls),
+                "remove": lambda: self.main.source_remove(*self.args.urls),
+                "template": self.main.source_template,
+                "update": self.main.source_update,
+            }
+            action = actions.get(self.args.source_command)
+            if action:
+                action()
 
         for action in action_lst:
             if action:
