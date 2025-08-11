@@ -99,12 +99,30 @@ class Main:
                 dlp = YT_DLP(ch_url, self.ydl_options)
                 playlist = dlp.get_playlist()
                 playlist = self.dp.omit(playlist)
-                merged_playlist = self.dp.merge_list_preserve_order(merged_playlist, playlist)
+                merged_playlist = self.dp.merge_list_preserve_order(
+                    merged_playlist, playlist
+                )
             except MissingChannelUrl:
                 print(f"Channel not found: {ch_url}")
                 continue
         print("Saving merged playlist...")
         self.file_handler.dump(merged_playlist)
+        print("Done!")
+
+        if not self.history_handler.is_history():
+            return
+
+        print("Update history playlist...")
+        history = self.history_handler.load()
+        new_playlist = YT_DLP.standalone_get_video(
+            list(history["playlist"].values())[0], self.ydl_options.ydl_opts
+        )
+        print("Saving...")
+        new_playlist = self.dp.omit(new_playlist)
+        new_playlist = self.dp.merge_list(history["videos"], new_playlist)
+        self.history_handler.update(
+            history["current"], history["playlist"], new_playlist
+        )
         print("Done!")
 
     def clear_cache(self):
