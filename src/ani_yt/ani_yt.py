@@ -379,7 +379,17 @@ class ArgsHandler:
         self.playlist_parsers = self.subparsers.add_parser(
             "playlist", help="Open playlist from URL"
         )
+
         self.playlist_parsers.add_argument("url", type=str)
+
+        self.parser.add_argument(
+            "-su",
+            "--source-update",
+            action="store_const",
+            const="source_update",
+            help="Quick update command for `source update`",
+        )
+
         self.sources_parsers = self.subparsers.add_parser(
             "source", help="Manage channel source list."
         )
@@ -451,6 +461,7 @@ class ArgsHandler:
             "list": self.main.list,
             "viewed_mode": self.main.loop,
             "resume": self.main.resume,
+            "source_update": self.main.source_update,
         }
 
     def run_main(self, action):
