@@ -14,7 +14,7 @@ idna==3.10
     # via requests
 rapidfuzz==3.13.0
     # via AniYT (pyproject.toml)
-requests==2.32.3
+requests==2.32.4
     # via AniYT (pyproject.toml)
 ujson==5.10.0
     # via AniYT (pyproject.toml)
