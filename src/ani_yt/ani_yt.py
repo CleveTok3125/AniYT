@@ -54,13 +54,32 @@ class Main:
         FileSourceHandler().placeholder()
         print("\nSource Manager: Template created.\n")
 
-    def source_update(self):
+    def _source_load_helper(self):
         fsh = FileSourceHandler()
         sources = fsh.load()
         if not sources:
             print("\nSource Manager: No sources to update.\n")
             return
+        return sources
+
+    def source_update(self):
+        sources = self._source_load_helper()
+
+        if not sources:
+            return
+
         self.update_multiple(sources)
+
+    def source_rebuild(self):
+        print("Rebuilding playlist from sources...")
+        self.file_handler.dump([])
+        sources = self._source_load_helper()
+
+        if not sources:
+            return
+
+        self.update_multiple(sources, no_update_history=True)
+        print("Rebuild complete!")
 
     def update(self):
         print("Getting playlist...")
@@ -91,7 +110,7 @@ class Main:
         print("Done!")
         return
 
-    def update_multiple(self, channel_urls):
+    def update_multiple(self, channel_urls, no_update_history=False):
         print("Getting playlist from multiple channels...")
         merged_playlist = []
         for ch_url in channel_urls:
@@ -109,7 +128,7 @@ class Main:
         self.file_handler.dump(merged_playlist)
         print("Done!")
 
-        if not self.history_handler.is_history():
+        if no_update_history or not self.history_handler.is_history():
             return
 
         print("Update history playlist...")
@@ -262,6 +281,23 @@ class ArgsHandler:
             const="store_true",
             help="Disable extension update.",
         )
+
+        self.parser.add_argument(
+            "-su",
+            "--source-update",
+            action="store_const",
+            const="source_update",
+            help="Quick update command for `source update`",
+        )
+
+        self.parser.add_argument(
+            "-sr",
+            "--source-rebuild",
+            action="store_const",
+            const="source_rebuild",
+            help="Quick update command for `source rebuild`",
+        )
+
         self.parser.add_argument(
             "-c",
             "--channel",
@@ -332,6 +368,37 @@ class ArgsHandler:
             dest="command",
             help="Note: To avoid incorrect handling, positional arguments should be placed after all options.",
         )
+
+        self.sources_parsers = self.subparsers.add_parser(
+            "source", help="Manage channel source list."
+        )
+        self.sources_subparsers = self.sources_parsers.add_subparsers(
+            dest="source_command"
+        )
+
+        add_parser = self.sources_subparsers.add_parser("add")
+        add_parser.add_argument(
+            "urls", nargs="+", help="One or more channel URLs or IDs to add"
+        )
+
+        remove_parser = self.sources_subparsers.add_parser("remove")
+        remove_parser.add_argument(
+            "urls", nargs="+", help="One or more channel URLs or IDs to remove"
+        )
+
+        self.sources_subparsers.add_parser(
+            "template", help="Create placeholder source file."
+        )
+
+        self.sources_subparsers.add_parser(
+            "update", help="Update playlist from all saved sources."
+        )
+
+        self.sources_subparsers.add_parser(
+            "rebuild",
+            help="Rebuild playlist from all saved sources (clear then update).",
+        )
+
         self.download_parsers = self.subparsers.add_parser(
             "download", help="Download video and skip sponsors using SponsorBlock."
         )
@@ -382,39 +449,6 @@ class ArgsHandler:
 
         self.playlist_parsers.add_argument("url", type=str)
 
-        self.parser.add_argument(
-            "-su",
-            "--source-update",
-            action="store_const",
-            const="source_update",
-            help="Quick update command for `source update`",
-        )
-
-        self.sources_parsers = self.subparsers.add_parser(
-            "source", help="Manage channel source list."
-        )
-        self.sources_subparsers = self.sources_parsers.add_subparsers(
-            dest="source_command"
-        )
-
-        add_parser = self.sources_subparsers.add_parser("add")
-        add_parser.add_argument(
-            "urls", nargs="+", help="One or more channel URLs or IDs to add"
-        )
-
-        remove_parser = self.sources_subparsers.add_parser("remove")
-        remove_parser.add_argument(
-            "urls", nargs="+", help="One or more channel URLs or IDs to remove"
-        )
-
-        self.sources_subparsers.add_parser(
-            "template", help="Create placeholder source file."
-        )
-
-        self.sources_subparsers.add_parser(
-            "update", help="Update playlist from all saved sources."
-        )
-
         self.args = self.parser.parse_args()
 
         self._argument_preprocessing()
@@ -462,6 +496,7 @@ class ArgsHandler:
             "viewed_mode": self.main.loop,
             "resume": self.main.resume,
             "source_update": self.main.source_update,
+            "source_rebuild": self.main.source_rebuild,
         }
 
     def run_main(self, action):
@@ -486,6 +521,7 @@ class ArgsHandler:
                 "remove": lambda: self.main.source_remove(*self.args.urls),
                 "template": self.main.source_template,
                 "update": self.main.source_update,
+                "rebuild": self.main.source_rebuild,
             }
             action = actions.get(self.args.source_command)
             if action:

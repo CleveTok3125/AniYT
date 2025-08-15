@@ -1,5 +1,5 @@
 # AniYT
-A cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube.
+A feauture rich cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube.
 
 # Demo
 ```
@@ -41,31 +41,31 @@ Command line interface (old version)
 
 # Key Features
 
-1. **Update Playlist from YouTube Channel**
-   Update playlists from a YouTube channel using its URL, ID, or Handle. Support updating and combining playlists from multiple sources.
+1. **Update Playlist from YouTube Channel**\
+   Update playlists from a YouTube channel using its URL, ID, or Handle. Support updating and combining playlists from multiple sources, similar to package manager.
 
-2. **Browse Playlists and Videos**
+2. **Browse Playlists and Videos**\
    Browse through playlists and videos in the saved playlists with pagination for easier navigation.
 
-3. **Search Playlists**
+3. **Search Playlists**\
    Search for playlists by keyword.
 
-4. **History Tracking**
+4. **History Tracking**\
    Continue watching previously viewed videos through the watch history and history tracking.
 
-5. **Bookmarking**
+5. **Bookmarking**\
    Bookmark favorite videos or playlists.
 
-6. **Play Videos with MPV**
+6. **Play Videos with MPV**\
    Play videos using the MPV player (supports both Android and auto modes).
 
-7. **View Thumbnail**
+7. **View Thumbnail**\
    View thumbnails with MPV player
 
-8. **Download Videos with SponsorBlock**
+8. **Download Videos with SponsorBlock**\
    Download videos and automatically skip sponsors using SponsorBlock.
 
-9. **Automatically check for yt-dlp updates**
+9. **Automatically check for yt-dlp updates**\
    Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
 
 # Installation
