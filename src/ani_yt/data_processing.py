@@ -42,3 +42,39 @@ class DataProcessing:
                 old_list.append(item)
                 existing_urls.add(item[1])
         return old_list
+
+    @staticmethod
+    def merge_args(default_args, extra_args):
+        merged = []
+        seen = set()
+
+        for arg in extra_args:
+            if arg not in seen:
+                merged.append(arg)
+                seen.add(arg)
+
+        for arg in default_args:
+            if arg not in seen:
+                merged.append(arg)
+                seen.add(arg)
+
+        return merged
+
+    @staticmethod
+    def dedup_args(args):
+        seen = set()
+        result = []
+        for arg in args:
+            if arg not in seen:
+                result.append(arg)
+                seen.add(arg)
+        return result
+
+    def dedup_args_keep_last(args):
+        seen = set()
+        result = []
+        for arg in reversed(args):
+            if arg not in seen:
+                result.append(arg)
+                seen.add(arg)
+        return list(reversed(result))

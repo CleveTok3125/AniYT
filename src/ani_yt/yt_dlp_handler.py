@@ -8,7 +8,7 @@ import yt_dlp
 # Custom lib
 from .os_manager import OSManager
 from .exceptions import MissingChannelUrl
-
+from .data_processing import DataProcessing
 
 class YT_DLP_Options:
     def __init__(self, quiet=True, no_warnings=True):
@@ -81,7 +81,10 @@ class YT_DLP:
         )
 
     @staticmethod
-    def download(url, cats="all", extra_args=[], args=None, capture_output=False):
+    def download(url, cats="all", extra_args=None, args=None, capture_output=False):
+        if extra_args == None:
+            extra_args = []
+
         if args is None:
             args = [
                 "--no-warnings",
@@ -100,6 +103,8 @@ class YT_DLP:
                 args.append(extra_args)
             else:
                 args += extra_args
+
+        args = DataProcessing.dedup_args_keep_last(args)
 
         command = ["yt-dlp"] + args
         result = subprocess.run(command, capture_output=capture_output)

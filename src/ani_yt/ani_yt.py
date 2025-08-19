@@ -313,7 +313,7 @@ class ArgsHandler:
         self.parser.add_argument(
             "--mpv-player",
             type=str,
-            choices=["auto", "default", "android", "ssh"],
+            choices=["auto", "default", "android", "ssh", "termux-x11"],
             default="auto",
             help="MPV player mode.",
         )

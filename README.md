@@ -133,7 +133,8 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 
 # Additional options
 - Use SponsorBlock plugin for MPV to skip OP/EN
-- For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)
+- For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)\
+   In addition, you can use MPV on [Termux-x11](https://github.com/termux/termux-x11) with DE `XFCE4` by default. Refer [this setup instructions](https://github.com/termux/termux-x11?tab=readme-ov-file#Setup-instructions).
 
 # Non-project-related notification
 _This notification is for the anime fan community, not related to this project._
