@@ -46,12 +46,23 @@ class Player:
             print("Error running command: Current OS may not be Android.")
             OSManager.exit(127)
 
+    def app_subprocess_helper(self, app_name, commands):
+        try:
+            subprocess.run(commands, check=True)
+        except FileNotFoundError:
+            print(f"Error: {app_name} is not installed.")
+            OSManager.exit(127)
+        except subprocess.CalledProcessError as e:
+            print(f"Error running {app_name}: {e}")
+            OSManager.exit(e.returncode)
+
     def run_mpv_x(
         self,
         url,
         *,
         monitor=1,
         open_app=True,
+        exit_app=True,
         mpv_fullscreen_playback=True,
         touch_mouse_gestures=True,
     ):
@@ -71,24 +82,15 @@ class Player:
 
         termux_x11_command = ["am", "start", "-n", "com.termux.x11/.MainActivity"]
 
-        if open_app:
-            try:
-                subprocess.run(termux_x11_command, check=True)
-            except FileNotFoundError:
-                print("Error: termux-x11 is not installed.")
-                OSManager.exit(127)
-            except subprocess.CalledProcessError as e:
-                print(f"Error running termux-x11: {e}")
-                OSManager.exit(e.returncode)
+        termux_command = ["am", "start", "-n", "com.termux/com.termux.app.TermuxActivity"]
 
-        try:
-            subprocess.run(mpv_command, check=True)
-        except FileNotFoundError:
-            print("Error: mpv is not installed.")
-            OSManager.exit(127)
-        except subprocess.CalledProcessError as e:
-            print(f"Error running mpv_command: {e}")
-            OSManager.exit(e.returncode)
+        if open_app:
+            self.app_subprocess_helper('termux-x11', termux_x11_command)
+
+        self.app_subprocess_helper('mpv', mpv_command)
+
+        if exit_app:
+            self.app_subprocess_helper('termux', termux_command)
 
     def start(self):
         if OSManager.android_check():
