@@ -7,7 +7,9 @@ from .os_manager import OSManager
 
 
 class Player:
-    def __init__(self, url, args=None):
+    def __init__(self, url, args=None, monitor=1):
+        self.monitor = monitor
+
         custom_config_exists = OSManager.exists("custom.conf")
         if args is None and custom_config_exists:
             self.args = ["--input-conf=custom.conf"]
@@ -60,13 +62,28 @@ class Player:
         self,
         url,
         *,
-        monitor=1,
+        monitor=None,
         open_app=True,
         exit_app=True,
         mpv_fullscreen_playback=True,
         touch_mouse_gestures=True,
     ):
         mpv_args = self.args.copy()
+
+        if monitor == None:
+            monitor = self.monitor
+
+        display_env = os.environ.get("DISPLAY")
+
+        if not display_env:
+            print(
+                "No X server found. If you are trying to run through Termux-x11, refer to: https://github.com/cletok3125/aniyt?tab=readme-ov-file#additional-options"
+            )
+            OSManager.exit(1)
+
+        if not display_env.startswith(f":{monitor}"):
+            print(f"It seems that X server does not run at display {monitor}.")
+            OSManager.exit(0)
 
         os.environ["DISPLAY"] = f":{monitor}"
 
@@ -82,15 +99,20 @@ class Player:
 
         termux_x11_command = ["am", "start", "-n", "com.termux.x11/.MainActivity"]
 
-        termux_command = ["am", "start", "-n", "com.termux/com.termux.app.TermuxActivity"]
+        termux_command = [
+            "am",
+            "start",
+            "-n",
+            "com.termux/com.termux.app.TermuxActivity",
+        ]
 
         if open_app:
-            self.app_subprocess_helper('termux-x11', termux_x11_command)
+            self.app_subprocess_helper("termux-x11", termux_x11_command)
 
-        self.app_subprocess_helper('mpv', mpv_command)
+        self.app_subprocess_helper("mpv", mpv_command)
 
         if exit_app:
-            self.app_subprocess_helper('termux', termux_command)
+            self.app_subprocess_helper("termux", termux_command)
 
     def start(self):
         if OSManager.android_check():
@@ -99,7 +121,7 @@ class Player:
             self.run_mpv()
 
     @staticmethod
-    def start_with_mode(url, opts="auto"):
+    def start_with_mode(url, monitor=1, opts="auto"):
         print("Playing...")
 
         player = Player(url)
