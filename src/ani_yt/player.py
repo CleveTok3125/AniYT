@@ -65,7 +65,7 @@ class Player:
         mpv_command = ["mpv"] + mpv_args
 
         if touch_mouse_gestures:
-            mpv_command += ["--script=gestures.lua"]
+            mpv_command += ["--no-window-dragging", "--script=gestures.lua"]
 
         mpv_command += [url]
 
