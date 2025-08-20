@@ -23,7 +23,7 @@ from .display import (
 
 
 class Main:
-    def __init__(self, channel_url, opts="auto"):
+    def __init__(self, channel_url, monitor=1, opts="auto"):
         self.opts = opts.lower()
         self.ydl_options = YT_DLP_Options()
         self.dlp = YT_DLP(channel_url, self.ydl_options)
@@ -41,6 +41,7 @@ class Main:
             },
         )
         self.url = ""
+        self.monitor = monitor
 
     def source_add(self, *urls):
         added = FileSourceHandler().add_sources(*urls)
@@ -164,7 +165,7 @@ class Main:
     def start_player(self, url=None):
         if url:
             self.url = url
-        Player.start_with_mode(url=self.url, opts=self.opts)
+        Player.start_with_mode(url=self.url, opts=self.opts, monitor=self.monitor)
 
     def loop(self):
         while True:
@@ -316,6 +317,12 @@ class ArgsHandler:
             choices=["auto", "default", "android", "ssh", "termux-x11"],
             default="auto",
             help="MPV player mode.",
+        )
+        self.parser.add_argument(
+            "--monitor",
+            type=int,
+            default=1,
+            help="X server monitor number (default: 1)",
         )
         self.parser.add_argument(
             "--clear-cache",
@@ -479,7 +486,15 @@ class ArgsHandler:
         if self.args.no_extension_update:
             Extension.check_update_enabled = False
 
-        self.main = Main(self.args.channel, self.args.mpv_player)
+        if self.args.monitor < 1:
+            print("Error: Monitor number must be >= 1")
+            OSManager.exit(1)
+
+        self.main = Main(
+            channel_url=self.args.channel,
+            monitor=self.args.monitor,
+            opts=self.args.mpv_player,
+        )
 
         if self.args.channel:
             self.main.update()
