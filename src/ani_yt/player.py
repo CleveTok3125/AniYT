@@ -1,11 +1,15 @@
 import subprocess
+import shlex
+import os
 
 # Custom lib
 from .os_manager import OSManager
 
 
 class Player:
-    def __init__(self, url, args=None):
+    def __init__(self, url, args=None, monitor=1):
+        self.monitor = monitor
+
         custom_config_exists = OSManager.exists("custom.conf")
         if args is None and custom_config_exists:
             self.args = ["--input-conf=custom.conf"]
@@ -44,56 +48,71 @@ class Player:
             print("Error running command: Current OS may not be Android.")
             OSManager.exit(127)
 
+    def app_subprocess_helper(self, app_name, commands):
+        try:
+            subprocess.run(commands, check=True)
+        except FileNotFoundError:
+            print(f"Error: {app_name} is not installed.")
+            OSManager.exit(127)
+        except subprocess.CalledProcessError as e:
+            print(f"Error running {app_name}: {e}")
+            OSManager.exit(e.returncode)
+
     def run_mpv_x(
         self,
-        *,
-        open_app=True,
-        monitor=1,
-        use_xfce4=True,
-        mpv_fullscreen_playback=True,
         url,
+        *,
+        monitor=None,
+        open_app=True,
+        exit_app=True,
+        mpv_fullscreen_playback=True,
+        touch_mouse_gestures=True,
     ):
         mpv_args = self.args.copy()
+
+        if monitor == None:
+            monitor = self.monitor
+
+        display_env = os.environ.get("DISPLAY")
+
+        if not display_env:
+            print(
+                "No X server found. If you are trying to run through Termux-x11, refer to: https://github.com/cletok3125/aniyt?tab=readme-ov-file#additional-options"
+            )
+            OSManager.exit(1)
+
+        if not display_env.startswith(f":{monitor}"):
+            print(f"It seems that X server does not run at display {monitor}.")
+            OSManager.exit(0)
+
+        os.environ["DISPLAY"] = f":{monitor}"
 
         if mpv_fullscreen_playback == True:
             mpv_args += ["--fs"]
 
-        mpv_command = ["mpv"] + mpv_args + [url]
+        mpv_command = ["mpv"] + mpv_args
+
+        if touch_mouse_gestures:
+            mpv_command += ["--no-window-dragging", "--script=gestures.lua"]
+
+        mpv_command += [url]
 
         termux_x11_command = ["am", "start", "-n", "com.termux.x11/.MainActivity"]
 
-        xstartup_cmd = []
-        if use_xfce4:
-            xstartup_cmd.append("xfce4-session &")
-
-        xstartup_cmd += mpv_command
-        xstartup_str = " ".join(xstartup_cmd)
-
-        mpv_x_command = [
-            "termux-x11",
-            f":{monitor}",
-            "-xstartup",
-            xstartup_str,
+        termux_command = [
+            "am",
+            "start",
+            "-n",
+            "com.termux/com.termux.app.TermuxActivity",
         ]
 
         if open_app:
-            try:
-                subprocess.run(termux_x11_command, check=True)
-            except FileNotFoundError:
-                print("Error: mpv or termux-x11 is not installed.")
-                OSManager.exit(127)
-            except subprocess.CalledProcessError as e:
-                print(f"Error running termux-x11: {e}")
-                OSManager.exit(e.returncode)
+            self.app_subprocess_helper("termux-x11", termux_x11_command)
 
-        try:
-            subprocess.run(mpv_x_command, check=True)
-        except FileNotFoundError:
-            print("Error: mpv or termux-x11 is not installed.")
-            OSManager.exit(127)
-        except subprocess.CalledProcessError as e:
-            print(f"Error running mpv_x_command: {e}")
-            OSManager.exit(e.returncode)
+        self.app_subprocess_helper("mpv", mpv_command)
+
+        if exit_app:
+            self.app_subprocess_helper("termux", termux_command)
 
     def start(self):
         if OSManager.android_check():
@@ -102,7 +121,7 @@ class Player:
             self.run_mpv()
 
     @staticmethod
-    def start_with_mode(url, opts="auto"):
+    def start_with_mode(url, monitor=1, opts="auto"):
         print("Playing...")
 
         player = Player(url)
@@ -114,13 +133,13 @@ class Player:
         elif opts == "ssh":
             print("Copy one of the commands below:")
             print(
-                f"MPV: \n\n\t{' '.join(player.command)}\n\nMPV Android: \n\n\t{' '.join(player.android_command)}\n\n"
+                f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
             )
             try:
                 input("Press Enter to continue...\t")
             except KeyboardInterrupt:
                 pass
         elif opts == "termux-x11":
-            player.run_mpv_x(url=url)
+            player.run_mpv_x(url)
         else:
             player.run_mpv()

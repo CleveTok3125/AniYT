@@ -128,13 +128,19 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 - `history.json`: store viewing history.
 - `bookmark.json`: store bookmark.
 - `channel_sources.txt`: list of channel sources.
+- `gestures.lua`: Recommended if running in graphical session via termux-x11. [Details](https://github.com/CleveTok3125/AniYT-mpv-gestures)
 
 *If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 
 # Additional options
 - Use SponsorBlock plugin for MPV to skip OP/EN
 - For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)\
-   In addition, you can use MPV on [Termux-x11](https://github.com/termux/termux-x11) with DE `XFCE4` by default. Refer [this setup instructions](https://github.com/termux/termux-x11?tab=readme-ov-file#Setup-instructions).
+   In addition, you can use MPV on [Termux-x11](https://github.com/termux/termux-x11). Refer [this setup instructions](https://github.com/termux/termux-x11?tab=readme-ov-file#Setup-instructions).
+- In `--mpv-player termux-x11` mode, `gestures.lua` script will be loaded by default if present to provide mouse/touch gestures. See [setup instructions](https://github.com/CleveTok3125/AniYT-mpv-gestures?tab=readme-ov-file#setup-instructions) for usage. This mode will select monitor 1 by default and send the mpv run command through it instead of having to use the command line in the graphical session. **Requires `mpv-x`**\
+   Need to run termux-x11 in the background in a separate termux session. If using `xfce4`, use (one of) [these commands](https://github.com/termux/termux-x11?tab=readme-ov-file#running-graphical-applications) to launch
+   ```bash
+   termux-x11 :1 -xstartup "dbus-launch --exit-with-session xfce4-session"
+   ```
 
 # Non-project-related notification
 _This notification is for the anime fan community, not related to this project._
