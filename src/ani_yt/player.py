@@ -73,6 +73,9 @@ class Player:
         if monitor == None:
             monitor = self.monitor
 
+        os.environ["DISPLAY"] = f":{monitor}"
+
+        ''' wrong application
         display_env = os.environ.get("DISPLAY")
 
         if not display_env:
@@ -84,8 +87,7 @@ class Player:
         if not display_env.startswith(f":{monitor}"):
             print(f"It seems that X server does not run at display {monitor}.")
             OSManager.exit(0)
-
-        os.environ["DISPLAY"] = f":{monitor}"
+        '''
 
         if mpv_fullscreen_playback == True:
             mpv_args += ["--fs"]
