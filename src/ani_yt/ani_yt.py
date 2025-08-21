@@ -551,11 +551,11 @@ class ArgsHandler:
                 print("Error: Monitor number must be >= 1")
                 OSManager.exit(1)
 
-            Termux_X11_OPTS.monitor = self.args.monitor
-            Termux_X11_OPTS.open_app = self.args.open_app
-            Termux_X11_OPTS.return_app = self.args.return_app
-            Termux_X11_OPTS.fullscreen = self.args.fullscreen
-            Termux_X11_OPTS.gestures = self.args.gestures
+        Termux_X11_OPTS.monitor = self.args.monitor
+        Termux_X11_OPTS.open_app = self.args.open_app
+        Termux_X11_OPTS.return_app = self.args.return_app
+        Termux_X11_OPTS.mpv_fullscreen_playback = self.args.fullscreen
+        Termux_X11_OPTS.touch_mouse_gestures = self.args.gestures
 
         self.main = Main(
             channel_url=self.args.channel,
