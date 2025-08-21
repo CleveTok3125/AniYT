@@ -5,12 +5,14 @@ import os
 # Custom lib
 from .os_manager import OSManager
 
+
 class Termux_X11_OPTS:
     monitor: int = 1
     open_app: bool = True
     return_app: bool = True
     mpv_fullscreen_playback: bool = True
     touch_mouse_gestures: bool = True
+
 
 class Player:
     def __init__(self, url, args=None):
@@ -66,29 +68,28 @@ class Player:
         self,
         url,
         *,
-        monitor=Termux_X11_OPTS.monitor,
-        open_app=Termux_X11_OPTS.open_app,
-        return_app=Termux_X11_OPTS.return_app,
-        mpv_fullscreen_playback=Termux_X11_OPTS.mpv_fullscreen_playback,
-        touch_mouse_gestures=Termux_X11_OPTS.touch_mouse_gestures,
+        monitor=None,
+        open_app=None,
+        return_app=None,
+        mpv_fullscreen_playback=None,
+        touch_mouse_gestures=None,
     ):
+        defaults = Termux_X11_OPTS
+        params = {
+            "monitor": monitor,
+            "open_app": open_app,
+            "return_app": return_app,
+            "mpv_fullscreen_playback": mpv_fullscreen_playback,
+            "touch_mouse_gestures": touch_mouse_gestures,
+        }
+
+        for key, value in params.items():
+            if value is None:
+                params[key] = getattr(defaults, key)
+
         mpv_args = self.args.copy()
 
         os.environ["DISPLAY"] = f":{monitor}"
-
-        ''' wrong application
-        display_env = os.environ.get("DISPLAY")
-
-        if not display_env:
-            print(
-                "No X server found. If you are trying to run through Termux-x11, refer to: https://github.com/cletok3125/aniyt?tab=readme-ov-file#additional-options"
-            )
-            OSManager.exit(1)
-
-        if not display_env.startswith(f":{monitor}"):
-            print(f"It seems that X server does not run at display {monitor}.")
-            OSManager.exit(0)
-        '''
 
         if mpv_fullscreen_playback == True:
             mpv_args += ["--fs"]

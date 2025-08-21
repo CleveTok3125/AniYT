@@ -263,18 +263,21 @@ class ArgsHandler:
 
         self.group_env = self.parser.add_argument_group("Environment Options")
         self.group_env.add_argument(
-            "-t", "--temp",
+            "-t",
+            "--temp",
             action="store_const",
             const="store_true",
             help="Use temporary folder (incompatible with -dir/--directory).",
         )
         self.group_env.add_argument(
-            "-dir", "--directory",
+            "-dir",
+            "--directory",
             type=str,
             help="Specify working directory (incompatible with -t/--temp).",
         )
         self.group_env.add_argument(
-            "-neu", "--no-extension-update",
+            "-neu",
+            "--no-extension-update",
             action="store_const",
             const="store_true",
             help="Disable extension update.",
@@ -282,26 +285,32 @@ class ArgsHandler:
 
         self.group_update = self.parser.add_argument_group("Source Update Options")
         self.group_update.add_argument(
-            "-su", "--source-update",
+            "-su",
+            "--source-update",
             action="store_const",
             const="source_update",
             help="Quick update command for `source update`",
         )
         self.group_update.add_argument(
-            "-sr", "--source-rebuild",
+            "-sr",
+            "--source-rebuild",
             action="store_const",
             const="source_rebuild",
             help="Quick update command for `source rebuild`",
         )
 
-        self.group_playlist = self.parser.add_argument_group("Playlist and Channel Options")
+        self.group_playlist = self.parser.add_argument_group(
+            "Playlist and Channel Options"
+        )
         self.group_playlist.add_argument(
-            "-c", "--channel",
+            "-c",
+            "--channel",
             type=str,
             help="Create or Update Playlist Data from Link, Channel ID, or Channel Handle.",
         )
         self.group_playlist.add_argument(
-            "-mc", "--merge-channels",
+            "-mc",
+            "--merge-channels",
             nargs="+",
             help="Merge playlists from multiple channels (URL, Channel ID, or handle).",
         )
@@ -337,25 +346,29 @@ class ArgsHandler:
 
         self.group_browse = self.parser.add_argument_group("Browse and View Options")
         self.group_browse.add_argument(
-            "-b", "--bookmark",
+            "-b",
+            "--bookmark",
             action="store_const",
             const="bookmark",
             help="Show bookmark.",
         )
         self.group_browse.add_argument(
-            "-l", "--list",
+            "-l",
+            "--list",
             action="store_const",
             const="list",
             help="Browse all cached playlists.",
         )
         self.group_browse.add_argument(
-            "-v", "--viewed-mode",
+            "-v",
+            "--viewed-mode",
             action="store_const",
             const="viewed_mode",
             help="Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.",
         )
         self.group_browse.add_argument(
-            "-r", "--resume",
+            "-r",
+            "--resume",
             action="store_const",
             const="resume",
             help="View last viewed video.",
