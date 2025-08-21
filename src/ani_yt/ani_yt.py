@@ -12,7 +12,7 @@ from .file_handler import FileHandler, FileSourceHandler
 from .history_handler import HistoryHandler
 from .bookmarking_handler import BookmarkingHandler
 from .yt_dlp_handler import YT_DLP_Options, YT_DLP
-from .player import Player
+from .player import Player, Termux_X11_OPTS
 from .display import (
     Display_Options,
     Display,
@@ -23,7 +23,7 @@ from .display import (
 
 
 class Main:
-    def __init__(self, channel_url, monitor=1, opts="auto"):
+    def __init__(self, channel_url, opts="auto"):
         self.opts = opts.lower()
         self.ydl_options = YT_DLP_Options()
         self.dlp = YT_DLP(channel_url, self.ydl_options)
@@ -41,7 +41,6 @@ class Main:
             },
         )
         self.url = ""
-        self.monitor = monitor
 
     def source_add(self, *urls):
         added = FileSourceHandler().add_sources(*urls)
@@ -165,7 +164,7 @@ class Main:
     def start_player(self, url=None):
         if url:
             self.url = url
-        Player.start_with_mode(url=self.url, opts=self.opts, monitor=self.monitor)
+        Player.start_with_mode(url=self.url, opts=self.opts)
 
     def loop(self):
         while True:
@@ -319,12 +318,6 @@ class ArgsHandler:
             help="MPV player mode.",
         )
         self.parser.add_argument(
-            "--monitor",
-            type=int,
-            default=1,
-            help="X server monitor number (default: 1)",
-        )
-        self.parser.add_argument(
             "--clear-cache",
             action="store_const",
             const="clear_cache",
@@ -432,6 +425,73 @@ class ArgsHandler:
             help="Video url or file path. File path are currently not supported on Android.",
         )
 
+        self.termux_x11_parser = self.subparsers.add_parser(
+            "termux-x11", help="Configure Termux-X11 MPV playback options."
+        )
+
+        self.termux_x11_parser.add_argument(
+            "--monitor",
+            type=int,
+            default=Termux_X11_OPTS.monitor,
+            help=f"X server monitor number (default: {Termux_X11_OPTS.monitor})",
+        )
+
+        self.termux_x11_parser.add_argument(
+            "--open-app",
+            dest="open_app",
+            action="store_true",
+            default=Termux_X11_OPTS.open_app,
+            help=f"Enable auto-opening Termux-X11 app (default: {Termux_X11_OPTS.open_app})",
+        )
+        self.termux_x11_parser.add_argument(
+            "--no-open-app",
+            dest="open_app",
+            action="store_false",
+            help="Disable auto-opening Termux-X11 app.",
+        )
+
+        self.termux_x11_parser.add_argument(
+            "--return-app",
+            dest="return_app",
+            action="store_true",
+            default=Termux_X11_OPTS.return_app,
+            help=f"Enable auto-return Termux after playback (default: {Termux_X11_OPTS.return_app})",
+        )
+        self.termux_x11_parser.add_argument(
+            "--no-return-app",
+            dest="return_app",
+            action="store_false",
+            help="Disable auto-return Termux after playback.",
+        )
+
+        self.termux_x11_parser.add_argument(
+            "--fullscreen",
+            dest="fullscreen",
+            action="store_true",
+            default=Termux_X11_OPTS.mpv_fullscreen_playback,
+            help=f"Enable fullscreen playback (default: {Termux_X11_OPTS.mpv_fullscreen_playback})",
+        )
+        self.termux_x11_parser.add_argument(
+            "--no-fullscreen",
+            dest="fullscreen",
+            action="store_false",
+            help="Disable fullscreen playback.",
+        )
+
+        self.termux_x11_parser.add_argument(
+            "--gestures",
+            dest="gestures",
+            action="store_true",
+            default=Termux_X11_OPTS.touch_mouse_gestures,
+            help=f"Enable MPV touch/mouse gestures (default: {Termux_X11_OPTS.touch_mouse_gestures})",
+        )
+        self.termux_x11_parser.add_argument(
+            "--no-gestures",
+            dest="gestures",
+            action="store_false",
+            help="Disable MPV touch/mouse gestures.",
+        )
+
         self.search_parsers = self.subparsers.add_parser(
             "search", help="Search for a playlist."
         )
@@ -486,13 +546,19 @@ class ArgsHandler:
         if self.args.no_extension_update:
             Extension.check_update_enabled = False
 
-        if self.args.monitor < 1:
-            print("Error: Monitor number must be >= 1")
-            OSManager.exit(1)
+        if self.args.command == "termux-x11":
+            if self.args.monitor < 1:
+                print("Error: Monitor number must be >= 1")
+                OSManager.exit(1)
+
+            Termux_X11_OPTS.monitor = self.args.monitor
+            Termux_X11_OPTS.open_app = self.args.open_app
+            Termux_X11_OPTS.return_app = self.args.return_app
+            Termux_X11_OPTS.fullscreen = self.args.fullscreen
+            Termux_X11_OPTS.gestures = self.args.gestures
 
         self.main = Main(
             channel_url=self.args.channel,
-            monitor=self.args.monitor,
             opts=self.args.mpv_player,
         )
 

@@ -5,11 +5,15 @@ import os
 # Custom lib
 from .os_manager import OSManager
 
+class Termux_X11_OPTS:
+    monitor: int = 1
+    open_app: bool = True
+    return_app: bool = True
+    mpv_fullscreen_playback: bool = True
+    touch_mouse_gestures: bool = True
 
 class Player:
-    def __init__(self, url, args=None, monitor=1):
-        self.monitor = monitor
-
+    def __init__(self, url, args=None):
         custom_config_exists = OSManager.exists("custom.conf")
         if args is None and custom_config_exists:
             self.args = ["--input-conf=custom.conf"]
@@ -62,16 +66,13 @@ class Player:
         self,
         url,
         *,
-        monitor=None,
-        open_app=True,
-        exit_app=True,
-        mpv_fullscreen_playback=True,
-        touch_mouse_gestures=True,
+        monitor=Termux_X11_OPTS.monitor,
+        open_app=Termux_X11_OPTS.open_app,
+        return_app=Termux_X11_OPTS.return_app,
+        mpv_fullscreen_playback=Termux_X11_OPTS.mpv_fullscreen_playback,
+        touch_mouse_gestures=Termux_X11_OPTS.touch_mouse_gestures,
     ):
         mpv_args = self.args.copy()
-
-        if monitor == None:
-            monitor = self.monitor
 
         os.environ["DISPLAY"] = f":{monitor}"
 
@@ -113,7 +114,7 @@ class Player:
 
         self.app_subprocess_helper("mpv", mpv_command)
 
-        if exit_app:
+        if return_app:
             self.app_subprocess_helper("termux", termux_command)
 
     def start(self):
@@ -123,7 +124,7 @@ class Player:
             self.run_mpv()
 
     @staticmethod
-    def start_with_mode(url, monitor=1, opts="auto"):
+    def start_with_mode(url, opts="auto"):
         print("Playing...")
 
         player = Player(url)
