@@ -261,104 +261,101 @@ class ArgsHandler:
             description="Note: Options, if provided, will be processed sequentially in the order they are listed below."
         )
 
-        self.parser.add_argument(
-            "-t",
-            "--temp",
+        self.group_env = self.parser.add_argument_group("Environment Options")
+        self.group_env.add_argument(
+            "-t", "--temp",
             action="store_const",
             const="store_true",
             help="Use temporary folder (incompatible with -dir/--directory).",
         )
-        self.parser.add_argument(
-            "-dir",
-            "--directory",
+        self.group_env.add_argument(
+            "-dir", "--directory",
             type=str,
             help="Specify working directory (incompatible with -t/--temp).",
         )
-        self.parser.add_argument(
-            "-neu",
-            "--no-extension-update",
+        self.group_env.add_argument(
+            "-neu", "--no-extension-update",
             action="store_const",
             const="store_true",
             help="Disable extension update.",
         )
 
-        self.parser.add_argument(
-            "-su",
-            "--source-update",
+        self.group_update = self.parser.add_argument_group("Source Update Options")
+        self.group_update.add_argument(
+            "-su", "--source-update",
             action="store_const",
             const="source_update",
             help="Quick update command for `source update`",
         )
-
-        self.parser.add_argument(
-            "-sr",
-            "--source-rebuild",
+        self.group_update.add_argument(
+            "-sr", "--source-rebuild",
             action="store_const",
             const="source_rebuild",
             help="Quick update command for `source rebuild`",
         )
 
-        self.parser.add_argument(
-            "-c",
-            "--channel",
+        self.group_playlist = self.parser.add_argument_group("Playlist and Channel Options")
+        self.group_playlist.add_argument(
+            "-c", "--channel",
             type=str,
             help="Create or Update Playlist Data from Link, Channel ID, or Channel Handle.",
         )
-        self.parser.add_argument(
-            "-mc",
-            "--merge-channels",
+        self.group_playlist.add_argument(
+            "-mc", "--merge-channels",
             nargs="+",
             help="Merge playlists from multiple channels (URL, Channel ID, or handle).",
         )
-        self.parser.add_argument(
+
+        self.group_mpv = self.parser.add_argument_group("MPV Player Options")
+        self.group_mpv.add_argument(
             "--mpv-player",
             type=str,
             choices=["auto", "default", "android", "ssh", "termux-x11"],
             default="auto",
             help="MPV player mode.",
         )
-        self.parser.add_argument(
+
+        self.group_cache = self.parser.add_argument_group("Cache and History Options")
+        self.group_cache.add_argument(
             "--clear-cache",
             action="store_const",
             const="clear_cache",
             help="Clear cache.",
         )
-        self.parser.add_argument(
+        self.group_cache.add_argument(
             "--delete-history",
             action="store_const",
             const="delete_history",
             help="Delete history.",
         )
-        self.parser.add_argument(
+        self.group_cache.add_argument(
             "--delete-bookmark",
             action="store_const",
             const="delete_bookmark",
             help="Delete bookmark.",
         )
-        self.parser.add_argument(
-            "-b",
-            "--bookmark",
+
+        self.group_browse = self.parser.add_argument_group("Browse and View Options")
+        self.group_browse.add_argument(
+            "-b", "--bookmark",
             action="store_const",
             const="bookmark",
             help="Show bookmark.",
         )
-        self.parser.add_argument(
-            "-l",
-            "--list",
+        self.group_browse.add_argument(
+            "-l", "--list",
             action="store_const",
             const="list",
             help="Browse all cached playlists.",
         )
-        self.parser.add_argument(
-            "-v",
-            "--viewed-mode",
+        self.group_browse.add_argument(
+            "-v", "--viewed-mode",
             action="store_const",
             const="viewed_mode",
             help="Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.",
         )
-        self.parser.add_argument(
-            "-r",
-            "--resume",
+        self.group_browse.add_argument(
+            "-r", "--resume",
             action="store_const",
             const="resume",
             help="View last viewed video.",
@@ -425,67 +422,65 @@ class ArgsHandler:
             help="Video url or file path. File path are currently not supported on Android.",
         )
 
-        self.termux_x11_parser = self.subparsers.add_parser(
-            "termux-x11", help="Configure Termux-X11 MPV playback options."
-        )
+        self.termux_x11_options = self.parser.add_argument_group("Termux-X11 options")
 
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--monitor",
             type=int,
             default=Termux_X11_OPTS.monitor,
             help=f"X server monitor number (default: {Termux_X11_OPTS.monitor})",
         )
 
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--open-app",
             dest="open_app",
             action="store_true",
             default=Termux_X11_OPTS.open_app,
             help=f"Enable auto-opening Termux-X11 app (default: {Termux_X11_OPTS.open_app})",
         )
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--no-open-app",
             dest="open_app",
             action="store_false",
             help="Disable auto-opening Termux-X11 app.",
         )
 
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--return-app",
             dest="return_app",
             action="store_true",
             default=Termux_X11_OPTS.return_app,
             help=f"Enable auto-return Termux after playback (default: {Termux_X11_OPTS.return_app})",
         )
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--no-return-app",
             dest="return_app",
             action="store_false",
             help="Disable auto-return Termux after playback.",
         )
 
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--fullscreen",
             dest="fullscreen",
             action="store_true",
             default=Termux_X11_OPTS.mpv_fullscreen_playback,
             help=f"Enable fullscreen playback (default: {Termux_X11_OPTS.mpv_fullscreen_playback})",
         )
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--no-fullscreen",
             dest="fullscreen",
             action="store_false",
             help="Disable fullscreen playback.",
         )
 
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--gestures",
             dest="gestures",
             action="store_true",
             default=Termux_X11_OPTS.touch_mouse_gestures,
             help=f"Enable MPV touch/mouse gestures (default: {Termux_X11_OPTS.touch_mouse_gestures})",
         )
-        self.termux_x11_parser.add_argument(
+        self.termux_x11_options.add_argument(
             "--no-gestures",
             dest="gestures",
             action="store_false",
@@ -546,16 +541,16 @@ class ArgsHandler:
         if self.args.no_extension_update:
             Extension.check_update_enabled = False
 
-        if self.args.command == "termux-x11":
+        if self.args.mpv_player == "termux-x11":
             if self.args.monitor < 1:
                 print("Error: Monitor number must be >= 1")
                 OSManager.exit(1)
 
-        Termux_X11_OPTS.monitor = self.args.monitor
-        Termux_X11_OPTS.open_app = self.args.open_app
-        Termux_X11_OPTS.return_app = self.args.return_app
-        Termux_X11_OPTS.mpv_fullscreen_playback = self.args.fullscreen
-        Termux_X11_OPTS.touch_mouse_gestures = self.args.gestures
+            Termux_X11_OPTS.monitor = self.args.monitor
+            Termux_X11_OPTS.open_app = self.args.open_app
+            Termux_X11_OPTS.return_app = self.args.return_app
+            Termux_X11_OPTS.mpv_fullscreen_playback = self.args.fullscreen
+            Termux_X11_OPTS.touch_mouse_gestures = self.args.gestures
 
         self.main = Main(
             channel_url=self.args.channel,
