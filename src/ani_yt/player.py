@@ -87,6 +87,12 @@ class Player:
             if value is None:
                 params[key] = getattr(defaults, key)
 
+        monitor = params["monitor"]
+        open_app = params["open_app"]
+        return_app = params["return_app"]
+        mpv_fullscreen_playback = params["mpv_fullscreen_playback"]
+        touch_mouse_gestures = params["touch_mouse_gestures"]
+
         mpv_args = self.args.copy()
 
         os.environ["DISPLAY"] = f":{monitor}"
