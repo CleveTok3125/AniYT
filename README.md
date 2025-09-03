@@ -35,7 +35,7 @@ Select: 13
 ```
 
 ___
-Command line interface (old version)
+Command line interface ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/tag/v0.9.6))
 
 ![Demo](./demo.png)
 
