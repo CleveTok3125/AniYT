@@ -4,9 +4,19 @@ import ujson as json
 from .os_manager import OSManager
 
 
+class InitializeOPTS:
+    dirs = ["data", "mpv-config", "mpv-scripts"]
+
+
+class Initialize:
+    @staticmethod
+    def directory():
+        OSManager.initialize_directory(InitializeOPTS.dirs)
+
+
 class FileHandler:
     def __init__(self):
-        self.filename = "playlists.json"
+        self.filename = "./data/playlists.json"
         self.encoding = "utf-8"
 
     def dump(self, video_list):
@@ -23,7 +33,7 @@ class FileHandler:
 
 class FileSourceHandler:
     def __init__(self):
-        self.source_filename = "channel_sources.txt"
+        self.source_filename = "./data/channel_sources.txt"
         self.encoding = "utf-8"
         self.notation = "# This is a list of channel sources used for multiple source updates.\n# Each line is the value of the -c/--channel CHANNEL argument.\n"
 

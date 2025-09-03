@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd ..
+
+git pull --rebase
+
+cd ./tools
+
+./install-gesture
+./install-sponsorblock

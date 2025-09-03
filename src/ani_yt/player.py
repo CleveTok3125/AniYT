@@ -16,9 +16,10 @@ class Termux_X11_OPTS:
 
 class Player:
     def __init__(self, url, args=None):
-        custom_config_exists = OSManager.exists("custom.conf")
+        mpv_config_path = "./mpv-config\/custom.conf"
+        custom_config_exists = OSManager.exists(mpv_config_path)
         if args is None and custom_config_exists:
-            self.args = ["--input-conf=custom.conf"]
+            self.args = [f"--input-conf={mpv_config_path}"]
         elif args is None and not custom_config_exists:
             self.args = []
         else:
@@ -97,7 +98,7 @@ class Player:
         mpv_command = ["mpv"] + mpv_args
 
         if touch_mouse_gestures:
-            mpv_command += ["--no-window-dragging", "--script=gestures.lua"]
+            mpv_command += ["--no-window-dragging", "--script=./mpv-scripts/gestures.lua", "--script=./mpv-scripts/sponsorblock_minimal.lua"]
 
         mpv_command += [url]
 

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd ..
+
+curl -L -o "./mpv-scripts/gestures.lua" "https://raw.githubusercontent.com/CleveTok3125/AniYT-mpv-gestures/refs/heads/master/gestures.lua"

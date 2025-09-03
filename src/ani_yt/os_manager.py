@@ -53,3 +53,8 @@ class OSManager:
             return None, None
         os.chdir(abs_path)
         return directory, abs_path
+
+    @staticmethod
+    def initialize_directory(dirs):
+        for dir in dirs:
+            os.makedirs(dir, exist_ok=True)

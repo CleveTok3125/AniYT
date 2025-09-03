@@ -122,13 +122,14 @@ PYTHONPATH=src python -m ani_yt.ani_yt -h
 ```
 
 # About additional/generated files
-- `custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration.
-- `playlists.json`: stores playlist information.\
+- `./mpv-config/custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration.
+- `./data/playlists.json`: stores playlist information.\
 Mainly to reduce repeated calls to YT-DLP API which slows down retrieval significantly when the channel has many playlists.
-- `history.json`: store viewing history.
-- `bookmark.json`: store bookmark.
-- `channel_sources.txt`: list of channel sources.
-- `gestures.lua`: Recommended if running in graphical session via termux-x11. [Details](https://github.com/CleveTok3125/AniYT-mpv-gestures)
+- `./data/history.json`: store viewing history.
+- `./data/bookmark.json`: store bookmark.
+- `./data/channel_sources.txt`: list of channel sources.
+- `./mpv-scripts/gestures.lua`: Recommended if running in graphical session via termux-x11. [Details](https://github.com/CleveTok3125/AniYT-mpv-gestures)
+- `./mpv-scripts/sponsorblock_minimal.lua`: Use SponsorBlock to skip sponsorships. Similar to `gesture.lua`, it is only loaded automatically if in a graphical session via termux-x11.
 
 *If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 

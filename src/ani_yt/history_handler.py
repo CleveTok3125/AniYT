@@ -7,7 +7,7 @@ from .exceptions import InvalidHistoryFile
 
 class HistoryHandler:
     def __init__(self):
-        self.filename = "history.json"
+        self.filename = "./data/history.json"
         self.encoding = "utf-8"
         self.required_keys = {"current", "playlist", "videos"}
 

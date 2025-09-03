@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd ..
+
+curl -L -o "./mpv-scripts/sponsorblock_minimal.lua" "https://codeberg.org/jouni/mpv_sponsorblock_minimal/raw/branch/master/sponsorblock_minimal.lua"

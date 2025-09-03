@@ -8,7 +8,7 @@ from .exceptions import MissingChannelUrl, InvalidHistoryFile
 from .os_manager import OSManager
 from .data_processing import DataProcessing
 from .query import Query
-from .file_handler import FileHandler, FileSourceHandler
+from .file_handler import FileHandler, FileSourceHandler, Initialize, InitializeOPTS
 from .history_handler import HistoryHandler
 from .bookmarking_handler import BookmarkingHandler
 from .yt_dlp_handler import YT_DLP_Options, YT_DLP
@@ -641,6 +641,7 @@ class ArgsHandler:
 
 
 def main():
+    Initialize.directory()
     ArgsHandler().listener()
 
 

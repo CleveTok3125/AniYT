@@ -6,7 +6,7 @@ from .os_manager import OSManager
 
 class BookmarkingHandler:
     def __init__(self):
-        self.filename = "bookmark.json"
+        self.filename = "./data/bookmark.json"
         self.encoding = "utf-8"
 
     def is_bookmarking(self):
