@@ -551,6 +551,8 @@ class ArgsHandler:
                 print("The specified path is not a directory or does not exist.")
                 OSManager.exit(404)
 
+        Initialize.directory()
+
         if self.args.no_extension_update:
             Extension.check_update_enabled = False
 
@@ -641,7 +643,6 @@ class ArgsHandler:
 
 
 def main():
-    Initialize.directory()
     ArgsHandler().listener()
 
 
