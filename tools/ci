@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR=$(dirname "$0")
+REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
+cd "$REPO_ROOT"
+
+echo "=== Install dependencies ==="
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install setuptools cython flake8 black isort pytest
+pip install -e .
+
+echo "=== Build Cython extensions ==="
+python setup.py build_ext --inplace
+pip install .
+
+echo "=== Run flake8 ==="
+flake8 src/ani_yt
+
+echo "=== Run black (check only) ==="
+black --check src/ani_yt
+
+echo "=== Run isort (check only) ==="
+isort --check-only src/ani_yt
+
+if [ -f "tests/test_main.py" ]; then
+    echo "=== Run tests ==="
+    pytest tests
+fi
+
+echo "=== Test AniYT CLI ==="
+PYTHONPATH=src python -m ani_yt.ani_yt -h
+
+echo "=== CI Completed ==="

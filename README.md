@@ -1,4 +1,10 @@
 # AniYT
+
+[![License](https://img.shields.io/github/license/CleveTok3125/AniYT)](https://github.com/CleveTok3125/AniYT/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/CleveTok3125/AniYT)](https://github.com/CleveTok3125/AniYT/releases)
+[![CodeQL](https://github.com/CleveTok3125/AniYT/workflows/CodeQL/badge.svg)](https://github.com/CleveTok3125/AniYT/security/code-scanning)
+[![CI](https://github.com/CleveTok3125/AniYT/actions/workflows/ci.yml/badge.svg)](https://github.com/CleveTok3125/AniYT/actions/workflows/ci.yml)
+
 A feauture rich cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube.
 
 # Demo
@@ -115,6 +121,10 @@ pip install setuptools cython
 ## Compile Cython
 ```bash
 python setup.py build_ext --inplace
+```
+## Build
+```bash
+pip install .
 ```
 ## Run
 ```bash

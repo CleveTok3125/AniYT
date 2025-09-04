@@ -1,8 +1,7 @@
-import subprocess
-import shlex
 import os
+import shlex
+import subprocess
 
-# Custom lib
 from .os_manager import OSManager
 
 
@@ -16,7 +15,7 @@ class Termux_X11_OPTS:
 
 class Player:
     def __init__(self, url, args=None):
-        mpv_config_path = "./mpv-config\/custom.conf"
+        mpv_config_path = "./mpv-config/custom.conf"
         custom_config_exists = OSManager.exists(mpv_config_path)
         if args is None and custom_config_exists:
             self.args = [f"--input-conf={mpv_config_path}"]
@@ -92,13 +91,17 @@ class Player:
 
         os.environ["DISPLAY"] = f":{monitor}"
 
-        if mpv_fullscreen_playback == True:
+        if mpv_fullscreen_playback is True:
             mpv_args += ["--fs"]
 
         mpv_command = ["mpv"] + mpv_args
 
         if touch_mouse_gestures:
-            mpv_command += ["--no-window-dragging", "--script=./mpv-scripts/gestures.lua", "--script=./mpv-scripts/sponsorblock_minimal.lua"]
+            mpv_command += [
+                "--no-window-dragging",
+                "--script=./mpv-scripts/gestures.lua",
+                "--script=./mpv-scripts/sponsorblock_minimal.lua",
+            ]
 
         mpv_command += [url]
 

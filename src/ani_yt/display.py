@@ -2,12 +2,11 @@ import os
 import sys
 from time import sleep
 
-# Custom lib
-from .yt_dlp_handler import YT_DLP_Options, YT_DLP
 from .bookmarking_handler import BookmarkingHandler
-from .player import Player
 from .data_processing import DataProcessing
 from .os_manager import OSManager
+from .player import Player
+from .yt_dlp_handler import YT_DLP, YT_DLP_Options
 
 
 class Display_Options:
@@ -332,9 +331,7 @@ class DisplayMenu(Display, DisplayExtension):
                 self.opts.items_per_list = (
                     user_int
                     if user_int > 0
-                    else self.total_items
-                    if user_int > self.total_items
-                    else 1
+                    else self.total_items if user_int > self.total_items else 1
                 )
                 self.pagination()
             elif user_input == "T:":

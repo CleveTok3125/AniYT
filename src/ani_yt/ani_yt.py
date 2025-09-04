@@ -2,24 +2,17 @@ import argparse
 import os
 import sys
 
-# Custom lib
-# from extension import Extension
-from .exceptions import MissingChannelUrl, InvalidHistoryFile
-from .os_manager import OSManager
-from .data_processing import DataProcessing
-from .query import Query
-from .file_handler import FileHandler, FileSourceHandler, Initialize, InitializeOPTS
-from .history_handler import HistoryHandler
 from .bookmarking_handler import BookmarkingHandler
-from .yt_dlp_handler import YT_DLP_Options, YT_DLP
+from .data_processing import DataProcessing
+from .display import Display_Options, DisplayMenu
+from .exceptions import MissingChannelUrl
+from .extension import Extension
+from .file_handler import FileHandler, FileSourceHandler, Initialize
+from .history_handler import HistoryHandler
+from .os_manager import OSManager
 from .player import Player, Termux_X11_OPTS
-from .display import (
-    Display_Options,
-    Display,
-    DisplayExtensionFallback,
-    DisplayExtension,
-    DisplayMenu,
-)
+from .query import Query
+from .yt_dlp_handler import YT_DLP, YT_DLP_Options
 
 
 class Main:

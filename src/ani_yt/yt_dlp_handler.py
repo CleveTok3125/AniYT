@@ -1,14 +1,13 @@
-from urllib.parse import urljoin, urlparse
 import os
 import subprocess
+from urllib.parse import urljoin, urlparse
 
-import ujson as json
 import yt_dlp
 
-# Custom lib
-from .os_manager import OSManager
-from .exceptions import MissingChannelUrl
 from .data_processing import DataProcessing
+from .exceptions import MissingChannelUrl
+from .os_manager import OSManager
+
 
 class YT_DLP_Options:
     def __init__(self, quiet=True, no_warnings=True):
@@ -38,9 +37,11 @@ class YT_DLP:
                         "https://www.youtube.com/", self.channel_url
                     )
             self.channel_url = urljoin(
-                self.channel_url
-                if self.channel_url.endswith("/")
-                else self.channel_url + "/",
+                (
+                    self.channel_url
+                    if self.channel_url.endswith("/")
+                    else self.channel_url + "/"
+                ),
                 "playlists",
             )
         self.ydl_options = ydl_options
@@ -82,7 +83,7 @@ class YT_DLP:
 
     @staticmethod
     def download(url, cats="all", extra_args=None, args=None, capture_output=False):
-        if extra_args == None:
+        if extra_args is None:
             extra_args = []
 
         if args is None:

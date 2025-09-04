@@ -1,5 +1,7 @@
 #!/bin/bash
 
-cd ..
+SCRIPT_DIR=$(dirname "$0")
+REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
+cd "$REPO_ROOT"
 
 curl -L -o "./mpv-scripts/sponsorblock_minimal.lua" "https://codeberg.org/jouni/mpv_sponsorblock_minimal/raw/branch/master/sponsorblock_minimal.lua"

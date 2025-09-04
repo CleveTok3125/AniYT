@@ -1,10 +1,9 @@
 #!/bin/bash
+set -e
 
 SCRIPT_DIR=$(dirname "$0")
 REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
 cd "$REPO_ROOT"
 
-git pull --rebase
-
-tools/install-gesture
-tools/install-sponsorblock
+source venv/bin/activate
+PYTHONPATH=src python -m ani_yt.ani_yt "$@"

@@ -2,7 +2,6 @@ import os
 import sys
 from tempfile import mkdtemp
 
-# Custom lib
 from .extension import Extension
 
 

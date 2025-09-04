@@ -1,8 +1,7 @@
 import ujson as json
 
-# Custom lib
-from .os_manager import OSManager
 from .exceptions import InvalidHistoryFile
+from .os_manager import OSManager
 
 
 class HistoryHandler:
@@ -41,9 +40,9 @@ class HistoryHandler:
 
         content = {
             "current": content["current"] if is_history and not curr else curr,
-            "playlist": content["playlist"]
-            if is_history and not playlist
-            else playlist,
+            "playlist": (
+                content["playlist"] if is_history and not playlist else playlist
+            ),
             "videos": content["videos"] if is_history and not videos else videos,
         }
 

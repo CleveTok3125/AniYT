@@ -1,5 +1,7 @@
 #!/bin/bash
 
-cd ..
+SCRIPT_DIR=$(dirname "$0")
+REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
+cd "$REPO_ROOT"
 
 curl -L -o "./mpv-scripts/gestures.lua" "https://raw.githubusercontent.com/CleveTok3125/AniYT-mpv-gestures/refs/heads/master/gestures.lua"

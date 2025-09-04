@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR=$(dirname "$0")
+REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
+cd "$REPO_ROOT"
+
+FILES=src/ani_yt
+
+source venv/bin/activate
+
+echo "=== Auto-fix code style ==="
+isort $FILES
+black $FILES
+flake8 $FILES
+
+echo "=== Done ==="
