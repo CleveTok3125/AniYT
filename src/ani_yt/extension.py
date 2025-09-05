@@ -2,6 +2,8 @@ import subprocess
 
 import requests
 
+from .helper import SubprocessHelper
+
 
 class Extension:
     check_update_enabled = True
@@ -10,6 +12,8 @@ class Extension:
         @staticmethod
         def check_yt_dlp(name="yt-dlp"):
             print("[Extension] Checking for yt-dlp update...")
+
+            SubprocessHelper.app_subprocess_helper("yt-dlp", check_only=True)
 
             old_ver = (
                 subprocess.check_output(["yt-dlp", "--version"]).decode("utf-8").strip()

@@ -1,7 +1,7 @@
 import os
 import shlex
-import subprocess
 
+from .helper import SubprocessHelper
 from .os_manager import OSManager
 
 
@@ -39,30 +39,14 @@ class Player:
         ]
 
     def run_mpv(self):  # optional: use sponsorblock for mpv to automatically skip op/en
-        try:
-            subprocess.run(self.command)
-        except FileNotFoundError:
-            print("Error running command: MPV is not installed.")
-            OSManager.exit(127)
+        SubprocessHelper.app_subprocess_helper(self.command, "MPV")
 
     def run_mpv_android(
         self,
     ):  # require https://github.com/mpv-android/mpv-android/pull/58
-        try:
-            subprocess.run(self.android_command)
-        except FileNotFoundError:
-            print("Error running command: Current OS may not be Android.")
-            OSManager.exit(127)
-
-    def app_subprocess_helper(self, app_name, commands):
-        try:
-            subprocess.run(commands, check=True)
-        except FileNotFoundError:
-            print(f"Error: {app_name} is not installed.")
-            OSManager.exit(127)
-        except subprocess.CalledProcessError as e:
-            print(f"Error running {app_name}: {e}")
-            OSManager.exit(e.returncode)
+        SubprocessHelper.app_subprocess_helper(
+            self.android_command, note="Current OS may not be Android."
+        )
 
     def run_mpv_x(
         self,
@@ -115,12 +99,12 @@ class Player:
         ]
 
         if open_app:
-            self.app_subprocess_helper("termux-x11", termux_x11_command)
+            SubprocessHelper.app_subprocess_helper(termux_x11_command, "termux-x11")
 
-        self.app_subprocess_helper("mpv", mpv_command)
+        SubprocessHelper.app_subprocess_helper(mpv_command)
 
         if return_app:
-            self.app_subprocess_helper("termux", termux_command)
+            SubprocessHelper.app_subprocess_helper(termux_command, "termux")
 
     def start(self):
         if OSManager.android_check():

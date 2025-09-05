@@ -74,6 +74,10 @@ Command line interface ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/
 9. **Automatically check for yt-dlp updates**\
    Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
 
+# Dependencies
+- Python >= 3.8 (recommended >= 3.13)
+- MPV or MPV-X11
+
 # Installation
 ## Install from Source
 ```bash
@@ -144,7 +148,17 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 *If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 
 # Additional options
+## SponsorBlock
 - Use SponsorBlock plugin for MPV to skip OP/EN
+
+## Notify new videos in playlist
+Dependencies:
+   - Go
+   - yt-dlp (binary)
+
+This feature will be available after optimizing history and bookmarks.
+
+## Android
 - For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)\
    In addition, you can use MPV on [Termux-x11](https://github.com/termux/termux-x11). Refer [this setup instructions](https://github.com/termux/termux-x11?tab=readme-ov-file#Setup-instructions).
 - In `--mpv-player termux-x11` mode, `gestures.lua` script will be loaded by default if present to provide mouse/touch gestures. See [setup instructions](https://github.com/CleveTok3125/AniYT-mpv-gestures?tab=readme-ov-file#setup-instructions) for usage. This mode will select monitor 1 by default and send the mpv run command through it instead of having to use the command line in the graphical session. **Requires `mpv-x`**\
@@ -152,7 +166,7 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
    ```bash
    termux-x11 :1 -xstartup "dbus-launch --exit-with-session xfce4-session"
    ```
-
+   
 # Non-project-related notification
 _This notification is for the anime fan community, not related to this project._
 
