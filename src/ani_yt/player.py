@@ -59,17 +59,21 @@ class Player:
         touch_mouse_gestures=None,
     ):
         defaults = Termux_X11_OPTS
-        params = {
-            "monitor": monitor,
-            "open_app": open_app,
-            "return_app": return_app,
-            "mpv_fullscreen_playback": mpv_fullscreen_playback,
-            "touch_mouse_gestures": touch_mouse_gestures,
-        }
 
-        for key, value in params.items():
-            if value is None:
-                params[key] = getattr(defaults, key)
+        if monitor is None:
+            monitor = defaults.monitor
+
+        if open_app is None:
+            open_app = defaults.open_app
+
+        if return_app is None:
+            return_app = defaults.return_app
+
+        if mpv_fullscreen_playback is None:
+            mpv_fullscreen_playback = defaults.mpv_fullscreen_playback
+
+        if touch_mouse_gestures is None:
+            touch_mouse_gestures = defaults.touch_mouse_gestures
 
         mpv_args = self.args.copy()
 

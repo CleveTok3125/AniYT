@@ -153,7 +153,7 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 
 ## Notify new videos in playlist
 Dependencies:
-   - Go
+   - Go >= 1.18
    - yt-dlp (binary)
 
 This feature will be available after optimizing history and bookmarks.
