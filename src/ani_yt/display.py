@@ -1,12 +1,17 @@
 import os
 import sys
 from time import sleep
+from typing import Dict, List
 
 from .bookmarking_handler import BookmarkingHandler
 from .data_processing import DataProcessing
+from .helper import LegacyCompatibility
+from .history_handler import HistoryHandler
 from .os_manager import OSManager
 from .player import Player
 from .yt_dlp_handler import YT_DLP, YT_DLP_Options
+
+Video = Dict[str, str]
 
 
 class Display_Options:
@@ -154,10 +159,9 @@ class DisplayExtension:
 
     def bookmark_processing(self, user_int):
         try:
-            if self.bookmarking_handler.is_bookmarked(
-                (item := self.data[user_int - 1])[1]
-            ):
-                self.bookmarking_handler.remove_bookmark(item[1])
+            item: Video = self.data[user_int - 1]
+            if self.bookmarking_handler.is_bookmarked(item["video_url"]):
+                self.bookmarking_handler.remove_bookmark(item["video_url"])
             else:
                 self.bookmarking_handler.update(item)
         except ValueError:
@@ -169,7 +173,8 @@ class DisplayExtension:
         Player.start_with_mode(url=url, opts=self.extra_opts.get("mode", "auto"))
 
     def show_thumbnail(self, user_int):
-        url = self.data[user_int - 1][1]
+        item: Video = self.data[user_int - 1]
+        url = item["video_url"]
 
         thumbnail_url = YT_DLP.standalone_get_thumbnail(url, self.yt_dlp_opts.ydl_opts)
         self.open_image_with_mpv(thumbnail_url)
@@ -187,36 +192,16 @@ class DisplayMenu(Display, DisplayExtension):
         # These values are always created new each time the class is called or are always overwritten.
         self.opts = opts
         self.user_input = ""
-        self.data = []
+        self.data: List[Video] = []
         self.splited_data = []
         self.len_data = 0
         self.len_last_item = 0
         self.total_items = 0
         self.len_data_items = 0
-        self.clear_choosed_item = False
 
         # Variable
         # These are variables that are manually cleared for caching purposes. Remember to clear these variables when running functions in the class multiple times.
         self.choosed_item = False
-
-        # Constant
-        self.no_opts = ["(O) Hide all options", "(O) Show all options"]
-        self.pages_opts = [
-            "(N) Next page",
-            "(P) Previous page",
-            "(P:<integer>) Jump to page",
-        ]
-        self.page_opts = [
-            self.no_opts[0],
-            "(U) Toggle link",
-            "(B) Toggle bookmark",
-            "(B:<integer>) Add/remove bookmark",
-            "(T:<integer>) View thumbnail",
-            "(I:<integer>) number of items per page",
-            "(Q) Quit",
-        ]
-        self.pages_opts = "\n".join(self.pages_opts)
-        self.page_opts = "\n".join(self.page_opts)
 
         # Constant
         self.RESET = "\033[0m"
@@ -225,6 +210,54 @@ class DisplayMenu(Display, DisplayExtension):
 
         # Variable
         self._init_loop_values_()
+
+        # Constant
+        self.no_opts = ["(O) Hide all options", "(O) Show all options"]
+        self.pages_opts = [
+            "(N) Next page",
+            "(P) Previous page",
+            "(P:<integer>) Jump to page",
+        ]
+        self.pages_opts = "\n".join(self.pages_opts)
+
+        # Dynamic
+        self._render_dynamic_opts()
+
+        # History handler
+        self.history_handler = HistoryHandler()
+        self.history_map = {}
+        if self.history_handler and self.history_handler.is_history():
+            try:
+                history = self.history_handler.load()
+                # Build video_url -> status map
+                self.history_map = {
+                    video["video_url"]: video.get("status", "")
+                    for playlist in history.get("playlists", [])
+                    for video in playlist.get("videos", [])
+                }
+            except Exception:
+                self.history_map = {}
+
+    def _find_first_unviewed_index(self):
+        if not hasattr(self, "data") or not self.data:
+            return 0
+
+        for idx, video in enumerate(self.data):
+            if self.history_map.get(video["video_url"], "").lower() != "viewed":
+                return idx
+        return 0
+
+    def _render_dynamic_opts(self):
+        self.page_opts = [
+            self.no_opts[0],
+            "(U) Toggle link",
+            f"{self.YELLOW if self.bookmark else ''}(B) Toggle bookmark{self.RESET}",
+            "(B:<integer>) Add/remove bookmark",
+            "(T:<integer>) View thumbnail",
+            "(I:<integer>) number of items per page",
+            "(Q) Quit",
+        ]
+        self.page_opts = "\n".join(self.page_opts)
 
     def _init_loop_values_(self):
         """
@@ -244,6 +277,22 @@ class DisplayMenu(Display, DisplayExtension):
         self.index_item = 0
         self.show_link = self.opts.show_link
         self.bookmark = self.opts.bookmark
+
+    def mark_viewed(self, url: str):
+        """
+        Mark the video as viewed in both history file and local map.
+        """
+        history = self.history_handler.load()
+
+        p_idx, v_idx = self.history_handler.search(url, history)
+        if p_idx != -1 and v_idx != -1:
+            history["playlists"][p_idx]["videos"][v_idx]["status"] = "viewed"
+            # persist
+            self.history_handler.update(
+                curr=history.get("current"), playlists=history.get("playlists")
+            )
+            # update local map
+            self.history_map[url] = "viewed"
 
     def valid_index_item(self):
         if self.choosed_item >= self.len_data:
@@ -284,25 +333,29 @@ class DisplayMenu(Display, DisplayExtension):
         )
 
     def print_menu(self):
-        skip_choose_item = False
+        self.len_data_items = len(self.splited_data_items)
+        first_unviewed_set = False
 
-        for index in range(self.len_data_items):
-            item = self.splited_data_items[index]
-            item_title = item[0]
-            item_url = item[1]
+        for index, item in enumerate(self.splited_data_items):
+            item_title = item["video_title"]
+            item_url = item["video_url"]
 
             item_number = self.index_item * self.opts.items_per_list + index + 1
 
-            color_viewed = ""
-            if len(item) >= 3 and item[2].lower() == "viewed":
-                color_viewed = self.LIGHT_GRAY
-            elif not skip_choose_item:
-                skip_choose_item = True
+            color_viewed = (
+                self.LIGHT_GRAY
+                if self.history_map.get(item_url, "").lower() == "viewed"
+                else ""
+            )
+
+            if not first_unviewed_set and color_viewed == "":
                 self.choosed_item = item_number - 1
+                first_unviewed_set = True
 
             color_bookmarked = (
                 self.YELLOW
-                if self.bookmark and self.bookmarking_handler.is_bookmarked(item_url)
+                if getattr(self, "bookmark", True)
+                and self.bookmarking_handler.is_bookmarked(item_url)
                 else ""
             )
 
@@ -315,7 +368,13 @@ class DisplayMenu(Display, DisplayExtension):
 
     def print_user_input(self):
         try:
-            self.user_input = input("Select: ").strip()
+            prompt = "Select"
+            if self.choosed_item is not False:
+                prompt += f" ({self.choosed_item+1})"
+            elif self.user_input:
+                prompt += f" ({self.user_input+1})"
+            prompt += ": "
+            self.user_input = input(prompt).strip()
         except KeyboardInterrupt:
             OSManager.exit(0)
 
@@ -355,8 +414,8 @@ class DisplayMenu(Display, DisplayExtension):
                 raise ValueError()
 
             self.choosed_item = int(self.user_input)
-            ans = self.data[self.choosed_item - 1]
-            return ans[0], ans[1]
+            ans: Video = self.data[self.choosed_item - 1]
+            return ans["video_title"], ans["video_url"]
 
         except ValueError:
             input("ValueError: only options and non-negative integers are accepted.\n")
@@ -376,13 +435,14 @@ class DisplayMenu(Display, DisplayExtension):
             self.show_link = not self.show_link
         elif user_input == "B":
             self.bookmark = not self.bookmark
+            self._render_dynamic_opts()
         elif user_input == "Q":
             OSManager.exit(0)
         else:
             return self.choose_item_option()
         return
 
-    def choose_menu(self, data, clear_choosed_item=False):
+    def choose_menu(self, playlists, clear_choosed_item=False):
         """
         How auto-select (guessing user choices) feature works
         1. __init__()
@@ -399,9 +459,19 @@ class DisplayMenu(Display, DisplayExtension):
         In case self.choosed_item exceeds the valid limit, it will be set to its initial value.
         """
 
-        self.data = data
+        playlists = LegacyCompatibility.normalize_playlist(playlists)
+
+        self.data = playlists
         self.clear_choosed_item = clear_choosed_item
         self.pagination()
+
+        if (
+            self.clear_choosed_item
+            or not hasattr(self, "choosed_item")
+            or self.choosed_item is False
+        ):
+            self.choosed_item = self._find_first_unviewed_index()
+            self.user_input = str(self.choosed_item + 1)
 
         try:
             while True:
@@ -422,7 +492,7 @@ class DisplayMenu(Display, DisplayExtension):
                     continue
 
                 if ans := self.standard_options():
-                    return ans
+                    return ans  # (title, url)
                 else:
                     continue
         finally:

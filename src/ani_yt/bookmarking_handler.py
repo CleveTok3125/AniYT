@@ -21,7 +21,15 @@ class BookmarkingHandler:
         else:
             content = {}
 
-        content[data[0]] = data[1]
+        if isinstance(data, dict):
+            key, value = data.get("video_title"), data.get("video_url")
+        else:
+            key, value = data[0], data[1]
+
+        if key is None or value is None:
+            raise ValueError("Bookmark data must contain title and url")
+
+        content[key] = value
 
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(content, f, indent=4)

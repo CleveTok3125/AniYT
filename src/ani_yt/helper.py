@@ -38,3 +38,28 @@ class SubprocessHelper:
         except subprocess.CalledProcessError as e:
             print(f"Error running {app_name}: {e}")
             sys.exit(e.returncode)
+
+
+class LegacyCompatibility:
+    @staticmethod
+    def normalize_playlist(playlist):
+        if not playlist:
+            return []
+
+        # Legacy: list[tuple[str, str]]
+        if isinstance(playlist[0], (tuple, list)):
+            return [
+                {"video_title": t, "video_url": u, "status": ""} for t, u in playlist
+            ]
+
+        # New: list[dict]
+        if isinstance(playlist[0], dict):
+            normalized = []
+            for v in playlist:
+                v_copy = dict(v)
+                if "status" not in v_copy:
+                    v_copy["status"] = ""
+                normalized.append(v_copy)
+            return normalized
+
+        raise TypeError("Unsupported playlist format")

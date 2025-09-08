@@ -22,22 +22,22 @@ $ /path/to/project/AniYT/ani_yt -c MuseAsia -l
 (I:<integer>) number of items per page
 (Q) Quit
 
-Page: 2/35 (24/420)
+Page: 2/34 (24/401)
 
-(13) MOMENTARY LILY [English Sub]
-(14) Even Given the Worthless "Appraiser" Class, I'm Actually the Strongest [English Sub]
-(15) From Bureaucrat to Villainess: Dad's Been Reincarnated! [English Sub]
-(16) I Want to Escape from Princess Lessons [English Sub]
-(17) I Left my A-Rank Party to Help My Former Students Reach the Dungeon Depths! [English Sub]
-(18) Beheneko: The Elf-Girl’s Cat is Secretly an S-Ranked Monster! [English Sub]
-(19) (Limited time only) Attack on Titan [English Sub]
-(20) HAIGAKURA [English Sub]
-(21) (Full Series) Re:ZERO -Starting Life in Another World- [English Sub]
-(22) Re:ZERO -Starting Life in Another World- Season 3 [English Sub]
-(23) The Most Notorious “Talker” Runs the World’s Greatest Clan [English Sub]
-(24) Let This Grieving Soul Retire [English Sub]
+(13) (Full Series) I've Been Killing Slimes for 300 Years and Maxed Out My Level [English Sub]
+(14) I'm the Evil Lord of an Intergalactic Empire! [English Sub]
+(15) Lord of Vermilion: The Crimson King [English Sub]
+(16) (Full Series) Is the Order a Rabbit? [English Sub]
+(17) Crayon Shinchan movies [English Sub]
+(18) Just Because! [English Sub]
+(19) [English Dub] Frieren: Beyond Journey's End
+(20) Cells at Work! [English Sub]
+(21) BanG Dream! Ave Mujica [English Sub]
+(22) MOMENTARY LILY [English Sub]
+(23) Even Given the Worthless "Appraiser" Class, I'm Actually the Strongest [English Sub]
+(24) From Bureaucrat to Villainess: Dad's Been Reincarnated! [English Sub]
 
-Select: 13
+Select (13): 17
 ```
 
 ___

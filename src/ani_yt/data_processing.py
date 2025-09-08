@@ -1,11 +1,32 @@
+from typing import List, TypedDict
+
+
+class Video(TypedDict):
+    video_title: str
+    video_url: str
+    status: str
+
+
+class VideoData(TypedDict):
+    videos: List[Video]
+
+
 class DataProcessing:
     @staticmethod
-    def omit(data):
-        return [
-            (entry["title"], entry["url"])
-            for entry in data.get("entries", [])
-            if entry.get("_type") == "url"
-        ]
+    def omit(data, status="") -> VideoData:
+        videos = []
+
+        for entry in data.get("entries", []):
+            if entry.get("_type") == "url":
+                video_item = {
+                    "video_title": entry["title"],
+                    "video_url": entry["url"],
+                    "status": status,
+                }
+
+                videos.append(video_item)
+
+        return videos
 
     @staticmethod
     def split_list(lst, n):
@@ -16,23 +37,25 @@ class DataProcessing:
         return sorted(lst, key=key, reverse=reverse)
 
     @staticmethod
-    def merge_list(old_list, new_list, truncate=True):
-        mapping = {v: k for k, v in new_list}
+    def merge_list(
+        old_videos: VideoData, new_videos: VideoData, truncate=True
+    ) -> VideoData:
+        new_urls = {v["video_url"] for v in new_videos}
 
         if truncate:
-            old_list = [
-                sublist for sublist in old_list if sublist[1] in set(mapping.keys())
-            ]
+            old_videos = [v for v in old_videos if v["video_url"] in new_urls]
 
-        for old_list_item in old_list:
-            if old_list_item[1] in mapping:
-                old_list_item[0] = mapping[old_list_item[1]]
+        existing = {v["video_url"]: v for v in old_videos}
 
-        existing_values = {sublist[1] for sublist in old_list}
+        for v in new_videos:
+            url = v["video_url"]
+            if url in existing:
+                # Update video_title, keep status
+                existing[url]["video_title"] = v["video_title"]
+            else:
+                old_videos.append(v)
 
-        old_list.extend([k, v] for k, v in new_list if v not in existing_values)
-
-        return DataProcessing.sort(old_list)
+        return DataProcessing.sort(old_videos, key=lambda x: x["video_title"])
 
     @staticmethod
     def merge_list_preserve_order(old_list, new_list):
