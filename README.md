@@ -11,10 +11,11 @@ A feauture rich cli tool to browse and watch videos in YouTube playlists. Specia
 ```
 $ /path/to/project/AniYT/ani_yt -c MuseAsia -l
 
+(O) Hide all options
 (N) Next page
 (P) Previous page
 (P:<integer>) Jump to page
-(O) Hide all options
+(J) Jump to next unviewed
 (U) Toggle link
 (B) Toggle bookmark
 (B:<integer>) Add/remove bookmark
