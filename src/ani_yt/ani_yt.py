@@ -742,7 +742,8 @@ class ArgsHandler:
         try:
             return self.actions.get(action)()
         except TypeError as e:
-            print(e)
+            # print(e)
+            raise TypeError(e)
             OSManager.exit(404)
 
     def listener(self):

@@ -181,6 +181,83 @@ class DisplayExtension:
 
 
 class DisplayMenu(Display, DisplayExtension):
+    """
+    DisplayMenu handles the presentation and navigation of video playlists with features like:
+    - Paging through videos
+    - Bookmarking
+    - Showing/hiding additional options
+    - Auto-selecting the next unviewed video
+    - Thumbnail preview
+
+    Key Features Overview:
+
+    1. Initialization (__init__):
+        - Sets up user options, display settings, and history map.
+        - Static options (pages_opts) and dynamic options (B_toggle, O_toggle) are combined.
+        - History is loaded to know which videos were already viewed.
+
+    2. Options Handling:
+        - Static options: navigation, jump to page, view thumbnail, quit.
+        - Dynamic options: toggle bookmark, show/hide all options.
+        - Options are stored in a dict with meaningful keys, then merged into `combined_opts`.
+        - `page_opts_display` contains the formatted string for display.
+
+    3. Auto-Select Mechanism:
+        - `_find_first_unviewed_index()` finds the first video not marked as 'viewed'.
+        - `_find_next_unviewed_index(start_idx)` finds the next unviewed video from a starting index.
+        - During `print_menu()`, the first unviewed video on the current page is automatically set as `choosed_item`.
+        - In `choose_item_option()`:
+            * If the user presses Enter without typing a number, `choosed_item` is auto-selected.
+            * If `_last_played` exists and matches `choosed_item`, the index increments to the next item for auto-play.
+        - This ensures the menu always highlights the next video the user hasn't watched yet.
+        - After selection, `_last_played` is updated so subsequent auto-selects work correctly.
+
+    4. Pagination:
+        - `pagination()` splits the playlist into pages according to `items_per_list`.
+        - Keeps track of current page, total items, items per page, and last page length.
+        - `index_item` tracks the current page index.
+        - `len_data_items` tracks number of videos on the current page.
+
+    5. Menu Rendering:
+        - `print_option()` shows either all options (if `show_opts=True`) or just toggle hint.
+        - `print_page_indicator()` shows current page / total pages and items shown.
+        - `print_menu()` prints each video title with colors:
+            * Gray if already viewed
+            * Yellow if bookmarked
+            * Appends video URL if `show_link=True`
+        - The first unviewed video on the page becomes the default selected item.
+
+    6. User Input Processing:
+        - `print_user_input()` asks the user to select an item.
+        - `advanced_options()` handles commands with parameters:
+            * "P:<int>" → jump to page
+            * "B:<int>" → toggle bookmark on a specific video
+            * "I:<int>" → change number of items per page
+            * "T:<int>" → view thumbnail
+        - `choose_item_option()` selects a video either based on input or auto-selection logic.
+        - `standard_options()` handles simple single-key commands:
+            * N/P → next/previous page
+            * J → jump to next unviewed video
+            * U → toggle URL display
+            * O → toggle full options
+            * B → toggle bookmark mode
+            * Q → quit
+
+    7. Menu Loop (choose_menu):
+        - Clears screen and redraws menu every iteration.
+        - Updates page info and options display dynamically.
+        - Continues until a valid video selection is made, which is returned as (title, URL).
+        - Ensures indices are valid and resets loop variables after exit.
+
+    8. Bookmark / Viewed Tracking:
+        - Bookmarks are toggled via `bookmark_processing()`.
+        - Viewed videos are tracked via `history_handler` and local `history_map`.
+        - `mark_viewed(url)` updates both history file and local map.
+
+    Overall Flow:
+        __init__ → load history & set up options → choose_menu → render menu → wait for user input → handle input → auto-select next unviewed → return selected video
+    """
+
     def __init__(self, opts: Display_Options, extra_opts={}):
         # Dependencies
         self._init_extra_opts(
@@ -212,13 +289,20 @@ class DisplayMenu(Display, DisplayExtension):
         self._init_loop_values_()
 
         # Constant
-        self.no_opts = ["(O) Hide all options", "(O) Show all options"]
-        self.pages_opts = [
-            "(N) Next page",
-            "(P) Previous page",
-            "(P:<integer>) Jump to page",
-        ]
-        self.pages_opts = "\n".join(self.pages_opts)
+        self.no_opts = {
+            "option_toggle": ["(O) Hide all options", "(O) Show all options"],
+        }
+        self.pages_opts = {
+            "N": "(N) Next page",
+            "P": "(P) Previous page",
+            "P_int": "(P:<integer>) Jump to page",
+            "J": "(J) Jump to next unviewed",
+            "U": "(U) Toggle link",
+            "B_int": "(B:<integer>) Add/remove bookmark",
+            "T_int": "(T:<integer>) View thumbnail",
+            "I_int": "(I:<integer>) number of items per page",
+            "Q": "(Q) Quit",
+        }
 
         # Dynamic
         self._render_dynamic_opts()
@@ -247,17 +331,46 @@ class DisplayMenu(Display, DisplayExtension):
                 return idx
         return 0
 
+    def _find_next_unviewed_index(self, start_idx=0):
+        if not self.data:
+            return 0
+        for idx in range(start_idx, len(self.data)):
+            if (
+                self.history_map.get(self.data[idx]["video_url"], "").lower()
+                != "viewed"
+            ):
+                return idx
+        return start_idx
+
     def _render_dynamic_opts(self):
-        self.page_opts = [
-            self.no_opts[0],
-            "(U) Toggle link",
-            f"{self.YELLOW if self.bookmark else ''}(B) Toggle bookmark{self.RESET}",
-            "(B:<integer>) Add/remove bookmark",
-            "(T:<integer>) View thumbnail",
-            "(I:<integer>) number of items per page",
-            "(Q) Quit",
+        self.combined_opts = self.pages_opts.copy()
+
+        self.combined_opts["B_toggle"] = (
+            f"{self.YELLOW if self.bookmark else ''}(B) Toggle bookmark{self.RESET}"
+        )
+        self.combined_opts["O_toggle"] = (
+            self.no_opts["option_toggle"][0]
+            if not self.opts.show_opts
+            else self.no_opts["option_toggle"][1]
+        )
+
+        key_order = [
+            "O_toggle",
+            "N",
+            "P",
+            "P_int",
+            "J",
+            "U",
+            "B_toggle",
+            "B_int",
+            "T_int",
+            "I_int",
+            "Q",
         ]
-        self.page_opts = "\n".join(self.page_opts)
+
+        self.page_opts_display = "\n".join(
+            [self.combined_opts[k] for k in key_order if k in self.combined_opts]
+        )
 
     def _init_loop_values_(self):
         """
@@ -318,12 +431,9 @@ class DisplayMenu(Display, DisplayExtension):
 
     def print_option(self):
         if self.opts.show_opts:
-            if self.len_data > 1:
-                output = f"{self.pages_opts}\n{self.page_opts}"
-            else:
-                output = self.page_opts
+            output = self.page_opts_display
         else:
-            output = self.no_opts[1]
+            output = self.no_opts["option_toggle"][0]
         print(f"{output}\n")
 
     def print_page_indicator(self):
@@ -371,8 +481,6 @@ class DisplayMenu(Display, DisplayExtension):
             prompt = "Select"
             if self.choosed_item is not False:
                 prompt += f" ({self.choosed_item+1})"
-            elif self.user_input:
-                prompt += f" ({self.user_input+1})"
             prompt += ": "
             self.user_input = input(prompt).strip()
         except KeyboardInterrupt:
@@ -402,19 +510,29 @@ class DisplayMenu(Display, DisplayExtension):
 
     def choose_item_option(self):
         try:
-            if self.clear_choosed_item:
-                self.choosed_item = False
-
             if self.user_input == "":
-                self.choosed_item += 1
-                self.user_input = str(self.choosed_item)
-                return self.choose_item_option()
+                # If just entered (no auto-play yet) then play correct self.choosed_item
+                if self.choosed_item is False:
+                    self.choosed_item = 0
+                else:
+                    # If user_input is empty multiple times in a row
+                    # then only increment when the previous set has been played
+                    if (
+                        hasattr(self, "_last_played")
+                        and self._last_played == self.choosed_item
+                    ):
+                        self.choosed_item += 1
+            else:
+                if not self.user_input.isdigit():
+                    raise ValueError()
+                idx = int(self.user_input) - 1
+                if idx < 0 or idx >= len(self.data):
+                    raise IndexError()
+                self.choosed_item = idx
 
-            if not self.user_input.isdigit():
-                raise ValueError()
-
-            self.choosed_item = int(self.user_input)
-            ans: Video = self.data[self.choosed_item - 1]
+            ans: Video = self.data[self.choosed_item]
+            # save the episode just played to enter next time auto next
+            self._last_played = self.choosed_item
             return ans["video_title"], ans["video_url"]
 
         except ValueError:
@@ -427,51 +545,39 @@ class DisplayMenu(Display, DisplayExtension):
         user_input = self.user_input.upper()
         if user_input == "O":
             self.opts.show_opts = not self.opts.show_opts
-        elif user_input == "N":
+            return True
+        if user_input == "N":
             self.index_item += 1
-        elif user_input == "P":
+            return True
+        if user_input == "P":
             self.index_item -= 1
-        elif user_input == "U":
+            return True
+        if user_input == "J":
+            self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
+            self.index_item = self.choosed_item // self.opts.items_per_list
+            return True
+        if user_input == "U":
             self.show_link = not self.show_link
-        elif user_input == "B":
+            return True
+        if user_input == "B":
             self.bookmark = not self.bookmark
             self._render_dynamic_opts()
-        elif user_input == "Q":
+            return True
+        if user_input == "Q":
             OSManager.exit(0)
-        else:
-            return self.choose_item_option()
-        return
+        return False
 
     def choose_menu(self, playlists, clear_choosed_item=False):
-        """
-        How auto-select (guessing user choices) feature works
-        1. __init__()
-        Initialize self.choosed_item
-        2. print_menu()
-        Assign a default value to self.choosed_item
-        This value is the index of the latest episode the user has watched
-        If not, self.choosed_item retains its initial value
-        3. choose_item_option()
-        If the user specifies a specific number (for self.user_input), it overwrites the default value of self.choosed_item
-        If not, self.choosed_item is incremented by 1 (the index of the next episode) and overwrites self.user_input
-        When the value of self.choosed_item is the initial value, it is automatically processed as index 0 and returns a value of 1 (the first episode in the list)
-        4. valid_index_item()
-        In case self.choosed_item exceeds the valid limit, it will be set to its initial value.
-        """
-
         playlists = LegacyCompatibility.normalize_playlist(playlists)
 
         self.data = playlists
         self.clear_choosed_item = clear_choosed_item
         self.pagination()
 
-        if (
-            self.clear_choosed_item
-            or not hasattr(self, "choosed_item")
-            or self.choosed_item is False
-        ):
+        if self.clear_choosed_item or self.choosed_item is False:
             self.choosed_item = self._find_first_unviewed_index()
-            self.user_input = str(self.choosed_item + 1)
+
+        self.index_item = self.choosed_item // self.opts.items_per_list
 
         try:
             while True:
@@ -491,9 +597,10 @@ class DisplayMenu(Display, DisplayExtension):
                 if self.advanced_options():
                     continue
 
-                if ans := self.standard_options():
-                    return ans  # (title, url)
-                else:
+                if self.standard_options():
                     continue
+
+                if ans := self.choose_item_option():
+                    return ans
         finally:
             self._init_loop_values_()
