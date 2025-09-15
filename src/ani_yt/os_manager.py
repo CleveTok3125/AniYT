@@ -35,7 +35,11 @@ class OSManager:
     def android_check():
         return (
             True
-            if os.name == "posix" and "android" in os.uname().release.lower()
+            if os.name == "posix"
+            and (
+                "android" in os.uname().release.lower()
+                or "com.termux" in os.environ.get("PREFIX", "")
+            )
             else False
         )
 

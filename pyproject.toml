@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "AniYT"
 version = "0.10.0"
-description = "A cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube."
+description = "A feauture rich cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube."
 authors = [
     { name = "CleveTok3125", email = "CleveTok3125@gmail.com" }
 ]
