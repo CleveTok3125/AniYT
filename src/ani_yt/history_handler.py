@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 import ujson as json
 
@@ -135,3 +135,66 @@ class HistoryHandler:
 
     def delete_history(self):
         OSManager.delete_file(self.filename)
+
+    def clear_history(
+        self,
+        mode: Literal["playlist", "videos", "unwatched"] = "playlist",
+        keep_recent: int = 1,
+    ):
+        """
+        Clear old history based on timestamp.
+
+        Parameters:
+        - mode:
+            "playlist"  -> delete full playlists
+            "videos"    -> delete all videos in playlist
+            "unwatched" -> delete only videos without 'status'
+        - keep_recent: number of most recently viewed playlists to keep
+        """
+
+        if not self.is_history():
+            print("No history file found.")
+            return
+
+        content = self.load()
+        playlists = content.get("playlists", [])
+
+        # Sort playlists by last_viewed descending (most recent first)
+        def ts_key(p):
+            ts = p.get("last_viewed") or ""
+            try:
+                return datetime.fromisoformat(ts)
+            except Exception:
+                return datetime.min
+
+        sorted_playlists = sorted(playlists, key=ts_key, reverse=True)
+
+        # Keep most recent playlists
+        keep = sorted_playlists[:keep_recent]
+        old = sorted_playlists[keep_recent:]
+
+        for p in old:
+            if mode == "playlist":
+                # will remove from playlists entirely later
+                continue
+            elif mode == "videos":
+                p["videos"] = []
+                p.pop("last_updated", None)
+                p.pop("last_viewed", None)
+            elif mode == "unwatched":
+                p["videos"] = [v for v in p.get("videos", []) if v.get("status")]
+
+        if mode == "playlist":
+            # Only keep the most recent
+            content["playlists"] = keep
+        else:
+            # Keep recent + modified old playlists
+            content["playlists"] = keep + old
+
+        # Persist
+        with open(self.filename, "w", encoding=self.encoding) as f:
+            json.dump(content, f, indent=4)
+
+        print(
+            f"History cleared. Mode: {mode}\nKept {keep_recent} most recent playlists."
+        )

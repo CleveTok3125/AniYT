@@ -5,7 +5,7 @@ import sys
 
 class SubprocessHelper:
     @staticmethod
-    def app_subprocess_helper(commands, app_name=None, *, check_only=False, note=""):
+    def _app_subprocess_helper(commands, app_name=None, *, check_only=False, note=""):
         if isinstance(commands, (list, tuple)) and commands:
             cmd_name = commands[0]
             cmd_list = list(commands)
@@ -38,6 +38,13 @@ class SubprocessHelper:
         except subprocess.CalledProcessError as e:
             print(f"Error running {app_name}: {e}")
             sys.exit(e.returncode)
+
+    @staticmethod
+    def app_subprocess_helper(*args, **kwargs):
+        try:
+            SubprocessHelper._app_subprocess_helper(*args, **kwargs)
+        except KeyboardInterrupt:
+            print("Action canceled by user.")
 
 
 class LegacyCompatibility:

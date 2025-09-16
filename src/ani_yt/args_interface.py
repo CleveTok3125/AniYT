@@ -91,6 +91,18 @@ class ArgsHandler:
             help="Delete history.",
         )
         self.group_cache.add_argument(
+            "--clear-history",
+            type=str,
+            choices=["playlist", "videos", "unwatched"],
+            help="Clear history: 'playlist' to remove old playlists, 'videos' to clear videos in old playlists, 'unwatched' to remove only unwatched videos.",
+        )
+        self.group_cache.add_argument(
+            "--keep-recent",
+            type=int,
+            default=1,
+            help="Number of recent playlists to keep when clearing history.",
+        )
+        self.group_cache.add_argument(
             "--delete-bookmark",
             action="store_const",
             const="delete_bookmark",
@@ -330,6 +342,11 @@ class ArgsHandler:
 
         if self.args.merge_channels:
             self.main.update_multiple(self.args.merge_channels)
+
+        if self.args.clear_history:
+            self.main.clear_history(
+                mode=self.args.clear_history, keep_recent=self.args.keep_recent
+            )
 
         self.actions = {
             "clear_cache": self.main.clear_cache,

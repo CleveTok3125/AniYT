@@ -172,6 +172,9 @@ class Main:
     def delete_history(self):
         self.history_handler.delete_history()
 
+    def clear_history(self, *args, **kwargs):
+        self.history_handler.clear_history(*args, **kwargs)
+
     def delete_bookmark(self):
         self.bookmarking_handler.delete_bookmark()
 

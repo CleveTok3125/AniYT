@@ -11,7 +11,7 @@ class Extension:
     class CheckModuleUpdate:
         @staticmethod
         def check_yt_dlp(name="yt-dlp"):
-            print("[Extension] Checking for yt-dlp update...")
+            print("\n[Extension] Checking for yt-dlp update...")
 
             SubprocessHelper.app_subprocess_helper("yt-dlp", check_only=True)
 
