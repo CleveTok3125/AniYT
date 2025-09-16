@@ -108,33 +108,7 @@ class Main:
         print("Saving...")
         new_videos = self.dp.omit(new_playlist_data)  # List[Video]
 
-        # find playlist index in history
-        p_idx = next(
-            (
-                i
-                for i, p in enumerate(history.get("playlists", []))
-                if p.get("playlist_url") == curr_playlist_url
-            ),
-            None,
-        )
-        if p_idx is None:
-            # If playlist not present, create and append
-            playlist_entry = {
-                "playlist_title": history["current"].get("playlist_title", ""),
-                "playlist_url": curr_playlist_url,
-                "videos": new_videos,
-            }
-            history.setdefault("playlists", []).append(playlist_entry)
-        else:
-            # merge videos into existing playlist
-            old_videos = history["playlists"][p_idx].get("videos", [])
-            merged = self.dp.merge_list(old_videos, new_videos, truncate=True)
-            history["playlists"][p_idx]["videos"] = merged
-
-        # persist: update entire playlists (and keep current)
-        self.history_handler.update(
-            curr=history.get("current"), playlists=history.get("playlists")
-        )
+        self.history_handler.update(curr=curr, videos=new_videos)
 
         print("Done!")
         return
@@ -189,22 +163,7 @@ class Main:
         print("Saving...")
         new_videos = self.dp.omit(new_playlist_data)
 
-        p_idx = self._find_playlist_index(history, curr_playlist_url)
-        if p_idx is None:
-            playlist_entry = {
-                "playlist_title": curr.get("playlist_title", ""),
-                "playlist_url": curr_playlist_url,
-                "videos": new_videos,
-            }
-            history.setdefault("playlists", []).append(playlist_entry)
-        else:
-            old_videos = history["playlists"][p_idx].get("videos", [])
-            merged = self.dp.merge_list(old_videos, new_videos, truncate=True)
-            history["playlists"][p_idx]["videos"] = merged
-
-        self._history_update(
-            curr=history.get("current"), playlists=history.get("playlists")
-        )
+        self.history_handler.update(curr=curr, videos=new_videos)
         print("Done!")
 
     def clear_cache(self):
@@ -261,7 +220,7 @@ class Main:
 
             title, self.url = self.display_menu.choose_menu(menu_items)
             self.start_player()
-
+            self.history_handler.update(curr=curr, viewed=True)
             self.display_menu.mark_viewed(self.url)
 
     def menu(self, playlist_list):
@@ -286,11 +245,6 @@ class Main:
             menu_items, clear_choosed_item=True
         )
 
-        history = (
-            self.history_handler.load()
-            if self.history_handler.is_history()
-            else {"current": {}, "playlists": []}
-        )
         curr_obj = {
             "video_title": title,
             "video_url": self.url,
@@ -298,34 +252,10 @@ class Main:
             "playlist_url": playlist_url,
         }
 
-        # find playlist index or create
-        p_idx = next(
-            (
-                i
-                for i, p in enumerate(history.get("playlists", []))
-                if p.get("playlist_url") == playlist_url
-            ),
-            None,
-        )
-        if p_idx is None:
-            history.setdefault("playlists", []).append(
-                {
-                    "playlist_title": playlist_title,
-                    "playlist_url": playlist_url,
-                    "videos": videos,
-                }
-            )
-        else:
-            old_videos = history["playlists"][p_idx].get("videos", [])
-            merged = self.dp.merge_list(old_videos, videos, truncate=False)
-            history["playlists"][p_idx]["videos"] = merged
-
-        self.history_handler.update(curr=curr_obj, playlists=history.get("playlists"))
+        self.history_handler.update(curr=curr_obj, videos=videos, viewed=True)
 
         self.start_player()
-
         self.display_menu.mark_viewed(self.url)
-
         self.loop()
 
     def show_bookmark(self):

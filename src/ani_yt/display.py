@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 from time import sleep
 from typing import Dict, List
 
@@ -393,13 +394,17 @@ class DisplayMenu(Display, DisplayExtension):
 
     def mark_viewed(self, url: str):
         """
-        Mark the video as viewed in both history file and local map.
+        Mark the video as viewed in both history file and local map, and update last_viewed timestamp.
         """
         history = self.history_handler.load()
 
         p_idx, v_idx = self.history_handler.search(url, history)
         if p_idx != -1 and v_idx != -1:
             history["playlists"][p_idx]["videos"][v_idx]["status"] = "viewed"
+
+            now = datetime.now().astimezone().isoformat()
+            history["playlists"][p_idx]["videos"][v_idx]["last_viewed"] = now
+
             # persist
             self.history_handler.update(
                 curr=history.get("current"), playlists=history.get("playlists")
