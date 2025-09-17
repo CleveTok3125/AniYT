@@ -1,0 +1,3 @@
+include src/ani_yt/*.pyx
+include src/ani_yt/*.pxd
+recursive-include src/ani_yt *.pyx *.pxd

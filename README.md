@@ -4,6 +4,7 @@
 [![Release](https://img.shields.io/github/v/release/CleveTok3125/AniYT)](https://github.com/CleveTok3125/AniYT/releases)
 [![CodeQL](https://github.com/CleveTok3125/AniYT/workflows/CodeQL/badge.svg)](https://github.com/CleveTok3125/AniYT/security/code-scanning)
 [![CI](https://github.com/CleveTok3125/AniYT/actions/workflows/ci.yml/badge.svg)](https://github.com/CleveTok3125/AniYT/actions/workflows/ci.yml)
+[![Build](https://github.com/CleveTok3125/AniYT/actions/workflows/build.yml/badge.svg)](https://github.com/CleveTok3125/AniYT/actions/workflows/build.yml)
 
 A feauture rich cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube.
 
@@ -75,23 +76,18 @@ Command line interface ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/
 9. **Automatically check for yt-dlp updates**\
    Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
 
-To see the full features, see Artifacts in latest workflow runs in [CI](https://github.com/CleveTok3125/AniYT/actions/workflows/ci.yml)
+To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/AniYT/blob/artifacts/artifacts/help/cli_help.txt)
 
 # Dependencies
 - Python >= 3.8 (recommended >= 3.13)
 - MPV or MPV-X11
 
 # Installation
-## Install from Source
-```bash
-git clone https://github.com/CleveTok3125/AniYT/
-cd AniYT
-pip install .
-```
-## Install from Remote
+## Install from Source (rolling)
 ```bash
 pip install git+https://github.com/CleveTok3125/AniYT.git
 ```
+## 
 
 # Usage
 ## Use with Python Module
@@ -114,12 +110,17 @@ ani-yt search "Attack on Titan"  # Search and return matching playlists
 python -m pip uninstall AniYT
 ```
 
-# Run from source
+# Install and run locally
 ## Clone repo
 ```bash
 git clone https://github.com/CleveTok3125/AniYT/
 cd AniYT
 ```
+## Setup environment
+```bash
+python -m venv venv
+source venv/bin/activate
+``
 ## Install requirements
 ```bash
 pip install -r requirements.txt

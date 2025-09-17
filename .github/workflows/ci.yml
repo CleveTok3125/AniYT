@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   run-tools-ci:
@@ -33,3 +33,14 @@ jobs:
       with:
         name: ani-yt-help
         path: cli_help.txt
+
+    - name: Commit and push artifacts to branch
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git checkout -B artifacts
+        mkdir -p artifacts/help
+        cp cli_help.txt artifacts/help/
+        git add -f artifacts/help/cli_help.txt
+        git commit -m "Update AniYT CLI help" || echo "No changes to commit"
+        git push -f origin artifacts
