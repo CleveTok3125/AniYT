@@ -27,3 +27,9 @@ jobs:
 
     - name: Run tools/ci
       run: ./tools/ci
+
+    - name: Upload AniYT CLI help
+      uses: actions/upload-artifact@v4
+      with:
+        name: ani-yt-help
+        path: cli_help.txt

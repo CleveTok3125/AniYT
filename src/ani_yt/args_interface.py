@@ -14,6 +14,12 @@ class ArgsHandler:
             description="Note: Options, if provided, will be processed sequentially in the order they are listed below."
         )
 
+        self.parser.add_argument(
+            "--full-help",
+            action="store_true",
+            help="show extended help for all commands and subcommands.",
+        )
+
         self.group_env = self.parser.add_argument_group("Environment Options")
         self.group_env.add_argument(
             "-t",
@@ -293,8 +299,20 @@ class ArgsHandler:
 
         self._argument_preprocessing()
 
+    def print_full_help(self):
+        self.parser.print_help()
+
+        for name, subparser in self.subparsers.choices.items():
+            print(f"\nSubcommand: {name}")
+            subparser.print_help()
+
+        sys.exit(0)
+
     def _argument_preprocessing(self):
         # Parameters that need to be processed immediately upon launch
+
+        if self.args.full_help:
+            self.print_full_help()
 
         if self.args.temp and self.args.directory:
             print(

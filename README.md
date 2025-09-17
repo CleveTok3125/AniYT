@@ -75,6 +75,8 @@ Command line interface ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/
 9. **Automatically check for yt-dlp updates**\
    Only check Python dependency, MPV Player if not using this dependency needs to be updated manually.
 
+To see the full features, see Artifacts in latest workflow runs in [CI](https://github.com/CleveTok3125/AniYT/actions/workflows/ci.yml)
+
 # Dependencies
 - Python >= 3.8 (recommended >= 3.13)
 - MPV or MPV-X11
