@@ -79,7 +79,7 @@ Command line interface ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/
 To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/AniYT/blob/artifacts/artifacts/help/cli_help.txt)
 
 # Dependencies
-- Python >= 3.8 (recommended >= 3.13)
+- Python >= 3.9 (recommended >= 3.13)
 - MPV or MPV-X11
 
 # Installation
@@ -87,7 +87,10 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 ```bash
 pip install git+https://github.com/CleveTok3125/AniYT.git
 ```
-## 
+## Install from GitHub Releases (recommended)
+```bash
+pip install --index-url https://clevetok3125.github.io/AniYT/ --extra-index-url https://pypi.org/simple aniyt
+```
 
 # Usage
 ## Use with Python Module

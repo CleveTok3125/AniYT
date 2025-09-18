@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+from . import __version__
 from .extension import Extension
 from .file_handler import Initialize
 from .main import Main
@@ -18,6 +19,10 @@ class ArgsHandler:
             "--full-help",
             action="store_true",
             help="show extended help for all commands and subcommands.",
+        )
+
+        self.parser.add_argument(
+            "--version", action="store_true", help="show version and exit"
         )
 
         self.group_env = self.parser.add_argument_group("Environment Options")
@@ -299,6 +304,10 @@ class ArgsHandler:
 
         self._argument_preprocessing()
 
+    def print_version(self):
+        print(f"AniYT {__version__}")
+        sys.exit(0)
+
     def print_full_help(self):
         self.parser.print_help()
 
@@ -310,6 +319,9 @@ class ArgsHandler:
 
     def _argument_preprocessing(self):
         # Parameters that need to be processed immediately upon launch
+
+        if self.args.version:
+            self.print_version()
 
         if self.args.full_help:
             self.print_full_help()

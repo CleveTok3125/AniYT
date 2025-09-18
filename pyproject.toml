@@ -4,12 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "AniYT"
-version = "0.11.0"
+version = "0.11.1"
 description = "A feauture rich cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube."
 authors = [
     { name = "CleveTok3125", email = "CleveTok3125@gmail.com" }
 ]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.8"
 dependencies = [

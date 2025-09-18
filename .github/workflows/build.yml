@@ -26,7 +26,7 @@ jobs:
     - name: Install build tools
       run: |
         python -m pip install --upgrade pip
-        pip install build cibuildwheel cython
+        pip install "setuptools>=77.0.0" wheel build cibuildwheel cython
 
     - name: Build sdist
       run: python -m build --sdist --outdir dist
@@ -34,7 +34,10 @@ jobs:
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.1.4
       env:
-        CIBW_BEFORE_BUILD: "pip install cython"
+        CIBW_SKIP: "cp36-* cp37-* cp38-*"
+        CIBW_BEFORE_BUILD: |
+          pip install --upgrade pip setuptools>=77.0.0 wheel build
+          pip install cython
         CIBW_BEFORE_BUILD_WINDOWS: "pip install cython"
         CIBW_ARCHS_MACOS: "x86_64 arm64"
         CIBW_ARCHS_WINDOWS: "AMD64"
@@ -114,6 +117,7 @@ jobs:
           artifacts/windows-latest/dist/*.tar.gz
           artifacts/windows-latest/wheelhouse/*.whl
           artifacts/digests/*.sha256
+          artifacts/help/cli_help.txt
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
