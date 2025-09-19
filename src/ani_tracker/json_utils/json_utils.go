@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"log"
-	"os"
 
 	"github.com/tidwall/gjson"
 )
@@ -51,18 +50,43 @@ func ParseMultipleJSON(jsonStr string) []any {
 	return all
 }
 
-func DumpJsonStr(all []any, outputFile string) {
-	file, err := os.Create(outputFile)
-	if err != nil {
-		log.Fatalf("Cannot create file: %v", err)
-	}
-	defer file.Close()
-
-	enc := json.NewEncoder(file)
-	enc.SetIndent("", "    ")
-	if err := enc.Encode(all); err != nil {
-		log.Fatalf("Failed to write JSON: %v", err)
+func GetJSONValueAt(jsonStr string, key string, index int) any {
+	var arr []map[string]any
+	if err := json.Unmarshal([]byte(jsonStr), &arr); err != nil {
+		log.Fatalf("Parse error: %v", err)
 	}
 
-	log.Printf("JSON dumped successfully to %s", outputFile)
+	if index >= 0 {
+		if index >= len(arr) {
+			log.Fatalf("Index %d out of range", index)
+		}
+		return arr[index][key] // value (need type assertion)
+	}
+
+	values := []any{}
+	for _, obj := range arr {
+		if v, ok := obj[key]; ok {
+			values = append(values, v)
+		}
+	}
+	return values // slice
+}
+
+func GetJSONValue(jsonStr string, key string) []any {
+	return GetJSONValueAt(jsonStr, key, -1).([]any)
+}
+
+func GetJSONValueCount(jsonStr string, key string) int {
+	var arr []map[string]any
+	if err := json.Unmarshal([]byte(jsonStr), &arr); err != nil {
+		log.Fatalf("Parse error: %v", err)
+	}
+
+	count := 0
+	for _, obj := range arr {
+		if _, ok := obj[key]; ok {
+			count++
+		}
+	}
+	return count
 }

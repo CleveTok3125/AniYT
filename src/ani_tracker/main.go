@@ -2,8 +2,10 @@
 package main
 
 import (
+	"ani-tracker/debug_utils"
 	"ani-tracker/history_handler"
-	"ani-tracker/yt_dlp_handler"
+
+	// "ani-tracker/yt_dlp_handler"
 	"log"
 	"os"
 )
@@ -21,10 +23,13 @@ func main() {
 	historyHandler.Load()
 	historyHandler.GetPlaylistURLs()
 
-	var videos = yt_dlp_handler.GetPlaylistVideosInfo(historyHandler.PlaylistURLs)
-	for _, v := range videos {
-		log.Println(v.Title)
-		log.Println(v.URL)
-	}
+	// var videos = yt_dlp_handler.GetPlaylistVideosInfo(historyHandler.PlaylistURLs)
+	// for _, v := range videos {
+	// 	log.Println(v.Title)
+	// 	log.Println(v.URL)
+	// }
 
+	historyHandler.GetPlaylistVideos()
+	historyHandler.ParseVideosToCompareList()
+	debug_utils.PrettyDump(debug_utils.GetField(historyHandler, "CompareList"), "	")
 }

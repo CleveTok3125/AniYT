@@ -160,10 +160,10 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 
 ## Notify new videos in playlist
 Dependencies:
-   - Go >= 1.18
+   - Go >= 1.22 (recommended >= 1.25.1)
    - yt-dlp (binary)
 
-This feature will be available after optimizing history and bookmarks.
+This feature is under development
 
 ## Android
 - For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)\
