@@ -1,3 +1,4 @@
+// Main logic
 package main
 
 import (
@@ -8,18 +9,22 @@ import (
 )
 
 func main() {
-	os.Chdir("../../data")
+	err := os.Chdir("../../data")
+	if err != nil {
+		log.Fatal("Failed to change dir: ", err)
+	}
 
-	history_handler := &history_handler.HistoryFile{
+	historyHandler := &history_handler.HistoryFile{
 		FileName: "history.json",
 	}
 
-	history_handler.Load()
-	history_handler.GetPlaylistURLs()
+	historyHandler.Load()
+	historyHandler.GetPlaylistURLs()
 
-	var videos []yt_dlp_handler.VideoInfo = yt_dlp_handler.GetPlaylistVideosInfo(history_handler.PlaylistURLs)
+	var videos = yt_dlp_handler.GetPlaylistVideosInfo(historyHandler.PlaylistURLs)
 	for _, v := range videos {
 		log.Println(v.Title)
 		log.Println(v.URL)
 	}
+
 }

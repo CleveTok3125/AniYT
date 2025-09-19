@@ -26,7 +26,9 @@ jobs:
       run: chmod +x tools/ci
 
     - name: Run tools/ci
-      run: ./tools/ci
+      run: |
+        export PATH="$HOME/go/bin:$PATH"
+        ./tools/ci
 
     - name: Upload AniYT CLI help
       uses: actions/upload-artifact@v4

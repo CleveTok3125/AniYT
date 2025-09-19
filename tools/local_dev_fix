@@ -1,17 +1,35 @@
 #!/bin/bash
 set -e
 
+clear
+
 SCRIPT_DIR=$(dirname "$0")
 REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
 cd "$REPO_ROOT"
 
-FILES=src/ani_yt
+PYTHON_FILES=src/ani_yt
+GO_MODULE_DIR=src/ani_tracker
 
+# --- Python ---
+echo "=== Python: auto-fix code style ==="
 source venv/bin/activate
+isort $PYTHON_FILES
+black $PYTHON_FILES
+flake8 $PYTHON_FILES
+deactivate
+echo "=== Python done ==="
 
-echo "=== Auto-fix code style ==="
-isort $FILES
-black $FILES
-flake8 $FILES
+# --- Go ---
+echo "=== Go: auto-fix + lint code ==="
 
-echo "=== Done ==="
+(cd "$GO_MODULE_DIR" && go mod tidy)
+
+(cd "$GO_MODULE_DIR" && gofmt -s -w .)
+(cd "$GO_MODULE_DIR" && goimports -w .)
+(cd "$GO_MODULE_DIR" && golangci-lint run --fix .)
+echo -n "Recheck: "
+(cd "$GO_MODULE_DIR" && golangci-lint run .)
+
+cd "$REPO_ROOT"
+echo "=== Go done ==="
+echo "=== ALL DONE ==="

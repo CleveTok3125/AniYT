@@ -5,31 +5,54 @@ SCRIPT_DIR=$(dirname "$0")
 REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
 cd "$REPO_ROOT"
 
+PYTHON_FILES=src/ani_yt
+GO_MODULE_DIR=src/ani_tracker
+
 echo "=== Install dependencies ==="
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 pip install setuptools cython flake8 black isort pytest
 pip install -e .
 
+go install golang.org/x/tools/cmd/goimports@latest
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
+golangci-lint --version
+
 echo "=== Build Cython extensions ==="
 python setup.py build_ext --inplace
 pip install .
 
+echo "=== Python checks ==="
+
 echo "=== Run flake8 ==="
-flake8 src/ani_yt
+black --check $PYTHON_FILES
 
 echo "=== Run black (check only) ==="
-black --check src/ani_yt
+black --check $PYTHON_FILES
 
 echo "=== Run isort (check only) ==="
-isort --check-only src/ani_yt
+isort --check-only $PYTHON_FILES
+
+echo "=== Python checks done ==="
+
+echo "=== Go: lint & style check ==="
+
+(cd "$GO_MODULE_DIR" && go mod tidy)
+
+(cd "$GO_MODULE_DIR" && golangci-lint run .)
+
+(cd "$GO_MODULE_DIR" && gofmt -l .)
+
+(cd "$GO_MODULE_DIR" && goimports -l .)
+
+echo "=== Go checks done ==="
 
 if [ -f "tests/test_main.py" ]; then
     echo "=== Run tests ==="
     pytest tests
 fi
 
-echo "=== Test AniYT CLI ==="
+echo "=== Generate Full Help ==="
 PYTHONPATH=src python -m ani_yt.ani_yt --full-help | tee cli_help.txt
 
 echo "=== CI Completed ==="

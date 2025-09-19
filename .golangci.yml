@@ -1,0 +1,32 @@
+version: 2
+run:
+  timeout: 1m
+  tests: true
+
+linters:
+  enable:
+    - staticcheck
+    - govet
+    - revive
+    - errcheck
+    - ineffassign
+
+linters-settings:
+  revive:
+    rules:
+      - name: var-naming
+      - name: package-comments
+      - name: exported
+      - name: import-shadowing
+
+issues:
+  exclude-use-default: false
+  max-same-issues: 0
+  max-issues-per-linter: 0
+  max-issues: 0
+
+  exclude:
+    - ".*_test.go"
+
+fix:
+  enabled: true

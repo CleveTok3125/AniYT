@@ -3,10 +3,11 @@ package json_utils
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/tidwall/gjson"
 	"io"
 	"log"
 	"os"
+
+	"github.com/tidwall/gjson"
 )
 
 func GetStringArray(jsonStr string, path string) []string {
