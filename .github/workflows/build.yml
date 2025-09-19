@@ -109,6 +109,7 @@ jobs:
       with:
         tag: ${{ github.ref_name }}
         generateReleaseNotes: true
+        prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
         artifacts: |
           artifacts/ubuntu-latest/dist/*.tar.gz
           artifacts/ubuntu-latest/wheelhouse/*.whl
