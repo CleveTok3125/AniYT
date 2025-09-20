@@ -1,17 +1,29 @@
 package yt_dlp_handler
 
 import (
+	"ani-tracker/common"
+	"ani-tracker/history_handler"
 	"ani-tracker/json_utils"
 	"log"
 	"os/exec"
 )
 
-type VideoInfo struct {
-	Title string
-	URL   string
+type PlaylistHandler struct {
+	*common.PlaylistURL
+	ComparingRemote *common.Comparing
 }
 
-func GetPlaylistVideos(url string) string {
+func (playlist_handler *PlaylistHandler) Init(historyHandler *history_handler.HistoryFile) {
+	if playlist_handler.PlaylistURL == nil {
+		playlist_handler.PlaylistURL = historyHandler.PlaylistURL
+	}
+
+	if playlist_handler.ComparingRemote == nil {
+		playlist_handler.ComparingRemote = &common.Comparing{}
+	}
+}
+
+func GetPlaylistVideosInfo(url string) string {
 	cmd := exec.Command("yt-dlp", "--flat-playlist", "-j", url)
 	output, err := cmd.CombinedOutput()
 
@@ -22,22 +34,29 @@ func GetPlaylistVideos(url string) string {
 	return string(output)
 }
 
-func GetPlaylistVideosInfo(PlaylistURLs []string) []VideoInfo {
-	var videos []VideoInfo
+func (playlist_handler *PlaylistHandler) ParseVideosToCompareList() {
+	playlistURLs := playlist_handler.PlaylistURL.PlaylistURLs
 
-	for _, playlist_url := range PlaylistURLs {
-		playlistJSON := GetPlaylistVideos(playlist_url)
-		playlistObjs := json_utils.ParseMultipleJSON(playlistJSON)
-		titles := json_utils.GetBytesStringArray(playlistObjs, "#.title")
-		urls := json_utils.GetBytesStringArray(playlistObjs, "#.url")
+	for _, playlist_url := range playlistURLs {
+		playlistJSON := GetPlaylistVideosInfo(playlist_url)
+		videos := make([]common.VideoInfo, 0)
 
-		for i := range titles {
-			videos = append(videos, VideoInfo{
-				Title: titles[i],
-				URL:   urls[i],
+		parsedJson, err := json_utils.ParseMultipleJSON(playlistJSON)
+
+		if err != nil {
+			log.Fatalf("Failed to parse JSON: %v", err)
+		}
+
+		for _, obj := range parsedJson {
+			m := obj.(map[string]any)
+			title, _ := m["title"].(string)
+			url, _ := m["url"].(string)
+			videos = append(videos, common.VideoInfo{
+				Title: title,
+				URL:   url,
 			})
 		}
-	}
 
-	return videos
+		playlist_handler.ComparingRemote.ComparingListRemote = append(playlist_handler.ComparingRemote.ComparingListRemote, videos)
+	}
 }
