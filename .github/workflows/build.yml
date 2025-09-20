@@ -40,8 +40,13 @@ jobs:
           pip install cython
         CIBW_BEFORE_BUILD_WINDOWS: "pip install cython"
         CIBW_ARCHS_MACOS: "x86_64 arm64"
-        CIBW_ARCHS_WINDOWS: "AMD64"
-        CIBW_ARCHS_LINUX: "x86_64"
+        CIBW_ARCHS_WINDOWS: "AMD64 ARM64"
+        CIBW_ARCHS_LINUX: "x86_64 aarch64"
+        CIBW_TEST_SKIP: >
+          *-manylinux_aarch64
+          *-musllinux_aarch64
+          *-macosx_arm64
+          *-win_arm64
         CIBW_OUTPUT_DIR: wheelhouse
 
     - name: Upload artifacts for matrix
