@@ -18,3 +18,15 @@ type ComparingData struct {
 	CompareListLocal    [][]VideoInfo
 	ComparingListRemote [][]VideoInfo
 }
+
+type GlobalDiff struct {
+	OnlyInLocal  []VideoInfo
+	OnlyInRemote []VideoInfo
+	TitleChanged []TitleChange
+}
+
+type TitleChange struct {
+	URL      string
+	OldTitle string
+	NewTitle string
+}

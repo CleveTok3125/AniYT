@@ -80,6 +80,6 @@ func (history_handler *HistoryFile) GenerateCompareList() {
 	}
 }
 
-func (history_handler *HistoryFile) GetCompareList() [][]common.VideoInfo  {
+func (history_handler *HistoryFile) GetCompareList() [][]common.VideoInfo {
 	return history_handler.ComparingLocal.CompareListLocal
 }
