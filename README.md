@@ -163,7 +163,11 @@ Dependencies:
    - Go >= 1.22 (recommended >= 1.25.1)
    - yt-dlp (binary)
 
-This feature is under development
+For testing:
+   ```bash
+   cd src/ani_tracker
+   go run .
+   ```
 
 ## Android
 - For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)\
