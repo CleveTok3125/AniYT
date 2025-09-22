@@ -10,7 +10,8 @@ import (
 
 type PlaylistHandler struct {
 	*common.PlaylistURL
-	ComparingRemote *common.Comparing
+	HistoryHandler  *history_handler.HistoryFile
+	ComparingRemote *common.ComparingData
 }
 
 func (playlist_handler *PlaylistHandler) Init(historyHandler *history_handler.HistoryFile) {
@@ -19,7 +20,7 @@ func (playlist_handler *PlaylistHandler) Init(historyHandler *history_handler.Hi
 	}
 
 	if playlist_handler.ComparingRemote == nil {
-		playlist_handler.ComparingRemote = &common.Comparing{}
+		playlist_handler.ComparingRemote = &common.ComparingData{}
 	}
 }
 
@@ -59,4 +60,13 @@ func (playlist_handler *PlaylistHandler) ParseVideosToCompareList() {
 
 		playlist_handler.ComparingRemote.ComparingListRemote = append(playlist_handler.ComparingRemote.ComparingListRemote, videos)
 	}
+}
+
+func (playlist_handler *PlaylistHandler) GenerateCompareList() {
+	playlist_handler.Init(playlist_handler.HistoryHandler)
+	playlist_handler.ParseVideosToCompareList()
+}
+
+func (playlist_handler *PlaylistHandler) GetCompareList() [][]common.VideoInfo {
+	return playlist_handler.ComparingRemote.ComparingListRemote
 }

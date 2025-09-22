@@ -12,7 +12,7 @@ type HistoryHandler any
 
 type HistoryFile struct {
 	*common.PlaylistURL
-	ComparingLocal *common.Comparing
+	ComparingLocal *common.ComparingData
 	FileName       string
 	jsonStr        string
 	videos         []string
@@ -25,7 +25,7 @@ func (history_handler *HistoryFile) Init() {
 	}
 
 	if history_handler.ComparingLocal == nil {
-		history_handler.ComparingLocal = &common.Comparing{}
+		history_handler.ComparingLocal = &common.ComparingData{}
 	}
 }
 
@@ -69,6 +69,8 @@ func (history_handler *HistoryFile) ParseVideosToCompareList() {
 
 func (history_handler *HistoryFile) GenerateCompareList() {
 	steps := []func(){
+		history_handler.Init,
+		history_handler.Load,
 		history_handler.LoadPlaylists,
 		history_handler.ParseVideosToCompareList,
 	}
@@ -76,4 +78,8 @@ func (history_handler *HistoryFile) GenerateCompareList() {
 	for _, step := range steps {
 		step()
 	}
+}
+
+func (history_handler *HistoryFile) GetCompareList() [][]common.VideoInfo  {
+	return history_handler.ComparingLocal.CompareListLocal
 }

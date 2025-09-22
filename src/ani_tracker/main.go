@@ -5,6 +5,7 @@ import (
 	"ani-tracker/debug_utils"
 	"ani-tracker/history_handler"
 	"ani-tracker/yt_dlp_handler"
+	"ani-tracker/common"
 
 	"log"
 	"os"
@@ -16,19 +17,17 @@ func main() {
 		log.Fatal("Failed to change dir: ", err)
 	}
 
-	historyHandler := &history_handler.HistoryFile{
-		FileName: "history.json",
+	historyHandler := &history_handler.HistoryFile{FileName: "history.json"}
+	ytdlpHandler := &yt_dlp_handler.PlaylistHandler{HistoryHandler: historyHandler}
+
+	handlers := []common.GenerateCompare{
+		historyHandler,
+		ytdlpHandler,
 	}
-	ytdlpHandler := &yt_dlp_handler.PlaylistHandler{}
 
-	historyHandler.Init()
-	historyHandler.Load()
-	historyHandler.GenerateCompareList()
+	for _, handler := range handlers {
+		handler.GenerateCompareList()
+		debug_utils.PrettyDump(handler.GetCompareList(), "    ")
+	}
 
-	ytdlpHandler.Init(historyHandler)
-	ytdlpHandler.ParseVideosToCompareList()
-
-	debug_utils.PrettyDump(historyHandler.ComparingLocal.CompareListLocal, "    ")
-	log.Print("\n\n\n")
-	debug_utils.PrettyDump(ytdlpHandler.ComparingRemote.ComparingListRemote, "    ")
 }
