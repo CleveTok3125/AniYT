@@ -2,6 +2,7 @@ package comparer
 
 import (
 	"ani-tracker/common"
+	"ani-tracker/os_manager"
 	"fmt"
 	"log"
 	"os"
@@ -98,7 +99,7 @@ func (df *DiffFile) Diff(localLists, remoteLists [][]common.VideoInfo) common.Gl
 		log.Fatal("Failed to export diff:", err)
 	}
 
-	log.Printf("Global diff exported to \"%s\"", df.FileName)
+	log.Printf("Global diff exported to: \"%s\"", os_manager.GetAbsPath(df.FileName))
 
 	return diff
 }

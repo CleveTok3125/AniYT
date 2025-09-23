@@ -81,6 +81,7 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 # Dependencies
 - Python >= 3.9 (recommended >= 3.13)
 - MPV or MPV-X11
+- YT-DLP
 
 # Installation
 ## Install from Source (rolling)
@@ -151,6 +152,8 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 - `./data/channel_sources.txt`: list of channel sources.
 - `./mpv-scripts/gestures.lua`: Recommended if running in graphical session via termux-x11. [Details](https://github.com/CleveTok3125/AniYT-mpv-gestures)
 - `./mpv-scripts/sponsorblock_minimal.lua`: Use SponsorBlock to skip sponsorships. Similar to `gesture.lua`, it is only loaded automatically if in a graphical session via termux-x11.
+- `./data/playlists.diff`: File containing difference information after running `ani-tracker`
+- `./data/*.log`: Log files for debugging
 
 *If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 
@@ -161,7 +164,6 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 ## Notify new videos in playlist
 Dependencies:
    - Go >= 1.22 (recommended >= 1.25.1)
-   - yt-dlp (binary)
 
 For testing:
    ```bash

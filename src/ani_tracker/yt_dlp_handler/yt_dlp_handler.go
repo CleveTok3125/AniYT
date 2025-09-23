@@ -4,6 +4,7 @@ import (
 	"ani-tracker/common"
 	"ani-tracker/history_handler"
 	"ani-tracker/json_utils"
+	"ani-tracker/os_manager"
 	"log"
 	"os/exec"
 )
@@ -25,6 +26,10 @@ func (playlist_handler *PlaylistHandler) Init(historyHandler *history_handler.Hi
 }
 
 func GetPlaylistVideosInfo(url string) string {
+	if ok, err := os_manager.IsInPATH("yt-dlp"); !ok {
+		log.Fatal("yt-dlp not found in PATH: ", err)
+	}
+
 	cmd := exec.Command("yt-dlp", "--flat-playlist", "-j", url)
 	output, err := cmd.CombinedOutput()
 
