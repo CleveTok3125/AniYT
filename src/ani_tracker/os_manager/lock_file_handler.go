@@ -21,9 +21,13 @@ func (lf *LockFile) CreateLockFile() {
 }
 
 func (lf *LockFile) RemoveLockFile() {
-	if err := os.Remove(lf.FilePath); err != nil {
-		log.Fatal("Unable to stop properly: ", err)
+	err := os.Remove(lf.FilePath)
+	switch {
+	case err == nil:
+		log.Printf("%s removed successfully", lf.FilePath)
+	case os.IsNotExist(err):
+		log.Printf("Lock file %s already removed", lf.FilePath)
+	default:
+		log.Println("Unable to remove lock file:", err)
 	}
-
-	log.Printf("%s removed successfully", lf.FilePath)
 }

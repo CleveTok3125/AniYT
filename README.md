@@ -157,7 +157,7 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 - `./mpv-scripts/sponsorblock_minimal.lua`: Use SponsorBlock to skip sponsorships. Similar to `gesture.lua`, it is only loaded automatically if in a graphical session via termux-x11.
 - `./data/playlists.diff`: File containing difference information after running `ani-tracker`
 - `./data/*.log`: Log files for debugging
-- `./data/*.lock`: This is a file created when the program runs. Delete it to force a manual break.
+- `./data/*.lock`: This is a file created when the program runs. Delete it to terminate the program.
 
 *If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 
@@ -172,7 +172,7 @@ Dependencies:
 For testing:
    ```bash
    cd src/ani_tracker
-   go run .
+   go run . -h
    ```
 
 ## Android
