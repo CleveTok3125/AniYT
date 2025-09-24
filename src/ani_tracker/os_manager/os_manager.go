@@ -2,6 +2,7 @@ package os_manager
 
 import (
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -22,4 +23,11 @@ func GetAbsPath(fileName string) string {
 		log.Fatal("Error: ", err)
 	}
 	return absPath
+}
+
+func ChangeDir(dir string) {
+	err := os.Chdir(dir)
+	if err != nil {
+		log.Fatal("Failed to change dir: ", err)
+	}
 }

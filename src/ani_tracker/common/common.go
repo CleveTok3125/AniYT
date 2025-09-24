@@ -1,7 +1,7 @@
 package common
 
 type GenerateCompare interface {
-	GenerateCompareList()
+	GenerateCompareList() error
 	GetCompareList() [][]VideoInfo
 }
 

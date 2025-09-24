@@ -18,7 +18,7 @@ type HistoryFile struct {
 	videos         []string
 }
 
-func (history_handler *HistoryFile) Init() {
+func (history_handler *HistoryFile) Init() error {
 	if history_handler.PlaylistURL == nil {
 		history_handler.PlaylistURL = &common.PlaylistURL{}
 
@@ -27,9 +27,10 @@ func (history_handler *HistoryFile) Init() {
 	if history_handler.ComparingLocal == nil {
 		history_handler.ComparingLocal = &common.ComparingData{}
 	}
+	return nil
 }
 
-func (history_file *HistoryFile) Load() {
+func (history_file *HistoryFile) Load() error {
 	data, err := os.ReadFile(history_file.FileName)
 
 	if err != nil {
@@ -37,15 +38,17 @@ func (history_file *HistoryFile) Load() {
 	}
 
 	history_file.jsonStr = string(data)
+	return nil
 }
 
-func (history_handler *HistoryFile) LoadPlaylists() {
+func (history_handler *HistoryFile) LoadPlaylists() error {
 	history_handler.PlaylistURL.PlaylistURLs = json_utils.GetStringArray(history_handler.jsonStr, "playlists.#.playlist_url")
 	history_handler.videos = json_utils.GetStringArray(history_handler.jsonStr, "playlists.#.videos")
 	history_handler.jsonStr = "" // GC
+	return nil
 }
 
-func (history_handler *HistoryFile) ParseVideosToCompareList() {
+func (history_handler *HistoryFile) ParseVideosToCompareList() error {
 	for _, v := range history_handler.videos {
 		var videoObjs []map[string]any
 		if err := json.Unmarshal([]byte(v), &videoObjs); err != nil {
@@ -65,10 +68,11 @@ func (history_handler *HistoryFile) ParseVideosToCompareList() {
 	}
 
 	history_handler.videos = nil // GC
+	return nil
 }
 
-func (history_handler *HistoryFile) GenerateCompareList() {
-	steps := []func(){
+func (history_handler *HistoryFile) GenerateCompareList() error {
+	steps := []func() error{
 		history_handler.Init,
 		history_handler.Load,
 		history_handler.LoadPlaylists,
@@ -76,8 +80,12 @@ func (history_handler *HistoryFile) GenerateCompareList() {
 	}
 
 	for _, step := range steps {
-		step()
+		err := step()
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (history_handler *HistoryFile) GetCompareList() [][]common.VideoInfo {

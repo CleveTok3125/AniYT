@@ -7,6 +7,7 @@ import (
 	"ani-tracker/os_manager"
 	"log"
 	"os/exec"
+	"strings"
 )
 
 type PlaylistHandler struct {
@@ -25,7 +26,7 @@ func (playlist_handler *PlaylistHandler) Init(historyHandler *history_handler.Hi
 	}
 }
 
-func GetPlaylistVideosInfo(url string) string {
+func GetPlaylistVideosInfo(url string) (string, error) {
 	if ok, err := os_manager.IsInPATH("yt-dlp"); !ok {
 		log.Fatal("yt-dlp not found in PATH: ", err)
 	}
@@ -34,17 +35,31 @@ func GetPlaylistVideosInfo(url string) string {
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		log.Fatalf("yt-dlp error: %v\n%s", err, string(output))
+		errMsg := err.Error()
+		outStr := string(output)
+
+		if strings.Contains(errMsg, "signal: interrupt") ||
+			strings.Contains(outStr, "Interrupted by user") ||
+			strings.Contains(outStr, "KeyboardInterrupt") {
+			log.Println("yt-dlp was interrupted, stopping gracefully.")
+			return "", err
+		}
+
+		log.Fatalf("yt-dlp error: %v\n%s", err, outStr)
 	}
 
-	return string(output)
+	return string(output), nil
 }
 
-func (playlist_handler *PlaylistHandler) ParseVideosToCompareList() {
+func (playlist_handler *PlaylistHandler) ParseVideosToCompareList() error {
 	playlistURLs := playlist_handler.PlaylistURL.PlaylistURLs
 
 	for _, playlist_url := range playlistURLs {
-		playlistJSON := GetPlaylistVideosInfo(playlist_url)
+		playlistJSON, err := GetPlaylistVideosInfo(playlist_url)
+		if err != nil {
+			return err
+		}
+
 		videos := make([]common.VideoInfo, 0)
 
 		parsedJson, err := json_utils.ParseMultipleJSON(playlistJSON)
@@ -65,11 +80,14 @@ func (playlist_handler *PlaylistHandler) ParseVideosToCompareList() {
 
 		playlist_handler.ComparingRemote.ComparingListRemote = append(playlist_handler.ComparingRemote.ComparingListRemote, videos)
 	}
+
+	return nil
 }
 
-func (playlist_handler *PlaylistHandler) GenerateCompareList() {
+func (playlist_handler *PlaylistHandler) GenerateCompareList() error {
 	playlist_handler.Init(playlist_handler.HistoryHandler)
-	playlist_handler.ParseVideosToCompareList()
+	err := playlist_handler.ParseVideosToCompareList()
+	return err
 }
 
 func (playlist_handler *PlaylistHandler) GetCompareList() [][]common.VideoInfo {
