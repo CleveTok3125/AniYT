@@ -7,7 +7,6 @@ import (
 	"ani-tracker/debug_utils"
 	"ani-tracker/os_manager"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -34,13 +33,13 @@ func main() {
 	os_manager.CatchTerminateSignal(stop)
 
 	cron := app.CronJob{
-		Interval: cfg.Interval,
-		Job:      app.Conductor,
-		Stop:     stop,
-		LockFile: lock,
+		Interval:          cfg.Interval,
+		Job:               app.Conductor,
+		Attempt:           cfg.Attempt,
+		BackoffMultiplier: cfg.BackoffMultiplier,
+		Stop:              stop,
+		LockFile:          lock,
 	}
-	err := cron.Run()
-	if err != nil {
-		log.Println("Cronjob stops with error: ", err)
-	}
+
+	cron.Run()
 }
