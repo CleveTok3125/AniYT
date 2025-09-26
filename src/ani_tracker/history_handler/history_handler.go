@@ -1,6 +1,7 @@
 package history_handler
 
 import (
+	"ani-tracker/bookmark_handler"
 	"ani-tracker/common"
 	"ani-tracker/json_utils"
 	"encoding/json"
@@ -12,10 +13,12 @@ type HistoryHandler any
 
 type HistoryFile struct {
 	*common.PlaylistURL
-	ComparingLocal *common.ComparingData
-	FileName       string
-	jsonStr        string
-	videos         []string
+	ComparingLocal   *common.ComparingData
+	FileName         string
+	jsonStr          string
+	videos           []string
+	Bookmarks        bookmark_handler.Bookmark
+	UseBookmarksOnly bool
 }
 
 func (history_handler *HistoryFile) Init() error {
@@ -41,9 +44,31 @@ func (history_file *HistoryFile) Load() error {
 	return nil
 }
 
+func (history_handler *HistoryFile) filterPlaylistsByBookmarks(allPlaylists []string, allVideos []string) ([]string, []string) {
+	filteredPlaylists := make([]string, 0)
+	filteredVideos := make([]string, 0)
+
+	for i, url := range allPlaylists {
+		if history_handler.Bookmarks.IsInBookmarks(url) {
+			filteredPlaylists = append(filteredPlaylists, url)
+			filteredVideos = append(filteredVideos, allVideos[i])
+		}
+	}
+
+	return filteredPlaylists, filteredVideos
+}
+
 func (history_handler *HistoryFile) LoadPlaylists() error {
-	history_handler.PlaylistURL.PlaylistURLs = json_utils.GetStringArray(history_handler.jsonStr, "playlists.#.playlist_url")
-	history_handler.videos = json_utils.GetStringArray(history_handler.jsonStr, "playlists.#.videos")
+	allPlaylists := json_utils.GetStringArray(history_handler.jsonStr, "playlists.#.playlist_url")
+	allVideos := json_utils.GetStringArray(history_handler.jsonStr, "playlists.#.videos")
+
+	if history_handler.UseBookmarksOnly && len(history_handler.Bookmarks) > 0 {
+		allPlaylists, allVideos = history_handler.filterPlaylistsByBookmarks(allPlaylists, allVideos)
+	}
+
+	history_handler.PlaylistURL.PlaylistURLs = allPlaylists
+	history_handler.videos = allVideos
+
 	history_handler.jsonStr = "" // GC
 	return nil
 }

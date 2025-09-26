@@ -32,9 +32,16 @@ func main() {
 	stop := make(chan struct{})
 	os_manager.CatchTerminateSignal(stop)
 
+	appInstance := &app.Config{
+		HistoryFileName:  "history.json",
+		BookmarkFileName: "bookmark.json",
+		DiffFileName:     "playlists.diff",
+		UseBookmarksOnly: cfg.UseBookmarksOnly,
+	}
+
 	cron := app.CronJob{
 		Interval:          cfg.Interval,
-		Job:               app.Conductor,
+		Job:               func() error { return appInstance.Conductor() },
 		Attempt:           cfg.Attempt,
 		BackoffMultiplier: cfg.BackoffMultiplier,
 		Stop:              stop,
