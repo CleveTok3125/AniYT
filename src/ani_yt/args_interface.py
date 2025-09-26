@@ -140,7 +140,14 @@ class ArgsHandler:
             "--viewed-mode",
             action="store_const",
             const="viewed_mode",
-            help="Browse all videos in cached playlist. Cached playlists will be cleared after playlist selection.",
+            help="Browse all videos in cached playlist.",
+        )
+        self.group_browse.add_argument(
+            "-vr",
+            "--viewed-refresh",
+            action="store_const",
+            const="viewed_refresh",
+            help="Browse all videos in cached playlist and refresh it once.",
         )
         self.group_browse.add_argument(
             "-r",
@@ -385,6 +392,7 @@ class ArgsHandler:
             "bookmark": self.main.show_bookmark,
             "list": self.main.list,
             "viewed_mode": self.main.loop,
+            "viewed_refresh": self.main.loop_refresh,
             "resume": self.main.resume,
             "source_update": self.main.source_update,
             "source_rebuild": self.main.source_rebuild,

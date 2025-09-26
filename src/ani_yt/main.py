@@ -195,7 +195,10 @@ class Main:
             self.url = url
         Player.start_with_mode(url=self.url, opts=self.opts)
 
-    def loop(self):
+    def loop_refresh(self):
+        self.loop(refresh=True)
+
+    def loop(self, refresh=False):
         while True:
             history = HistoryHandler().load()
 
@@ -217,6 +220,19 @@ class Main:
             if p_idx is None:
                 print("Current playlist not found in history.")
                 return
+
+            if refresh:
+                try:
+                    video_data = self.dlp.get_video(curr_playlist_url)
+                except MissingChannelUrl:
+                    print("Failed to fetch playlist videos.")
+                    return
+
+                videos = self.dp.omit(video_data)
+                videos = self.dp.sort(videos, key=lambda x: x["video_title"])
+
+                self.history_handler.update(curr=curr, videos=videos)
+                history = self.history_handler.load()
 
             videos = history["playlists"][p_idx].get("videos", [])
             menu_items = self._videos_to_pairs(videos)
