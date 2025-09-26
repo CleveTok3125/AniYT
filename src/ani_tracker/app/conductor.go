@@ -5,6 +5,7 @@ import (
 	"ani-tracker/common"
 	"ani-tracker/comparer"
 	"ani-tracker/history_handler"
+	"ani-tracker/notify"
 	"ani-tracker/yt_dlp_handler"
 	"log"
 )
@@ -14,6 +15,7 @@ type Config struct {
 	BookmarkFileName string
 	DiffFileName     string
 	UseBookmarksOnly bool
+	Silent           bool
 }
 
 func (cfg *Config) Conductor() error {
@@ -44,6 +46,10 @@ func (cfg *Config) Conductor() error {
 	}
 
 	cmp.Diff(historyHandler.GetCompareList(), ytdlpHandler.GetCompareList())
+
+	if !cfg.Silent && cmp.HasChanges {
+		notify.NotifyDiff(cmp.Summary)
+	}
 
 	return nil
 }

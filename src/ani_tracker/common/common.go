@@ -30,3 +30,10 @@ type TitleChange struct {
 	OldTitle string
 	NewTitle string
 }
+
+type DiffSummary struct {
+	TotalChanges int
+	OnlyInLocal  int
+	OnlyInRemote int
+	TitleChanged int
+}

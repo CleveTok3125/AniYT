@@ -10,6 +10,10 @@ import (
 	"os"
 )
 
+const HistoryFileName = "history.json"
+const BookmarkFileName = "bookmark.json"
+const DiffFileName = "playlists.diff"
+
 var logFileHandle *os.File
 
 func main() {
@@ -17,6 +21,13 @@ func main() {
 	cfg := args_handler.Cfg
 
 	os_manager.ChangeDir(cfg.WorkingDir)
+
+	nonCrons := []app.NonCrons{
+		app.ShowDiffCmd{DiffFileName: DiffFileName},
+	}
+	for _, cmd := range nonCrons {
+		cmd.Run(cfg)
+	}
 
 	if !cfg.NoDaemon {
 		logInst := debug_utils.LogFile{FilePath: cfg.LogFile, LogFileHandle: logFileHandle}
@@ -33,10 +44,11 @@ func main() {
 	os_manager.CatchTerminateSignal(stop)
 
 	appInstance := &app.Config{
-		HistoryFileName:  "history.json",
-		BookmarkFileName: "bookmark.json",
-		DiffFileName:     "playlists.diff",
+		HistoryFileName:  HistoryFileName,
+		BookmarkFileName: BookmarkFileName,
+		DiffFileName:     DiffFileName,
 		UseBookmarksOnly: cfg.UseBookmarksOnly,
+		Silent:           cfg.Silent,
 	}
 
 	cron := app.CronJob{
