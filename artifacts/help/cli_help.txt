@@ -1,0 +1,5 @@
+
+[Extension] Checking for yt-dlp update...
+
+[34m[notice][0m A new release of yt-dlp is available: [31m2025.4.30[0m -> [32m2025.9.26[0m
+[34m[notice][0m To update, run: [32mpython -m pip install --upgrade yt-dlp[0m
