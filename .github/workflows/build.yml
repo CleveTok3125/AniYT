@@ -60,7 +60,7 @@ jobs:
         pip install "setuptools>=77.0.0" wheel build cibuildwheel cython
 
     - name: Set up QEMU
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
       uses: docker/setup-qemu-action@v3
       with:
         platforms: arm64
@@ -74,27 +74,72 @@ jobs:
         GOARCH: ${{ matrix.arch }}
 
     - name: Build sdist
-      run: python -m build --sdist --outdir dist
+      shell: bash
+      run: |
+        python -m build --sdist --outdir dist
+        OS=${{ matrix.os }}
+        ARCH=${{ matrix.arch }}
+        for f in dist/*.tar.gz; do
+            base=$(basename "$f" .tar.gz)
+            mv "$f" "dist/${base}-${OS}-${ARCH}.tar.gz"
+        done
+
+    - name: Generate C files from Cython
+      run: |
+        python -c "from Cython.Build import cythonize; cythonize(['src/ani_yt/_query.pyx'], language_level=3)"
+
+    - name: Build pure Python wheel
+      if: env.SOURCE_ONLY == '1'
+      shell: bash
+      run: |
+        cp pyproject.toml pyproject.toml.old
+
+        version="${GITHUB_REF_NAME#v}"
+
+        case "${{ matrix.os }}" in
+        ubuntu-latest) osname=linux ;;
+        macos-latest)  osname=macos ;;
+        windows-latest) osname=windows ;;
+        *) osname=unknown ;;
+        esac
+        archname="${{ matrix.arch }}"
+
+        # backup pyproject.toml
+        cp pyproject.toml pyproject.toml.bak
+
+        if [[ "$(uname)" == "Darwin" ]]; then
+            sed -i '' "s/^version = \".*\"/version = \"${version}+0.${osname}.${archname}\"/" pyproject.toml
+        else
+            sed -i "s/^version = \".*\"/version = \"${version}+0.${osname}.${archname}\"/" pyproject.toml
+        fi
+
+        python -m build --wheel --outdir wheelhouse
+
+        ls -lh wheelhouse
+      env:
+        SOURCE_ONLY: 1
 
     - name: Build wheels
+      if: env.SOURCE_ONLY != '1'
       uses: pypa/cibuildwheel@v3.1.4
       env:
+        SOURCE_ONLY: 1
         CIBW_SKIP: "cp38-*"
         CIBW_BEFORE_BUILD: |
           pip install --upgrade pip setuptools>=77.0.0 wheel build
           pip install cython
         CIBW_BEFORE_BUILD_WINDOWS: "pip install cython"
-        CIBW_ARCHS_MACOS: "x86_64 arm64"
+        CIBW_ARCHS_LINUX: ${{ matrix.arch == 'amd64' && 'x86_64' || 'aarch64' }}
+        CIBW_ARCHS_WINDOWS: ${{ matrix.arch == 'amd64' && 'AMD64' || 'ARM64' }}
+        CIBW_ARCHS_MACOS: ${{ matrix.arch == 'amd64' && 'x86_64' || 'arm64' }}
         MACOSX_DEPLOYMENT_TARGET: "12.0"
-        CIBW_ARCHS_WINDOWS: "AMD64 ARM64"
-        CIBW_ARCHS_LINUX: "x86_64 aarch64"
         CIBW_TEST_SKIP: >
           *-manylinux_aarch64
           *-musllinux_aarch64
           *-macosx_arm64
           *-win_arm64
         CIBW_OUTPUT_DIR: wheelhouse
-        CIBW_REPAIR_WHEEL_COMMAND: ""
+        CIBW_REPAIR_WHEEL_COMMAND: ${{ matrix.wheel_type == 'prebuilt' && 'auditwheel repair {wheel} -w {dest}/' || '' }}
 
     - name: Upload artifacts for matrix
       uses: actions/upload-artifact@v4
@@ -131,8 +176,8 @@ jobs:
     - name: Generate SHA256 digests
       run: |
         mkdir -p artifacts/digests
-        find artifacts -type f ! -name "*.sha256" | while read f; do
-          sha256sum "$f" > "artifacts/digests/$(basename "$f").sha256"
+        find artifacts -path "artifacts/bin" -prune -o -type f ! -name "*.sha256" -print | while read f; do
+        sha256sum "$f" > "artifacts/digests/$(basename "$f").sha256"
         done
 
     - name: Commit and push all artifacts
@@ -150,11 +195,10 @@ jobs:
         generateReleaseNotes: true
         prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
         artifacts: |
-          artifacts/**/dist/*.tar.gz
-          artifacts/**/wheelhouse/*.whl
-          artifacts/**/bin/*
-          artifacts/digests/*.sha256
-          artifacts/help/cli_help.txt
+            artifacts/**/wheelhouse/*.whl
+            artifacts/**/dist/*.tar.gz
+            artifacts/digests/*.sha256
+            artifacts/help/cli_help.txt
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
