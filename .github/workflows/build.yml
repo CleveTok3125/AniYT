@@ -79,7 +79,6 @@ jobs:
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.1.4
       env:
-        CIBW_BUILD_FRONTEND: build
         CIBW_SKIP: "cp38-*"
         CIBW_BEFORE_BUILD: |
           pip install --upgrade pip setuptools>=77.0.0 wheel build
@@ -95,6 +94,7 @@ jobs:
           *-macosx_arm64
           *-win_arm64
         CIBW_OUTPUT_DIR: wheelhouse
+        CIBW_REPAIR_WHEEL_COMMAND: ""
 
     - name: Upload artifacts for matrix
       uses: actions/upload-artifact@v4
