@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from . import __version__
+from .ani_tracker_handler import TrackerWrapper
 from .extension import Extension
 from .file_handler import Initialize
 from .main import Main
@@ -307,6 +308,8 @@ class ArgsHandler:
 
         self.playlist_parsers.add_argument("url", type=str)
 
+        self._args_wrapping()
+
         self.args = self.parser.parse_args()
 
         self._argument_preprocessing()
@@ -322,7 +325,19 @@ class ArgsHandler:
             print(f"\nSubcommand: {name}")
             subparser.print_help()
 
+        TrackerWrapper.print_help()
+
         sys.exit(0)
+
+    def _args_wrapping(self):
+        # Special arguments for wrapping, which need to be run before argsparse
+        # By default, it needs to exit after running or there are additional steps to avoid invalid choice
+
+        if len(sys.argv) > 1 and sys.argv[1] == "tracker":
+            tracker_args = sys.argv[2:]
+            TrackerWrapper.run_tracker(tracker_args)
+
+        OSManager.exit(0)
 
     def _argument_preprocessing(self):
         # Parameters that need to be processed immediately upon launch

@@ -9,6 +9,8 @@ import (
 type Config struct {
 	WorkingDir string `short:"d" required:"true" help:"Working directory"`
 
+	Confirm           bool          `default:"false" help:"Confirm running commands"`
+	Kill              bool          `default:"false" help:"Force stop other running processes"`
 	NoDaemon          bool          `default:"false" help:"Do not daemonize"`
 	Silent            bool          `short:"s" default:"false" help:"Run in silent mode (for automation)"`
 	Interval          time.Duration `short:"i" default:"1h" help:"Interval duration"`

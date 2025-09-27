@@ -5,7 +5,9 @@ SCRIPT_DIR=$(dirname "$0")
 REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
 cd "$REPO_ROOT"
 
-tools/local_go_build
-tools/local_install
-clear
-ani-yt "$@"
+mkdir -p bin
+
+cd src/ani_tracker
+go build -o ../../bin/ani-tracker .
+
+cd "$REPO_ROOT"

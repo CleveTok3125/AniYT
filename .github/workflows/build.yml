@@ -12,7 +12,31 @@ jobs:
   build-wheels:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            arch: amd64
+            ext: ""
+          - os: ubuntu-latest
+            goos: linux
+            arch: arm64
+            ext: ""
+          - os: macos-latest
+            goos: darwin
+            arch: amd64
+            ext: ""
+          - os: macos-latest
+            goos: darwin
+            arch: arm64
+            ext: ""
+          - os: windows-latest
+            goos: windows
+            arch: amd64
+            ext: .exe
+          - os: windows-latest
+            goos: windows
+            arch: arm64
+            ext: .exe
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout repo
@@ -23,10 +47,31 @@ jobs:
       with:
         python-version: 3.13
 
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: 1.25.1
+        cache: true
+        cache-dependency-path: src/ani_tracker/go.sum
+
     - name: Install build tools
       run: |
         python -m pip install --upgrade pip
         pip install "setuptools>=77.0.0" wheel build cibuildwheel cython
+
+    - name: Set up QEMU
+      if: matrix.os == 'ubuntu-latest'
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+
+    - name: Build Go binary
+      run: |
+        cd src/ani_tracker
+        go build -ldflags="-s -w" -o ../../bin/ani-tracker${{ matrix.ext }} .
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.arch }}
 
     - name: Build sdist
       run: python -m build --sdist --outdir dist
@@ -34,12 +79,14 @@ jobs:
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.1.4
       env:
+        CIBW_BUILD_FRONTEND: build
         CIBW_SKIP: "cp38-*"
         CIBW_BEFORE_BUILD: |
           pip install --upgrade pip setuptools>=77.0.0 wheel build
           pip install cython
         CIBW_BEFORE_BUILD_WINDOWS: "pip install cython"
         CIBW_ARCHS_MACOS: "x86_64 arm64"
+        MACOSX_DEPLOYMENT_TARGET: "12.0"
         CIBW_ARCHS_WINDOWS: "AMD64 ARM64"
         CIBW_ARCHS_LINUX: "x86_64 aarch64"
         CIBW_TEST_SKIP: >
@@ -52,10 +99,11 @@ jobs:
     - name: Upload artifacts for matrix
       uses: actions/upload-artifact@v4
       with:
-        name: ani-yt-${{ matrix.os }}
+        name: ani-yt-${{ matrix.os }}-${{ matrix.arch }}
         path: |
           dist/*
           wheelhouse/*
+          bin/*
 
   merge-artifacts:
     needs: build-wheels
@@ -74,30 +122,16 @@ jobs:
       run: |
         git merge origin/main --no-ff -m "Sync main into artifacts" || echo "No changes to merge"
 
-    - name: Download Ubuntu artifacts
+    # Download all artifacts
+    - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
-        name: ani-yt-ubuntu-latest
-        path: artifacts/ubuntu-latest
-
-    - name: Download macOS artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: ani-yt-macos-latest
-        path: artifacts/macos-latest
-
-    - name: Download Windows artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: ani-yt-windows-latest
-        path: artifacts/windows-latest
+        path: artifacts
 
     - name: Generate SHA256 digests
       run: |
         mkdir -p artifacts/digests
-        for f in artifacts/ubuntu-latest/dist/* artifacts/ubuntu-latest/wheelhouse/* \
-                 artifacts/macos-latest/dist/* artifacts/macos-latest/wheelhouse/* \
-                 artifacts/windows-latest/dist/* artifacts/windows-latest/wheelhouse/*; do
+        find artifacts -type f ! -name "*.sha256" | while read f; do
           sha256sum "$f" > "artifacts/digests/$(basename "$f").sha256"
         done
 
@@ -116,12 +150,9 @@ jobs:
         generateReleaseNotes: true
         prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
         artifacts: |
-          artifacts/ubuntu-latest/dist/*.tar.gz
-          artifacts/ubuntu-latest/wheelhouse/*.whl
-          artifacts/macos-latest/dist/*.tar.gz
-          artifacts/macos-latest/wheelhouse/*.whl
-          artifacts/windows-latest/dist/*.tar.gz
-          artifacts/windows-latest/wheelhouse/*.whl
+          artifacts/**/dist/*.tar.gz
+          artifacts/**/wheelhouse/*.whl
+          artifacts/**/bin/*
           artifacts/digests/*.sha256
           artifacts/help/cli_help.txt
       env:
@@ -139,14 +170,13 @@ jobs:
       - name: Generate PyPI-style simple index
         run: |
           mkdir -p gh-pages/aniyt
-          for f in artifacts/*/*/*.whl; do
+          rm -f gh-pages/aniyt/index.html
+          for f in artifacts/**/wheelhouse/*.whl artifacts/**/dist/*.tar.gz; do
+            [ -f "$f" ] || continue
             fname=$(basename "$f")
             cp "$f" gh-pages/aniyt/
-            echo "<a href='$fname'>$fname</a><br>" >> gh-pages/aniyt/index.html
           done
-          for f in artifacts/*/*/*.tar.gz; do
-            fname=$(basename "$f")
-            cp "$f" gh-pages/aniyt/
+          ls gh-pages/aniyt | grep -E '\.whl$|\.tar\.gz$' | sort | while read fname; do
             echo "<a href='$fname'>$fname</a><br>" >> gh-pages/aniyt/index.html
           done
 

@@ -24,6 +24,7 @@ func main() {
 
 	nonCrons := []app.NonCrons{
 		app.ShowDiffCmd{DiffFileName: DiffFileName},
+		app.KillCmd{},
 	}
 	for _, cmd := range nonCrons {
 		cmd.Run(cfg)

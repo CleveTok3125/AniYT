@@ -83,8 +83,11 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 
 # Dependencies
 - Python >= 3.9 (recommended >= 3.13)
+- _Go >= 1.22 (recommended >= 1.25.1)_*
 - MPV or MPV-X11
 - YT-DLP
+
+*Only needed when building from source
 
 # Installation
 ## Install from Source (rolling)
@@ -100,16 +103,19 @@ pip install --index-url https://clevetok3125.github.io/AniYT/ --extra-index-url 
 ## Use with Python Module
 ```bash
 python -m ani-yt -h
+python -m ani-yt tracker -h
 ```
 ## Use with CLI Directly
 ```bash
 ani-yt -h
+ani-tracker -h
 ```
 ## Example
 ```bash
 ani-yt -c MuseAsia   # Update/Create new list of playlists from specified channel
 ani-yt -l   # List all available playlists
 ani-yt search "Attack on Titan"  # Search and return matching playlists
+ani-tracker --working-dir "./data" --interval 1h   # Watch new videos every 1 hour based on data generated from `ani-yt`
 ```
 
 # Uninstall
@@ -137,13 +143,26 @@ pip install setuptools cython
 ```bash
 python setup.py build_ext --inplace
 ```
+## Build Go binary
+```bash
+cd src/ani_tracker
+go build -o ../../bin/ani-tracker .
+cd ../../
+```
 ## Build
 ```bash
 pip install .
 ```
-## Run
+## Run live for debugging
+### ani-yt 
 ```bash
 PYTHONPATH=src python -m ani_yt.ani_yt -h
+```
+### ani-tracker
+```bash
+cd src/ani_tracker
+go run . -d ./../../data --no-daemon -h
+cd ../../
 ```
 
 # About additional/generated files
@@ -165,15 +184,12 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
 ## SponsorBlock
 - Use SponsorBlock plugin for MPV to skip OP/EN
 
-## Notify new videos in playlist
-Dependencies:
-   - Go >= 1.22 (recommended >= 1.25.1)
-
-For testing:
-   ```bash
-   cd src/ani_tracker
-   go run . -h
-   ```
+## Ani-Tracker: Notify new videos in playlist
+- This feature is separated from the original project and named `ani-tracker`
+- Instructions are included in `ani-yt --full-help`
+- The binary is included in the wheel of the original project, and can be run directly on the CLI. See [Usage](#usage)
+- Can be run via the `tracker` subcommand of `ani-yt` as a wrapper.\
+   For example `ani-yt tracker --help` will print help for `ani-tracker`
 
 ## Android
 - For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)\
