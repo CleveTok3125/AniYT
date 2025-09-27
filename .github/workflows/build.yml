@@ -21,6 +21,11 @@ jobs:
             goos: linux
             arch: arm64
             ext: ""
+          - os: ubuntu-latest
+            goos: linux
+            arch: aarch64
+            ext: ""
+            target: termux
           - os: macos-latest
             goos: darwin
             arch: amd64
@@ -84,10 +89,6 @@ jobs:
             mv "$f" "dist/${base}-${OS}-${ARCH}.tar.gz"
         done
 
-    - name: Generate C files from Cython
-      run: |
-        python -c "from Cython.Build import cythonize; cythonize(['src/ani_yt/_query.pyx'], language_level=3)"
-
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.1.4
       env:
@@ -96,11 +97,12 @@ jobs:
           pip install --upgrade pip setuptools>=77.0.0 wheel build
           pip install cython
         CIBW_BEFORE_BUILD_WINDOWS: "pip install cython"
-        CIBW_ARCHS_LINUX: ${{ matrix.arch == 'amd64' && 'x86_64' || 'aarch64' }}
+        CIBW_ARCHS_LINUX: ${{ matrix.target == 'termux' && 'aarch64' || (matrix.arch == 'amd64' && 'x86_64' || 'aarch64') }}
         CIBW_ARCHS_WINDOWS: ${{ matrix.arch == 'amd64' && 'AMD64' || 'ARM64' }}
         CIBW_ARCHS_MACOS: ${{ matrix.arch == 'amd64' && 'x86_64' || 'arm64' }}
         MACOSX_DEPLOYMENT_TARGET: "12.0"
         CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
+        CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.target == 'termux' && 'quay.io/pypa/manylinux_bionic_aarch64' || '' }}
         CIBW_TEST_SKIP: >
           *-manylinux_aarch64
           *-musllinux_aarch64
@@ -112,14 +114,65 @@ jobs:
     - name: Upload artifacts for matrix
       uses: actions/upload-artifact@v4
       with:
-        name: ani-yt-${{ matrix.os }}-${{ matrix.arch }}
+        name: ani-yt-${{ matrix.os }}-${{ matrix.arch }}${{ env.TARGET_SUFFIX }}
         path: |
           dist/*
           wheelhouse/*
           bin/*
+      env:
+        TARGET_SUFFIX: ${{ matrix.target != '' && format('-{}', matrix.target) || '' }}
+
+  build-termux:
+    runs-on: ubuntu-latest
+    name: Build Termux aarch64 wheel + Go binary
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install Android NDK & dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y wget unzip
+          wget https://dl.google.com/android/repository/android-ndk-r26b-linux.zip
+          unzip android-ndk-r26b-linux.zip
+          export ANDROID_NDK_HOME=$PWD/android-ndk-r26b
+          export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel cython
+
+      - name: Build Go binary for Termux
+        run: |
+          cd src/ani_tracker
+          GOOS=android GOARCH=arm64 go build -ldflags="-s -w" -o ../../bin/ani-tracker
+        env:
+          GOOS: android
+          GOARCH: arm64
+
+      - name: Build C-extension for Termux
+        run: |
+          export CC=aarch64-linux-android21-clang
+          export CXX=aarch64-linux-android21-clang++
+          export AR=aarch64-linux-android-ar
+          export LD=aarch64-linux-android-ld
+          python setup.py bdist_wheel -d wheelhouse/termux
+
+      - name: Upload Termux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ani-yt-termux-aarch64
+          path: |
+            bin/*
+            wheelhouse/termux/*
 
   merge-artifacts:
-    needs: build-wheels
+    needs: [build-wheels, build-termux]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout artifacts branch

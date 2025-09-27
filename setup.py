@@ -7,11 +7,11 @@ import subprocess
 SOURCE_ONLY = os.environ.get("SOURCE_ONLY") == "1"
 USE_CYTHON = not SOURCE_ONLY
 
-if USE_CYTHON:
-    try:
-        from Cython.Build import cythonize
-    except ImportError:
-        USE_CYTHON = False
+try:
+    from Cython.Build import cythonize
+    USE_CYTHON = True
+except ImportError:
+    USE_CYTHON = False
 
 
 class build_py(_build_py):
@@ -32,22 +32,19 @@ class build_py(_build_py):
 
         super().run()
 
-ext_modules = []
-ext = Extension(
-    name="ani_yt._query",
-    sources=["src/ani_yt/_query.pyx" if USE_CYTHON else "src/ani_yt/_query.c"]
-)
-if not SOURCE_ONLY:
-    if USE_CYTHON:
-        ext_modules = cythonize([ext], language_level=3)
-    else:
-        ext_modules = [ext]
+extensions = [
+    Extension(
+        name="ani_yt._query",
+        sources=[os.path.join("src", "ani_yt", "_query" + (".pyx" if USE_CYTHON else ".c"))],
+    )
+]
+
+
+if USE_CYTHON:
+    extensions = cythonize(extensions, language_level=3)
 
 setup(
     name="AniYT",
-    ext_modules=ext_modules,
+    ext_modules=extensions,
     package_dir={"": "src"},
-    cmdclass={"build_py": build_py},
-    setup_requires=["Cython"],
-    zip_safe=False,
 )
