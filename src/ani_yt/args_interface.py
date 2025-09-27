@@ -337,7 +337,7 @@ class ArgsHandler:
             tracker_args = sys.argv[2:]
             TrackerWrapper.run_tracker(tracker_args)
 
-        OSManager.exit(0)
+            OSManager.exit(0)
 
     def _argument_preprocessing(self):
         # Parameters that need to be processed immediately upon launch

@@ -84,47 +84,10 @@ jobs:
             mv "$f" "dist/${base}-${OS}-${ARCH}.tar.gz"
         done
 
-    - name: Generate C files from Cython
-      run: |
-        python -c "from Cython.Build import cythonize; cythonize(['src/ani_yt/_query.pyx'], language_level=3)"
-
-    - name: Build pure Python wheel
-      if: env.SOURCE_ONLY == '1'
-      shell: bash
-      run: |
-        cp pyproject.toml pyproject.toml.old
-
-        version="${GITHUB_REF_NAME#v}"
-
-        case "${{ matrix.os }}" in
-        ubuntu-latest) osname=linux ;;
-        macos-latest)  osname=macos ;;
-        windows-latest) osname=windows ;;
-        *) osname=unknown ;;
-        esac
-        archname="${{ matrix.arch }}"
-
-        # backup pyproject.toml
-        cp pyproject.toml pyproject.toml.bak
-
-        if [[ "$(uname)" == "Darwin" ]]; then
-            sed -i '' "s/^version = \".*\"/version = \"${version}+0.${osname}.${archname}\"/" pyproject.toml
-        else
-            sed -i "s/^version = \".*\"/version = \"${version}+0.${osname}.${archname}\"/" pyproject.toml
-        fi
-
-        python -m build --wheel --outdir wheelhouse
-
-        ls -lh wheelhouse
-      env:
-        SOURCE_ONLY: 1
-
     - name: Build wheels
-      if: env.SOURCE_ONLY != '1'
       uses: pypa/cibuildwheel@v3.1.4
       env:
-        SOURCE_ONLY: 1
-        CIBW_SKIP: "cp38-*"
+        CIBW_SKIP: "*-musllinux_* cp38-*"
         CIBW_BEFORE_BUILD: |
           pip install --upgrade pip setuptools>=77.0.0 wheel build
           pip install cython
@@ -133,6 +96,7 @@ jobs:
         CIBW_ARCHS_WINDOWS: ${{ matrix.arch == 'amd64' && 'AMD64' || 'ARM64' }}
         CIBW_ARCHS_MACOS: ${{ matrix.arch == 'amd64' && 'x86_64' || 'arm64' }}
         MACOSX_DEPLOYMENT_TARGET: "12.0"
+        CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
         CIBW_TEST_SKIP: >
           *-manylinux_aarch64
           *-musllinux_aarch64

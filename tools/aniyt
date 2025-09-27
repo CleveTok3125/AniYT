@@ -8,4 +8,5 @@ cd "$REPO_ROOT"
 tools/local_go_build
 tools/local_install
 clear
+source venv/bin/activate
 ani-yt "$@"
