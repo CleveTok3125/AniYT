@@ -9,6 +9,107 @@ permissions:
   contents: write
 
 jobs:
+  build-termux:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Pull Termux Docker ARM64
+        run: docker pull termux/termux-docker:aarch64
+
+      - name: Build Go, Python/Cython
+        run: |
+          docker \
+          create --name termux_build \
+          termux/termux-docker:aarch64 \
+          sh -c "
+            cd /data/data/com.termux/files/home/
+            mkdir -p project
+            cd project
+
+            rm -f $PREFIX/etc/tls/openssl.cnf
+
+            DEBIAN_FRONTEND=noninteractive pkg update -y
+            DEBIAN_FRONTEND=noninteractive yes | pkg upgrade -y
+
+            ln -s $PREFIX/lib/libexpat.so $PREFIX/lib/libexpat.so.1
+
+            DEBIAN_FRONTEND=noninteractive pkg install -y python python-pip clang make git curl ca-certificates
+
+            python -m pip install --upgrade pip setuptools wheel cython build
+
+            curl -LO https://go.dev/dl/go1.25.1.linux-arm64.tar.gz
+            tar -C /data/data/com.termux/files/usr -xzf go1.25.1.linux-arm64.tar.gz
+
+            ln -s $PREFIX/etc/tls/cert.pem /etc/ssl/certs/ca-certificates.crt
+            export SSL_CERT_FILE="/data/data/com.termux/files/usr/etc/tls/cert.pem"
+            export PATH="/data/data/com.termux/files/usr/go/bin:$PATH"
+            export GODEBUG=x509ignoreCN=0
+            export CGO_ENABLED=0
+            export GOOS=linux
+            export GOARCH=arm64
+
+            go env -w GOPROXY=https://proxy.golang.org,direct
+
+            git clone https://github.com/CleveTok3125/AniYT
+            cd AniYT
+
+            cd src/ani_tracker
+            GOTOOLCHAIN=local go build -ldflags='-s -w' -o ../../bin/ani-tracker
+            cd ../../
+
+            python -m build --wheel
+          "
+
+      - name: Run build container
+        run: docker start -a termux_build
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.25.1
+          cache: true
+          cache-dependency-path: src/ani_tracker/go.sum
+
+      - name: Build Go binary
+        run: |
+          cd src/ani_tracker
+          go build -ldflags="-s -w" -o ../../bin/ani-tracker${{ matrix.ext }} .
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.arch }}
+
+      - name: Copy wheel out & replace bin
+        run: |
+          set -e
+
+          docker cp termux_build:/data/data/com.termux/files/home/project/AniYT/dist/. dist/
+          ls -l dist/
+
+          for whl in dist/*.whl; do
+          TMPDIR=$(mktemp -d)
+          unzip -q "$whl" -d "$TMPDIR"
+          BIN_DIR=$(find "$TMPDIR" -type d -path "*/data/bin")
+          cp bin/ani-tracker "$BIN_DIR/ani-tracker"
+
+          zip -qr "$whl" -j "$TMPDIR"/*
+
+          rm -rf "$TMPDIR"
+          done
+
+      - name: Clean up container
+        run: docker rm termux_build
+
+      - name: Upload Termux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ani-yt-termux-aarch64
+          path: |
+            dist/*
+            wheelhouse/*
+            bin/*
+
   build-wheels:
     strategy:
       matrix:
@@ -17,10 +118,10 @@ jobs:
             goos: linux
             arch: amd64
             ext: ""
-          - os: ubuntu-latest
-            goos: linux
-            arch: arm64
-            ext: ""
+          # - os: ubuntu-24.04-arm
+          #   goos: linux
+          #   arch: arm64
+          #   ext: ""
           - os: macos-latest
             goos: darwin
             arch: amd64
@@ -115,7 +216,7 @@ jobs:
           bin/*
 
   merge-artifacts:
-    needs: build-wheels
+    needs: [build-wheels, build-termux]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout artifacts branch
