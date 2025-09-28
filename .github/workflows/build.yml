@@ -12,9 +12,6 @@ jobs:
   build-termux:
     runs-on: ubuntu-24.04-arm
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
       - name: Pull Termux Docker ARM64
         run: docker pull termux/termux-docker:aarch64
 
@@ -65,38 +62,8 @@ jobs:
       - name: Run build container
         run: docker start -a termux_build
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: 1.25.1
-          cache: true
-          cache-dependency-path: src/ani_tracker/go.sum
-
-      - name: Build Go binary
-        run: |
-          cd src/ani_tracker
-          go build -ldflags="-s -w" -o ../../bin/ani-tracker${{ matrix.ext }} .
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.arch }}
-
-      - name: Copy wheel out & replace bin
-        run: |
-          set -e
-
-          docker cp termux_build:/data/data/com.termux/files/home/project/AniYT/dist/. dist/
-          ls -l dist/
-
-          for whl in dist/*.whl; do
-          TMPDIR=$(mktemp -d)
-          unzip -q "$whl" -d "$TMPDIR"
-          BIN_DIR=$(find "$TMPDIR" -type d -path "*/data/bin")
-          cp bin/ani-tracker "$BIN_DIR/ani-tracker"
-
-          zip -qr "$whl" -j "$TMPDIR"/*
-
-          rm -rf "$TMPDIR"
-          done
+      - name: Copy wheel out
+        run: docker cp termux_build:/data/data/com.termux/files/home/project/AniYT/dist/. dist/
 
       - name: Clean up container
         run: docker rm termux_build
@@ -261,6 +228,7 @@ jobs:
         prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
         artifacts: |
             artifacts/**/wheelhouse/*.whl
+            artifacts/**/dist/*.whl
             artifacts/**/dist/*.tar.gz
             artifacts/digests/*.sha256
             artifacts/help/cli_help.txt
@@ -280,7 +248,7 @@ jobs:
         run: |
           mkdir -p gh-pages/aniyt
           rm -f gh-pages/aniyt/index.html
-          for f in artifacts/**/wheelhouse/*.whl artifacts/**/dist/*.tar.gz; do
+          for f in artifacts/**/wheelhouse/*.whl artifacts/**/dist/*.whl artifacts/**/dist/*.tar.gz; do
             [ -f "$f" ] || continue
             fname=$(basename "$f")
             cp "$f" gh-pages/aniyt/

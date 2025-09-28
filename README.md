@@ -89,6 +89,22 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 
 *Only needed when building from source
 
+# Supported OS/Arch (Pre-built Binaries)
+
+|          OS         	| x86_64 	| notes 	| arm64/aarch64 	|                       notes                      	|
+|:-------------------:	|:------:	|:-----:	|:-------------:	|:------------------------------------------------:	|
+| Windows             	|    ✅   	|   -   	|       ✅       	|                         -                        	|
+| macOS               	|    ✅   	|   -   	|       ✅       	|                         -                        	|
+| Linux               	|    ✅   	| glibc 	|       -       	|              duplicate package name              	|
+| Android<br>(Termux) 	|    ⚠️   	|   -   	|       🟡       	| bionic libc<br>toolchain not fully supported yet 	|
+
+* ✅: Full support
+* 🟡: Partial support - some features may not work
+* ⚠️: No official support (may require intervention)
+* ❌: Not supported
+
+The source install version still supports most OS/Arch
+
 # Installation
 ## Install from Source (rolling)
 ```bash
@@ -192,9 +208,6 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
    For example `ani-yt tracker --help` will print help for `ani-tracker`
 
 ## Android
-- Android devices running on aarch64 installed via Python wheel will get `ImportError` because termux uses bionic instead of glibc.\
-   Fix by rebuilding the extension, can refer/use [this script](https://github.com/CleveTok3125/AniYT/blob/main/tools/tmx-ext-rebuild).\
-   *By default, running `pip uninstall` will not remove user-added files, so they need to be removed manually when uninstalling/upgrading.*
 - For Android, use MPV with youtube-dl built-in. Refer to [this link](https://github.com/mpv-android/mpv-android/pull/58)\
    In addition, you can use MPV on [Termux-x11](https://github.com/termux/termux-x11). Refer [this setup instructions](https://github.com/termux/termux-x11?tab=readme-ov-file#Setup-instructions).
 - In `--mpv-player termux-x11` mode, `gestures.lua` script will be loaded by default if present to provide mouse/touch gestures. See [setup instructions](https://github.com/CleveTok3125/AniYT-mpv-gestures?tab=readme-ov-file#setup-instructions) for usage. This mode will select monitor 1 by default and send the mpv run command through it instead of having to use the command line in the graphical session. **Requires `mpv-x`**\

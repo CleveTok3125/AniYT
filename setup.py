@@ -16,18 +16,16 @@ except ImportError:
 
 class build_py(_build_py):
     def run(self):
-
-        repo_root = os.path.abspath(os.path.dirname(__file__))
-        bin_dir = os.path.join(repo_root, "bin")
-        os.makedirs(bin_dir, exist_ok=True)
-
-        go_src = os.path.join(repo_root, "src", "ani_tracker")
-        output_bin = os.path.join(bin_dir, "ani-tracker")
-
-        print(f"Building Go binary at {output_bin} ...")
-        if shutil.which("go") is None:
+        if shutil.which("go") is None or os.environ.get("GO_BUILD") == "0":
             print("Skipping Go build, 'go' not found")
         else:
+            print(f"Building Go binary at {output_bin} ...")
+            repo_root = os.path.abspath(os.path.dirname(__file__))
+            bin_dir = os.path.join(repo_root, "bin")
+            os.makedirs(bin_dir, exist_ok=True)
+
+            go_src = os.path.join(repo_root, "src", "ani_tracker")
+            output_bin = os.path.join(bin_dir, "ani-tracker")
             subprocess.check_call(["go", "build", "-o", output_bin, "."], cwd=go_src)
 
         super().run()
