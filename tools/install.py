@@ -16,6 +16,8 @@ class Installer:
     ARCH = None
     WHL_URL = None
     HASH_URL = None
+    SDIST_URL = None
+    SDIST_HASH_URL = None
 
     @staticmethod
     def android_check():
@@ -49,7 +51,7 @@ class Installer:
             Installer.PLATFORM_TAG = f"{platform.system().lower()}_{Installer.ARCH}"
 
     @staticmethod
-    def find_wheel():
+    def find_artifact():
         with urllib.request.urlopen(Installer.API_URL) as resp:
             data = json.load(resp)
 
@@ -63,21 +65,27 @@ class Installer:
             ):
                 Installer.WHL_URL = url
                 Installer.HASH_URL = url + ".sha256"
-                break
+                return
 
-        if not Installer.WHL_URL:
-            print(
-                f"Error: No wheel found for Python {Installer.PYTHON_TAG} and platform {Installer.PLATFORM_TAG}"
-            )
-            sys.exit(1)
+        for asset in data.get("assets", []):
+            url = asset.get("browser_download_url", "")
+            if url.endswith(".tar.gz"):
+                Installer.SDIST_URL = url
+                Installer.SDIST_HASH_URL = url + ".sha256"
+                return
+
+        print(
+            f"Error: No compatible wheel or sdist found for Python {Installer.PYTHON_TAG} and platform {Installer.PLATFORM_TAG}"
+        )
+        sys.exit(1)
 
     @staticmethod
-    def verify_hash(local_file):
-        if not Installer.HASH_URL:
+    def verify_hash(local_file, hash_url=None):
+        if not hash_url:
             print("No hash provided, skipping verification.")
             return
 
-        with urllib.request.urlopen(Installer.HASH_URL) as resp:
+        with urllib.request.urlopen(hash_url) as resp:
             expected_hash = resp.read().decode().strip().split()[0]
 
         sha256 = hashlib.sha256()
@@ -94,15 +102,24 @@ class Installer:
         print("SHA256 hash verified.")
 
     @staticmethod
-    def install_wheel():
-        print(f"Installing wheel: {Installer.WHL_URL}")
-        download_dir = tempfile.gettempdir()
-        filename = os.path.basename(Installer.WHL_URL)
-        local_file = os.path.join(download_dir, filename)
-        urllib.request.urlretrieve(Installer.WHL_URL, local_file)
-        Installer.verify_hash(local_file)
+    def install():
+        if Installer.WHL_URL:
+            install_url = Installer.WHL_URL
+            hash_url = Installer.HASH_URL
+            install_type = "wheel"
+        else:
+            install_url = Installer.SDIST_URL
+            hash_url = Installer.SDIST_HASH_URL
+            install_type = "sdist"
 
-        if Installer.android_check():
+        print(f"Installing {install_type}: {install_url}")
+        download_dir = tempfile.gettempdir()
+        filename = os.path.basename(install_url)
+        local_file = os.path.join(download_dir, filename)
+        urllib.request.urlretrieve(install_url, local_file)
+        Installer.verify_hash(local_file, hash_url)
+
+        if install_type == 'wheel' and Installer.android_check():
             new_file = local_file.replace("android", "linux")
             os.rename(local_file, new_file)
             local_file = new_file
@@ -112,8 +129,8 @@ class Installer:
     @staticmethod
     def start():
         Installer.get_sys_info()
-        Installer.find_wheel()
-        Installer.install_wheel()
+        Installer.find_artifact()
+        Installer.install()
 
 
 if __name__ == "__main__":

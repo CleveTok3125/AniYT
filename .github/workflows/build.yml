@@ -253,6 +253,8 @@ jobs:
             echo "<a href='$fname'>$fname</a><br>" >> gh-pages/aniyt/index.html
           done
 
+          cp tools/install.py gh-pages/
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

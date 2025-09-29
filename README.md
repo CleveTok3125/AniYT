@@ -103,12 +103,12 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 * ⚠️: No official support (may require intervention)
 * ❌: Not supported
 
-The source install version still supports most OS/Arch
+The sdist still supports most OS/Arch
 
 # Installation
 ## Install from GitHub Releases (recommended)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/CleveTok3125/AniYT/main/tools/install.py | python -
+curl -fsSL https://clevetok3125.github.io/AniYT/install.py | python -
 ```
 ## Install from Source (rolling)
 ```bash
