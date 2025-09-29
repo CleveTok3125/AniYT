@@ -56,9 +56,6 @@ jobs:
             GOTOOLCHAIN=local go build -ldflags='-s -w' -o ../../bin/ani-tracker
             cd ../../
 
-            chmod +x tools/android-plat-name-edit
-            sh tools/android-plat-name-edit
-
             python -m build --wheel
           "
 
@@ -67,6 +64,12 @@ jobs:
 
       - name: Copy wheel out
         run: docker cp termux_build:/data/data/com.termux/files/home/project/AniYT/dist/. dist/
+
+      - name: Rename wheels
+        run: |
+            for f in dist/*.whl; do
+            mv "$f" "${f/linux/android}"
+            done
 
       - name: Clean up container
         run: docker rm termux_build

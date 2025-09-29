@@ -95,7 +95,7 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 |:-------------------:	|:------:	|:-----:	|:-------------:	|:------------------------------------------------:	|
 | Windows             	|    ✅   	|   -   	|       ✅       	|                         -                        	|
 | macOS               	|    ✅   	|   -   	|       ✅       	|                         -                        	|
-| Linux               	|    ✅   	| glibc 	|       -       	|              duplicate package name              	|
+| Linux               	|    ✅   	| glibc 	|       ✅       	|                       glibc                      	|
 | Android<br>(Termux) 	|    ⚠️   	|   -   	|       🟡       	| bionic libc<br>toolchain not fully supported yet 	|
 
 * ✅: Full support
@@ -106,11 +106,15 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 The source install version still supports most OS/Arch
 
 # Installation
+## Install from GitHub Releases (recommended)
+```bash
+curl -fsSL https://raw.githubusercontent.com/CleveTok3125/AniYT/main/tools/install.py | python -
+```
 ## Install from Source (rolling)
 ```bash
 pip install git+https://github.com/CleveTok3125/AniYT.git
 ```
-## Install from GitHub Releases (recommended)
+## Install from Github PyPI
 ```bash
 pip install --index-url https://clevetok3125.github.io/AniYT/ --extra-index-url https://pypi.org/simple aniyt
 ```

@@ -1,7 +1,0 @@
-#!/bin/sh
-
-PLAT_NAME="android_aarch64"
-CFG_FILE="setup.cfg"
-echo "Overwriting $CFG_FILE with platform tag $PLAT_NAME"
-echo "[bdist_wheel]" > "$CFG_FILE"
-echo "plat_name = $PLAT_NAME" >> "$CFG_FILE"
