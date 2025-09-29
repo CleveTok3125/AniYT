@@ -260,3 +260,16 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./gh-pages
+
+  test-install:
+    needs: generate-simple-index
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
+
+      - name: Test install script
+        run: |
+          curl -fsSL https://clevetok3125.github.io/AniYT/install.py | python -
