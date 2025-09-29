@@ -56,6 +56,9 @@ jobs:
             GOTOOLCHAIN=local go build -ldflags='-s -w' -o ../../bin/ani-tracker
             cd ../../
 
+            chmod +x tools/android-plat-name-edit
+            sh tools/android-plat-name-edit
+
             python -m build --wheel
           "
 
@@ -75,7 +78,6 @@ jobs:
           path: |
             dist/*
             wheelhouse/*
-            bin/*
 
   build-wheels:
     strategy:
@@ -85,10 +87,10 @@ jobs:
             goos: linux
             arch: amd64
             ext: ""
-          # - os: ubuntu-24.04-arm
-          #   goos: linux
-          #   arch: arm64
-          #   ext: ""
+          - os: ubuntu-24.04-arm
+            goos: linux
+            arch: arm64
+            ext: ""
           - os: macos-latest
             goos: darwin
             arch: amd64
@@ -101,7 +103,7 @@ jobs:
             goos: windows
             arch: amd64
             ext: .exe
-          - os: windows-latest
+          - os: windows-11-arm
             goos: windows
             arch: arm64
             ext: .exe
@@ -142,15 +144,8 @@ jobs:
         GOARCH: ${{ matrix.arch }}
 
     - name: Build sdist
-      shell: bash
-      run: |
-        python -m build --sdist --outdir dist
-        OS=${{ matrix.os }}
-        ARCH=${{ matrix.arch }}
-        for f in dist/*.tar.gz; do
-            base=$(basename "$f" .tar.gz)
-            mv "$f" "dist/${base}-${OS}-${ARCH}.tar.gz"
-        done
+      if: matrix.os == 'ubuntu-latest' && matrix.arch == 'amd64'
+      run: python -m build --sdist --outdir dist
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v3.1.4
@@ -180,7 +175,6 @@ jobs:
         path: |
           dist/*
           wheelhouse/*
-          bin/*
 
   merge-artifacts:
     needs: [build-wheels, build-termux]
@@ -199,7 +193,6 @@ jobs:
       run: |
         git merge origin/main --no-ff -m "Sync main into artifacts" || echo "No changes to merge"
 
-    # Download all artifacts
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
