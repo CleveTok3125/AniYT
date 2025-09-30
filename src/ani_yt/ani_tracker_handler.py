@@ -15,7 +15,7 @@ class TrackerWrapper:
 
     @staticmethod
     def print_help():
-        SubprocessHelper.app_subprocess_helper(
+        SubprocessHelper.app_subprocess_help(
             [TrackerWrapper.get_tracker_bin(), "--help"]
         )
 

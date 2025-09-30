@@ -61,3 +61,15 @@ class OSManager:
     def initialize_directory(dirs):
         for dir in dirs:
             os.makedirs(dir, exist_ok=True)
+
+    @staticmethod
+    def ensure_parent_dir(parent_dir):
+        cwd = os.getcwd()
+        parent = os.path.basename(cwd)
+
+        if parent != parent_dir:
+            target = os.path.join(cwd, parent_dir)
+            os.makedirs(target, exist_ok=True)
+            os.chdir(target)
+            return target
+        return cwd

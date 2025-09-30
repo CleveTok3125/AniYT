@@ -13,7 +13,7 @@ class Extension:
         def check_yt_dlp(name="yt-dlp"):
             print("\n[Extension] Checking for yt-dlp update...")
 
-            SubprocessHelper.app_subprocess_helper("yt-dlp", check_only=True)
+            SubprocessHelper.app_subprocess_help("yt-dlp", check_only=True)
 
             old_ver = (
                 subprocess.check_output(["yt-dlp", "--version"]).decode("utf-8").strip()

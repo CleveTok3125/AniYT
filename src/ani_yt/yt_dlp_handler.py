@@ -109,6 +109,6 @@ class YT_DLP:
         args = DataProcessing.dedup_args_keep_last(args)
 
         command = ["yt-dlp"] + args
-        SubprocessHelper.app_subprocess_helper("yt-dlp", check_only=True)
+        SubprocessHelper.app_subprocess_help("yt-dlp", check_only=True)
         result = subprocess.run(command, capture_output=capture_output)
         return result.stdout

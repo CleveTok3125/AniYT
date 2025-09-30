@@ -4,12 +4,18 @@ from .os_manager import OSManager
 
 
 class InitializeOPTS:
+    parent_dir = "AniYT"
     dirs = ["data", "mpv-config", "mpv-scripts"]
 
 
 class Initialize:
     @staticmethod
-    def directory():
+    def directory(make_parent=True):
+
+        if make_parent:
+            parent_path = OSManager.ensure_parent_dir(InitializeOPTS.parent_dir)
+            print(f"Data and configuration files are stored at: {parent_path}")
+
         OSManager.initialize_directory(InitializeOPTS.dirs)
 
 

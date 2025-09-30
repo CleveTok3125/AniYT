@@ -87,7 +87,7 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 - MPV or MPV-X11
 - YT-DLP
 
-*Only needed when building from source
+*_Only needed when building from source_
 
 # Supported OS/Arch (Pre-built Binaries)
 
@@ -120,11 +120,6 @@ pip install --index-url https://clevetok3125.github.io/AniYT/ --extra-index-url 
 ```
 
 # Usage
-## Use with Python Module
-```bash
-python -m ani-yt -h
-python -m ani-yt tracker -h
-```
 ## Use with CLI Directly
 ```bash
 ani-yt -h
@@ -186,17 +181,17 @@ cd ../../
 ```
 
 # About additional/generated files
-- `./mpv-config/custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration.
-- `./data/playlists.json`: stores playlist information.\
+- `./AniYT/mpv-config/custom.conf`: like `mpv.conf`. Use if you want to separate it from the original MPV configuration.
+- `./AniYT/data/playlists.json`: stores playlist information.\
 Mainly to reduce repeated calls to YT-DLP API which slows down retrieval significantly when the channel has many playlists.
-- `./data/history.json`: store viewing history.
-- `./data/bookmark.json`: store bookmark.
-- `./data/channel_sources.txt`: list of channel sources.
-- `./mpv-scripts/gestures.lua`: Recommended if running in graphical session via termux-x11. [Details](https://github.com/CleveTok3125/AniYT-mpv-gestures)
-- `./mpv-scripts/sponsorblock_minimal.lua`: Use SponsorBlock to skip sponsorships. Similar to `gesture.lua`, it is only loaded automatically if in a graphical session via termux-x11.
-- `./data/playlists.diff`: File containing difference information after running `ani-tracker`
-- `./data/*.log`: Log files for debugging
-- `./data/*.lock`: This is a file created when the program runs. Delete it to terminate the program.
+- `./AniYT/data/history.json`: store viewing history.
+- `./AniYT/data/bookmark.json`: store bookmark.
+- `./AniYT/data/channel_sources.txt`: list of channel sources.
+- `./AniYT/mpv-scripts/gestures.lua`: Recommended if running in graphical session via termux-x11. [Details](https://github.com/CleveTok3125/AniYT-mpv-gestures)
+- `./AniYT/mpv-scripts/sponsorblock_minimal.lua`: Use SponsorBlock to skip sponsorships. Similar to `gesture.lua`, it is only loaded automatically if in a graphical session via termux-x11.
+- `./AniYT/data/playlists.diff`: File containing difference information after running `ani-tracker`
+- `./AniYT/data/*.log`: Log files for debugging
+- `./AniYT/data/*.lock`: This is a file created when the program runs. Delete it to terminate the program.
 
 *If using python modules, these files are automatically generated in the working directory. `custom.conf` is not automatically generated, however it can be manually created in the working directory to use it.*
 

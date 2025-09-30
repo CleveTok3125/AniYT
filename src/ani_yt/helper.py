@@ -1,11 +1,26 @@
+import functools
 import shutil
 import subprocess
 import sys
 
 
+class IOHelper:
+    @staticmethod
+    def gracefully_terminate(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except KeyboardInterrupt:
+                print("Action canceled by user.")
+
+        return wrapper
+
+
 class SubprocessHelper:
     @staticmethod
-    def _app_subprocess_helper(commands, app_name=None, *, check_only=False, note=""):
+    @IOHelper.gracefully_terminate
+    def app_subprocess_help(commands, app_name=None, *, check_only=False, note=""):
         if isinstance(commands, (list, tuple)) and commands:
             cmd_name = commands[0]
             cmd_list = list(commands)
@@ -22,7 +37,9 @@ class SubprocessHelper:
             app_name = cmd_name
 
         if shutil.which(cmd_name) is None:
-            print(f"{app_name} is not installed. Please install before running.")
+            print(
+                f"{app_name} is not installed. Please install before running.{' ' if note else ''}{note}"
+            )
             sys.exit(127)
 
         if check_only:
@@ -38,13 +55,6 @@ class SubprocessHelper:
         except subprocess.CalledProcessError as e:
             print(f"Error running {app_name}: {e}")
             sys.exit(e.returncode)
-
-    @staticmethod
-    def app_subprocess_helper(*args, **kwargs):
-        try:
-            SubprocessHelper._app_subprocess_helper(*args, **kwargs)
-        except KeyboardInterrupt:
-            print("Action canceled by user.")
 
 
 class LegacyCompatibility:

@@ -39,12 +39,16 @@ class Player:
         ]
 
     def run_mpv(self):  # optional: use sponsorblock for mpv to automatically skip op/en
-        SubprocessHelper.app_subprocess_helper(self.command, "MPV")
+        SubprocessHelper.app_subprocess_help(
+            self.command,
+            "MPV",
+            note="\nSee https://mpv.io/installation/\nIf using MPV via Termux, use MPV-X: pkg install mpv-x",
+        )
 
     def run_mpv_android(
         self,
     ):  # require https://github.com/mpv-android/mpv-android/pull/58
-        SubprocessHelper.app_subprocess_helper(
+        SubprocessHelper.app_subprocess_help(
             self.android_command, note="Current OS may not be Android."
         )
 
@@ -103,12 +107,12 @@ class Player:
         ]
 
         if open_app:
-            SubprocessHelper.app_subprocess_helper(termux_x11_command, "termux-x11")
+            SubprocessHelper.app_subprocess_help(termux_x11_command, "termux-x11")
 
-        SubprocessHelper.app_subprocess_helper(mpv_command)
+        SubprocessHelper.app_subprocess_help(mpv_command)
 
         if return_app:
-            SubprocessHelper.app_subprocess_helper(termux_command, "termux")
+            SubprocessHelper.app_subprocess_help(termux_command, "termux")
 
     def start(self):
         if OSManager.android_check():
