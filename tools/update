@@ -4,7 +4,7 @@ SCRIPT_DIR=$(dirname "$0")
 REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
 cd "$REPO_ROOT"
 
-git pull --rebase
+git pull origin main --rebase
 
-tools/install-gesture
-tools/install-sponsorblock
+bash tools/install-gesture
+bash tools/install-sponsorblock

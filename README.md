@@ -214,7 +214,11 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
    ```bash
    termux-x11 :1 -xstartup "dbus-launch --exit-with-session xfce4-session"
    ```
-   
+   or for convenience:
+   ```bash
+   bash ./AniYT/tools/tmux-x11-start ani-yt --mpv-player termux-x11 -h
+   ```
+
 # Non-project-related notification
 _This notification is for the anime fan community, not related to this project._
 

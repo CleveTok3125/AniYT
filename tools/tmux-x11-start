@@ -1,0 +1,10 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+nohup termux-x11 :1 -xstartup "dbus-launch --exit-with-session xfce4-session" \
+  > termux-x11.log 2>&1 &
+
+X11_PID=$!
+
+"$@"
+
+kill $X11_PID
