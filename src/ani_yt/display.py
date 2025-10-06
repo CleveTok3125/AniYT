@@ -285,6 +285,7 @@ class DisplayMenu(Display, DisplayExtension):
         self.RESET = "\033[0m"
         self.YELLOW = "\033[33m"
         self.LIGHT_GRAY = "\033[38;5;247m"
+        self.BLUE = "\033[0;34;49m"
 
         # Variable
         self._init_loop_values_()
@@ -451,6 +452,8 @@ class DisplayMenu(Display, DisplayExtension):
         self.len_data_items = len(self.splited_data_items)
         first_unviewed_set = False
 
+        indicator = f"{self.BLUE}❯{self.RESET}"
+
         for index, item in enumerate(self.splited_data_items):
             item_title = item["video_title"]
             item_url = item["video_url"]
@@ -476,17 +479,20 @@ class DisplayMenu(Display, DisplayExtension):
 
             link = f"\n\t{item_url}" if self.show_link else ""
 
+            indicate_item = (
+                indicator
+                if index == self.choosed_item and self.choosed_item is not False
+                else " "
+            )
+
             print(
-                f"{self.RESET}{color_viewed}{color_bookmarked}({item_number}) {item_title}{link}{self.RESET}"
+                f"{self.RESET} {indicate_item} {color_viewed}{color_bookmarked}({item_number}) {item_title}{link}{self.RESET}"
             )
         print()
 
     def print_user_input(self):
         try:
-            prompt = "Select"
-            if self.choosed_item is not False:
-                prompt += f" ({self.choosed_item+1})"
-            prompt += ": "
+            prompt = "Select: "
             self.user_input = input(prompt).strip()
         except KeyboardInterrupt:
             OSManager.exit(0)
