@@ -50,6 +50,15 @@ class Installer:
         else:
             Installer.PLATFORM_TAG = f"{platform.system().lower()}_{Installer.ARCH}"
 
+        if "--info" in sys.argv:
+            print(
+                "[INFO] System info:",
+                f"- {Installer.PYTHON_TAG=}",
+                f"- {Installer.PLATFORM_TAG=}",
+                f"- {Installer.ARCH=}",
+                sep="\n",
+            )
+
     @staticmethod
     def find_artifact():
         with urllib.request.urlopen(Installer.API_URL) as resp:
@@ -112,14 +121,25 @@ class Installer:
             hash_url = Installer.SDIST_HASH_URL
             install_type = "sdist"
 
+        if "--dry-run" in sys.argv:
+            print(f"[DRY RUN] Would download: {os.path.basename(install_url)}")
+            print(
+                f"[DRY RUN] Would verify SHA256 hash from: {os.path.basename(hash_url)}"
+            )
+            print(
+                f"[DRY RUN] Would Install {install_type}: {os.path.basename(install_url)}"
+            )
+            return
+
         print(f"Installing {install_type}: {install_url}")
+
         download_dir = tempfile.gettempdir()
         filename = os.path.basename(install_url)
         local_file = os.path.join(download_dir, filename)
         urllib.request.urlretrieve(install_url, local_file)
         Installer.verify_hash(local_file, hash_url)
 
-        if install_type == 'wheel' and Installer.android_check():
+        if install_type == "wheel" and Installer.android_check():
             new_file = local_file.replace("android", "linux")
             os.rename(local_file, new_file)
             local_file = new_file
