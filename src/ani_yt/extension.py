@@ -45,8 +45,11 @@ class Extension:
             check_update = Extension.check_update_enabled
 
             if check_update:
-                yt_dlp_update_info = Extension.CheckModuleUpdate.check_yt_dlp()
-                Extension.CheckModuleUpdate.print_notice(yt_dlp_update_info)
+                try:
+                    yt_dlp_update_info = Extension.CheckModuleUpdate.check_yt_dlp()
+                    Extension.CheckModuleUpdate.print_notice(yt_dlp_update_info)
+                except KeyboardInterrupt:
+                    print("Canceled update check.")
 
             return func(*args, **kwargs)
 

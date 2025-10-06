@@ -8,6 +8,7 @@ from .data_processing import DataProcessing
 from .display import Display_Options, DisplayMenu
 from .exceptions import MissingChannelUrl
 from .file_handler import FileHandler, FileSourceHandler
+from .helper import IOHelper
 from .history_handler import HistoryHandler
 from .os_manager import OSManager
 from .player import Player
@@ -35,14 +36,17 @@ class Main:
         )
         self.url = ""
 
+    @IOHelper.gracefully_terminate
     def source_add(self, *urls):
         added = FileSourceHandler().add_sources(*urls)
         print(f"\nSource Manager: Added {added} new sources.\n")
 
+    @IOHelper.gracefully_terminate
     def source_remove(self, *urls):
         removed = FileSourceHandler().remove_sources(*urls)
         print(f"\nSource Manager: Removed {removed} sources.\n")
 
+    @IOHelper.gracefully_terminate
     def source_template(self):
         FileSourceHandler().placeholder()
         print("\nSource Manager: Template created.\n")
@@ -55,14 +59,16 @@ class Main:
             return
         return sources
 
+    @IOHelper.gracefully_terminate
     def source_update(self):
         sources = self._source_load_helper()
 
         if not sources:
             return
 
-        self.update_multiple(sources)
+        self._update_multiple(sources)
 
+    @IOHelper.gracefully_terminate
     def source_rebuild(self):
         print("Rebuilding playlist from sources...")
         self.file_handler.dump([])
@@ -71,9 +77,10 @@ class Main:
         if not sources:
             return
 
-        self.update_multiple(sources, no_update_history=True)
+        self._update_multiple(sources, no_update_history=True)
         print("Rebuild complete!")
 
+    @IOHelper.gracefully_terminate
     def update(self):
         print("Getting playlist...")
         try:
@@ -113,7 +120,7 @@ class Main:
         print("Done!")
         return
 
-    def update_multiple(self, channel_urls, no_update_history=False):
+    def _update_multiple(self, channel_urls, no_update_history=False):
         print("Getting playlist from multiple channels...")
         merged_playlist_videos = []  # list of Video dict (for merged video playlist)
         merged_playlist_lists = []  # list of [title, url] for file_handler cache
@@ -166,18 +173,23 @@ class Main:
         self.history_handler.update(curr=curr, videos=new_videos)
         print("Done!")
 
+    @IOHelper.gracefully_terminate
     def clear_cache(self):
         self.file_handler.clear_cache()
 
+    @IOHelper.gracefully_terminate
     def delete_history(self):
         self.history_handler.delete_history()
 
+    @IOHelper.gracefully_terminate
     def clear_history(self, *args, **kwargs):
         self.history_handler.clear_history(*args, **kwargs)
 
+    @IOHelper.gracefully_terminate
     def delete_bookmark(self):
         self.bookmarking_handler.delete_bookmark()
 
+    @IOHelper.gracefully_terminate_exit
     def load_playlist(self):
         try:
             playlist = self.file_handler.load()
@@ -190,6 +202,7 @@ class Main:
         # Convert List[Video] -> [[video_title, video_url], ...]
         return [[v.get("video_title", ""), v.get("video_url", "")] for v in videos]
 
+    @IOHelper.gracefully_terminate
     def start_player(self, url=None):
         if url:
             self.url = url
@@ -198,6 +211,7 @@ class Main:
     def loop_refresh(self):
         self.loop(refresh=True)
 
+    @IOHelper.gracefully_terminate_exit
     def loop(self, refresh=False):
         while True:
             history = HistoryHandler().load()
@@ -242,6 +256,7 @@ class Main:
             self.history_handler.update(curr=curr, viewed=True)
             self.display_menu.mark_viewed(self.url)
 
+    @IOHelper.gracefully_terminate_exit
     def menu(self, playlist_list):
         if not playlist_list:
             print("No playlist provided.")
@@ -277,6 +292,7 @@ class Main:
         self.display_menu.mark_viewed(self.url)
         self.loop()
 
+    @IOHelper.gracefully_terminate
     def show_bookmark(self):
         bms = self.bookmarking_handler.load()
         for key, value in bms.items():
@@ -284,6 +300,7 @@ class Main:
                 f"{self.display_menu.YELLOW}{key}{self.display_menu.RESET}\n\t{value}"
             )
 
+    @IOHelper.gracefully_terminate_exit
     def list(self):
         playlist_list = self.load_playlist()  # should be list of [title,url]
         if not playlist_list:
@@ -291,6 +308,7 @@ class Main:
             return
         self.menu(playlist_list)
 
+    @IOHelper.gracefully_terminate_exit
     def resume(self):
         history = HistoryHandler().load()
         curr = history.get("current", {})
@@ -303,6 +321,7 @@ class Main:
         self.start_player()
         self.loop()
 
+    @IOHelper.gracefully_terminate_exit
     def search(self, inp, case_sensitive=False, fuzzy=False, score=50):
         if not inp.strip():
             print("Empty search query.")
@@ -320,6 +339,7 @@ class Main:
             return
         self.menu(playlist)
 
+    @IOHelper.gracefully_terminate_exit
     def playlist_from_url(self, url):
         video_data = self.dlp.get_video(url)
         videos = self.dp.omit(video_data)  # List[Video]
@@ -331,6 +351,7 @@ class Main:
         _, self.url = self.display_menu.choose_menu(menu_items)
         self.start_player()
 
+    @IOHelper.gracefully_terminate_exit
     def download(self, url, category, mpv):
         capture_output = mpv == "mpv"
         result = YT_DLP.download(url, category, capture_output=capture_output)
@@ -348,5 +369,6 @@ class Main:
                 "No data returned. There was an error downloading the video or it was already downloaded."
             )
 
+    @IOHelper.gracefully_terminate
     def open_with_mpv(self, inp):
         self.start_player(inp)

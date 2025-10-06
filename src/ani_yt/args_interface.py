@@ -5,12 +5,14 @@ from . import __version__
 from .ani_tracker_handler import TrackerWrapper
 from .extension import Extension
 from .file_handler import Initialize
+from .helper import IOHelper
 from .main import Main
 from .os_manager import OSManager
 from .player import Termux_X11_OPTS
 
 
 class ArgsHandler:
+    @IOHelper.gracefully_terminate_exit
     def __init__(self):
         self.parser = argparse.ArgumentParser(
             description="Note: Options, if provided, will be processed sequentially in the order they are listed below."
@@ -314,10 +316,12 @@ class ArgsHandler:
 
         self._argument_preprocessing()
 
+    @IOHelper.gracefully_terminate
     def print_version(self):
         print(f"AniYT {__version__}")
         sys.exit(0)
 
+    @IOHelper.gracefully_terminate
     def print_full_help(self):
         self.parser.print_help()
 
@@ -413,6 +417,7 @@ class ArgsHandler:
             "source_rebuild": self.main.source_rebuild,
         }
 
+    @IOHelper.gracefully_terminate_exit
     def run_main(self, action):
         try:
             return self.actions.get(action)()
@@ -421,6 +426,7 @@ class ArgsHandler:
             raise TypeError(e)
             OSManager.exit(404)
 
+    @IOHelper.gracefully_terminate_exit
     def listener(self):
         action_lst = [
             getattr(self.args, item, None) for item in list(self.actions.keys())

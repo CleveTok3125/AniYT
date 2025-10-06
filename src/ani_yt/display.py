@@ -1,12 +1,12 @@
 import os
 import sys
 from datetime import datetime
-from time import sleep
 from typing import Dict, List
 
 from .bookmarking_handler import BookmarkingHandler
 from .data_processing import DataProcessing
-from .helper import LegacyCompatibility
+from .exceptions import PauseableException
+from .helper import IOHelper, LegacyCompatibility
 from .history_handler import HistoryHandler
 from .input_handler import InputHandler, ReturnCode
 from .os_manager import OSManager
@@ -26,6 +26,7 @@ class Display_Options:
 
 class Display:
     @staticmethod
+    @IOHelper.gracefully_terminate
     def search():
         return str(input("Search: "))
 
@@ -37,35 +38,6 @@ class Display:
             os.system("clear")
 
 
-class DisplayExtensionFallback:
-    # Ensures the program still works even if the extension cannot be loaded
-
-    @staticmethod
-    def fallback_bookmark_handler():
-        # Mock BookmarkingHandler for fallback purposes
-        class MockBookmarkingHandler(BookmarkingHandler):
-            def __init__(self):
-                pass  # No need to reinitialize attributes, just override methods as needed
-
-            def is_bookmarked(self, url):
-                # Override the method to always return False (or any desired value for mock)
-                return False
-
-            def remove_bookmark(self, url):
-                # Mock the behavior of removing a bookmark
-                print(f"[Mock] Removed bookmark for: {url}")
-
-            def update(self, data):
-                # Mock the behavior of updating a bookmark
-                print(f"[Mock] Updated bookmark: {data}")
-
-        return MockBookmarkingHandler()
-
-    @staticmethod
-    def fallback_yt_dlp_opts():
-        return YT_DLP_Options(quiet=True, no_warnings=True)
-
-
 class DisplayExtension:
     def _inject_dependencies(
         self,
@@ -73,13 +45,11 @@ class DisplayExtension:
         self.bookmarking_handler = self._get_dependencies(
             "bookmark",
             BookmarkingHandler,
-            fallback_factory=DisplayExtensionFallback.fallback_bookmark_handler,
         )
 
         self.yt_dlp_opts = self._get_dependencies(
             "yt-dlp",
             YT_DLP_Options,
-            fallback_factory=DisplayExtensionFallback.fallback_yt_dlp_opts,
         )
 
     def _init_extra_opts(self, extra_opts):
@@ -90,72 +60,17 @@ class DisplayExtension:
                 f"The parameter passed should be a dictionary, but got {type(extra_opts)}"
             )
 
-    def _get_dependencies_errors(self, requirement, requirement_suggestion, dependency):
-        if not dependency:
-            raise ValueError(
-                f"Missing required dependency: '{requirement}' is not provided. Need instance of class {requirement_suggestion}"
-            )
-        elif not isinstance(dependency, requirement_suggestion):
-            raise TypeError(
-                f"Instance {dependency} is not an instance of class {requirement_suggestion}"
-            )
-        elif isinstance(dependency, type):
-            raise TypeError(
-                f"The dependency '{requirement}' should be an instance, but got a class: {dependency}"
-            )
-        elif dependency.__class__.__module__ == "builtins":
-            raise TypeError(
-                f"The dependency '{requirement}' should be an instance of a user-defined class, but got built-in type: {type(dependency)}"
-            )
-
     def _get_dependencies(
         self, requirement: object, requirement_suggestion: type, fallback_factory=None
     ):
         dependency = self.extra_opts.get(requirement)
-        strict_mode = self.extra_opts.get("strict_mode", False)
-        default_warning_time = 1
-        warning_time = self.extra_opts.get("warning_time", default_warning_time)
 
-        if not isinstance(strict_mode, bool):
-            strict_mode = False
-
-        if isinstance(warning_time, str):
-            warning_time = (
-                int(warning_time) if warning_time.isdigit() else default_warning_time
+        if dependency is None:
+            raise ValueError(f"Missing required dependency: {requirement}")
+        if not isinstance(dependency, requirement_suggestion):
+            raise TypeError(
+                f"Dependency '{requirement}' must be an instance of {requirement_suggestion}"
             )
-        elif not isinstance(warning_time, int):
-            warning_time = default_warning_time
-
-        if strict_mode:
-            print(f"[StrictMode] Checking '{requirement}' strictly.")
-            self._get_dependencies_errors(
-                requirement, requirement_suggestion, dependency
-            )
-        else:
-            try:
-                self._get_dependencies_errors(
-                    requirement, requirement_suggestion, dependency
-                )
-            except (ValueError, TypeError) as e:
-                if fallback_factory:
-                    print(f"{type(e).__name__}: {e}")
-                    fallback = fallback_factory()
-
-                    if not isinstance(fallback, requirement_suggestion):
-                        raise TypeError(
-                            f"Fallback for '{requirement}' is not valid instance of {requirement_suggestion}"
-                        )
-
-                    print(
-                        f"[WARN] Using fallback for '{requirement}': {fallback.__class__.__name__}"
-                    )
-                    self.extra_opts[requirement] = fallback
-                    dependency = fallback
-
-                    if warning_time == -1:
-                        input()
-                    else:
-                        sleep(warning_time)
 
         return dependency
 
@@ -167,9 +82,9 @@ class DisplayExtension:
             else:
                 self.bookmarking_handler.update(item)
         except ValueError:
-            input("ValueError: only non-negative integers are accepted.\n")
+            PauseableException("ValueError: only non-negative integers are accepted.")
         except IndexError:
-            input("IndexError: The requested item is not listed.\n")
+            PauseableException("IndexError: The requested item is not listed.")
 
     def open_image_with_mpv(self, url):
         Player.start_with_mode(url=url, opts=self.extra_opts.get("mode", "auto"))
@@ -183,83 +98,6 @@ class DisplayExtension:
 
 
 class DisplayMenu(Display, DisplayExtension):
-    """
-    DisplayMenu handles the presentation and navigation of video playlists with features like:
-    - Paging through videos
-    - Bookmarking
-    - Showing/hiding additional options
-    - Auto-selecting the next unviewed video
-    - Thumbnail preview
-
-    Key Features Overview:
-
-    1. Initialization (__init__):
-        - Sets up user options, display settings, and history map.
-        - Static options (pages_opts) and dynamic options (B_toggle, O_toggle) are combined.
-        - History is loaded to know which videos were already viewed.
-
-    2. Options Handling:
-        - Static options: navigation, jump to page, view thumbnail, quit.
-        - Dynamic options: toggle bookmark, show/hide all options.
-        - Options are stored in a dict with meaningful keys, then merged into `combined_opts`.
-        - `page_opts_display` contains the formatted string for display.
-
-    3. Auto-Select Mechanism:
-        - `_find_first_unviewed_index()` finds the first video not marked as 'viewed'.
-        - `_find_next_unviewed_index(start_idx)` finds the next unviewed video from a starting index.
-        - During `print_menu()`, the first unviewed video on the current page is automatically set as `choosed_item`.
-        - In `choose_item_option()`:
-            * If the user presses Enter without typing a number, `choosed_item` is auto-selected.
-            * If `_last_played` exists and matches `choosed_item`, the index increments to the next item for auto-play.
-        - This ensures the menu always highlights the next video the user hasn't watched yet.
-        - After selection, `_last_played` is updated so subsequent auto-selects work correctly.
-
-    4. Pagination:
-        - `pagination()` splits the playlist into pages according to `items_per_list`.
-        - Keeps track of current page, total items, items per page, and last page length.
-        - `index_item` tracks the current page index.
-        - `len_data_items` tracks number of videos on the current page.
-
-    5. Menu Rendering:
-        - `print_option()` shows either all options (if `show_opts=True`) or just toggle hint.
-        - `print_page_indicator()` shows current page / total pages and items shown.
-        - `print_menu()` prints each video title with colors:
-            * Gray if already viewed
-            * Yellow if bookmarked
-            * Appends video URL if `show_link=True`
-        - The first unviewed video on the page becomes the default selected item.
-
-    6. User Input Processing:
-        - `print_user_input()` asks the user to select an item.
-        - `advanced_options()` handles commands with parameters:
-            * "P:<int>" → jump to page
-            * "B:<int>" → toggle bookmark on a specific video
-            * "I:<int>" → change number of items per page
-            * "T:<int>" → view thumbnail
-        - `choose_item_option()` selects a video either based on input or auto-selection logic.
-        - `standard_options()` handles simple single-key commands:
-            * N/P → next/previous page
-            * J → jump to next unviewed video
-            * U → toggle URL display
-            * O → toggle full options
-            * B → toggle bookmark mode
-            * Q → quit
-
-    7. Menu Loop (choose_menu):
-        - Clears screen and redraws menu every iteration.
-        - Updates page info and options display dynamically.
-        - Continues until a valid video selection is made, which is returned as (title, URL).
-        - Ensures indices are valid and resets loop variables after exit.
-
-    8. Bookmark / Viewed Tracking:
-        - Bookmarks are toggled via `bookmark_processing()`.
-        - Viewed videos are tracked via `history_handler` and local `history_map`.
-        - `mark_viewed(url)` updates both history file and local map.
-
-    Overall Flow:
-        __init__ → load history & set up options → choose_menu → render menu → wait for user input → handle input → auto-select next unviewed → return selected video
-    """
-
     def __init__(self, opts: Display_Options, extra_opts={}):
         # Dependencies
         self._init_extra_opts(
@@ -590,9 +428,11 @@ class DisplayMenu(Display, DisplayExtension):
             return ans["video_title"], ans["video_url"]
 
         except ValueError:
-            input("ValueError: only options and non-negative integers are accepted.\n")
+            PauseableException(
+                "ValueError: only options and non-negative integers are accepted."
+            )
         except IndexError:
-            input("IndexError: The requested item is not listed.\n")
+            PauseableException("IndexError: The requested item is not listed.")
         return
 
     def standard_options(self):

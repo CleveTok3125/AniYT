@@ -8,7 +8,7 @@
 
 A feauture rich cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube.
 
-# Demo
+# Demo ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/tag/v0.9.6))
 ```
 $ /path/to/project/AniYT/ani_yt -c MuseAsia -l
 
@@ -43,7 +43,6 @@ Select (13): 17
 ```
 
 ___
-Command line interface ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/tag/v0.9.6))
 
 ![Demo](./demo.png)
 

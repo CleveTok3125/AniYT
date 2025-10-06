@@ -16,6 +16,18 @@ class IOHelper:
 
         return wrapper
 
+    @staticmethod
+    def gracefully_terminate_exit(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except KeyboardInterrupt:
+                print("Action canceled by user.")
+                sys.exit(0)
+
+        return wrapper
+
 
 class SubprocessHelper:
     @staticmethod
