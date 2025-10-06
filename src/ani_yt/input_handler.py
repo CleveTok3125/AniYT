@@ -13,7 +13,7 @@ class InputMap:
 class ReturnCodeMeta(type):
     _valid_codes = {
         "CONTINUE",
-        "EXIT_LOOP",
+        "BREAK",
         "NEXT_PAGE",
         "PREV_PAGE",
         "LINE_UP",
@@ -22,10 +22,12 @@ class ReturnCodeMeta(type):
 
     def __getattr__(cls, name):
         if name in cls._valid_codes:
-            obj = object()
-            setattr(cls, name, obj)
-            return obj
+            setattr(cls, name, name)
+            return name
         raise AttributeError(f"{name} is not a valid return code")
+
+    def __contains__(cls, item):
+        return item in cls._valid_codes
 
     def is_valid(cls, code):
         return code in {getattr(cls, name) for name in cls._valid_codes}
@@ -52,7 +54,7 @@ class OnPressed:
         return ReturnCode.LINE_DOWN
 
     def enter(self, char):
-        return ReturnCode.EXIT_LOOP
+        return ReturnCode.BREAK
 
     def backspace(self, char):
         if self.input_obj.input_chars:
@@ -66,7 +68,7 @@ class OnPressed:
         return ReturnCode.CONTINUE
 
 
-class Input:
+class InputHandler:
     def __init__(self):
         self.input_chars = []
         self.on_pressed = OnPressed(self)
@@ -79,7 +81,7 @@ class Input:
             InputMap.arrow_down: self.on_pressed.arrow_down,
         }
 
-    def get_input(self, prompt="Select: ", verbose=False):
+    def get_input(self, prompt=None, verbose=False):
         print(prompt, end="", flush=True)
 
         while True:
@@ -91,11 +93,13 @@ class Input:
             action = self.key_actions.get(char, self.on_pressed.default)
             code = action(char)
 
-            if code == ReturnCode.EXIT_LOOP:
+            if code == ReturnCode.BREAK:
+                print()
                 break
 
+            if code == ReturnCode.CONTINUE:
+                continue
+
+            return code
+
         return "".join(self.input_chars)
-
-
-A = Input()
-print("\nInput: ", A.get_input(verbose=False))

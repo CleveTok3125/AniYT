@@ -8,6 +8,7 @@ from .bookmarking_handler import BookmarkingHandler
 from .data_processing import DataProcessing
 from .helper import LegacyCompatibility
 from .history_handler import HistoryHandler
+from .input_handler import InputHandler, ReturnCode
 from .os_manager import OSManager
 from .player import Player
 from .yt_dlp_handler import YT_DLP, YT_DLP_Options
@@ -299,7 +300,9 @@ class DisplayMenu(Display, DisplayExtension):
             "P": "(P) Previous page",
             "P_int": "(P:<integer>) Jump to page",
             "J": "(J) Jump to next unviewed",
-            "U": "(U) Toggle link",
+            "U": "(U) Move cursor up",
+            "D": "(D) Move cursor down",
+            "L": "(L) Toggle link",
             "B_int": "(B:<integer>) Add/remove bookmark",
             "T_int": "(T:<integer>) View thumbnail",
             "I_int": "(I:<integer>) number of items per page",
@@ -363,6 +366,8 @@ class DisplayMenu(Display, DisplayExtension):
             "P_int",
             "J",
             "U",
+            "D",
+            "L",
             "B_toggle",
             "B_int",
             "T_int",
@@ -390,6 +395,8 @@ class DisplayMenu(Display, DisplayExtension):
         Calling the class every time will not have the problem of instance attributes but will have performance problems.
         """
         self.index_item = 0
+        self.cursor_in_page = 0
+        self.cursor_moved = False
         self.show_link = self.opts.show_link
         self.bookmark = self.opts.bookmark
 
@@ -452,7 +459,8 @@ class DisplayMenu(Display, DisplayExtension):
         self.len_data_items = len(self.splited_data_items)
         first_unviewed_set = False
 
-        indicator = f"{self.BLUE}❯{self.RESET}"
+        unviewed_indicator = f"{self.YELLOW}❯{self.RESET}"
+        cursor_in_page = f"{self.BLUE}❯{self.RESET}"
 
         for index, item in enumerate(self.splited_data_items):
             item_title = item["video_title"]
@@ -466,7 +474,7 @@ class DisplayMenu(Display, DisplayExtension):
                 else ""
             )
 
-            if not first_unviewed_set and color_viewed == "":
+            if not first_unviewed_set and color_viewed == "" and not self.cursor_moved:
                 self.choosed_item = item_number - 1
                 first_unviewed_set = True
 
@@ -479,21 +487,43 @@ class DisplayMenu(Display, DisplayExtension):
 
             link = f"\n\t{item_url}" if self.show_link else ""
 
-            indicate_item = (
-                indicator
-                if index == self.choosed_item and self.choosed_item is not False
-                else " "
+            indicate_item = " "
+            is_unviewed_indicator = (
+                item_number - 1 == self.choosed_item
+                and self.choosed_item is not False
+                and not self.cursor_moved
             )
+            is_cursor_in_page = index == self.cursor_in_page and self.cursor_moved
+            if is_unviewed_indicator:
+                indicate_item = unviewed_indicator
+            if is_cursor_in_page:
+                indicate_item = cursor_in_page
 
             print(
                 f"{self.RESET} {indicate_item} {color_viewed}{color_bookmarked}({item_number}) {item_title}{link}{self.RESET}"
             )
         print()
 
+    def map_user_input(self, prompt=None):
+        input_handler = InputHandler()
+        user_input = input_handler.get_input(prompt).strip()
+
+        input_map = {
+            ReturnCode.NEXT_PAGE: "N",
+            ReturnCode.PREV_PAGE: "P",
+            ReturnCode.LINE_UP: "U",
+            ReturnCode.LINE_DOWN: "D",
+        }
+
+        if mapped_key := input_map.get(user_input):
+            return mapped_key
+
+        return user_input
+
     def print_user_input(self):
         try:
             prompt = "Select: "
-            self.user_input = input(prompt).strip()
+            self.user_input = self.map_user_input(prompt)
         except KeyboardInterrupt:
             OSManager.exit(0)
 
@@ -519,27 +549,40 @@ class DisplayMenu(Display, DisplayExtension):
             return True
         return False
 
+    def _handle_enter_input(self):
+        # If enter is pressed when the cursor is already on a specific item
+        if self.cursor_moved:
+            self.choosed_item = (
+                self.index_item * self.opts.items_per_list + self.cursor_in_page
+            )
+            self.cursor_moved = False
+        else:
+            # If just enter (no auto-play yet) then play correct self.choosed_item
+            if self.choosed_item is False:
+                self.choosed_item = 0
+            else:
+                # If user_input is empty multiple times in a row
+                # then only increment when the previous set has been played
+                if (
+                    hasattr(self, "_last_played")
+                    and self._last_played == self.choosed_item
+                ):
+                    self.choosed_item += 1
+
+    def _handle_numeric_input(self):
+        idx = int(self.user_input) - 1
+        if idx < 0 or idx >= len(self.data):
+            raise IndexError()
+        self.choosed_item = idx
+
     def choose_item_option(self):
         try:
             if self.user_input == "":
-                # If just entered (no auto-play yet) then play correct self.choosed_item
-                if self.choosed_item is False:
-                    self.choosed_item = 0
-                else:
-                    # If user_input is empty multiple times in a row
-                    # then only increment when the previous set has been played
-                    if (
-                        hasattr(self, "_last_played")
-                        and self._last_played == self.choosed_item
-                    ):
-                        self.choosed_item += 1
+                self._handle_enter_input()
+            elif self.user_input.isdigit():
+                self._handle_numeric_input()
             else:
-                if not self.user_input.isdigit():
-                    raise ValueError()
-                idx = int(self.user_input) - 1
-                if idx < 0 or idx >= len(self.data):
-                    raise IndexError()
-                self.choosed_item = idx
+                raise ValueError()
 
             ans: Video = self.data[self.choosed_item]
             # save the episode just played to enter next time auto next
@@ -559,15 +602,35 @@ class DisplayMenu(Display, DisplayExtension):
             return True
         if user_input == "N":
             self.index_item += 1
+            self.cursor_in_page = 0
+            self.cursor_moved = False
             return True
         if user_input == "P":
             self.index_item -= 1
+            self.cursor_in_page = 0
+            self.cursor_moved = False
             return True
         if user_input == "J":
             self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
             self.index_item = self.choosed_item // self.opts.items_per_list
             return True
         if user_input == "U":
+            if self.cursor_in_page > 0:
+                self.cursor_in_page -= 1
+            self.cursor_moved = True
+            self.choosed_item = (
+                self.index_item * self.opts.items_per_list + self.cursor_in_page
+            )
+            return True
+        if user_input == "D":
+            if self.cursor_in_page < len(self.splited_data_items) - 1:
+                self.cursor_in_page += 1
+            self.cursor_moved = True
+            self.choosed_item = (
+                self.index_item * self.opts.items_per_list + self.cursor_in_page
+            )
+            return True
+        if user_input == "L":
             self.show_link = not self.show_link
             return True
         if user_input == "B":
