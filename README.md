@@ -8,42 +8,7 @@
 
 A feauture rich cli tool to browse and watch videos in YouTube playlists. Specially designed for watching anime on YouTube.
 
-# Demo ([v0.9.6](https://github.com/CleveTok3125/AniYT/releases/tag/v0.9.6))
-```
-$ /path/to/project/AniYT/ani_yt -c MuseAsia -l
-
-(O) Hide all options
-(N) Next page
-(P) Previous page
-(P:<integer>) Jump to page
-(J) Jump to next unviewed
-(U) Toggle link
-(B) Toggle bookmark
-(B:<integer>) Add/remove bookmark
-(T:<integer>) View thumbnail
-(I:<integer>) number of items per page
-(Q) Quit
-
-Page: 2/34 (24/401)
-
-(13) (Full Series) I've Been Killing Slimes for 300 Years and Maxed Out My Level [English Sub]
-(14) I'm the Evil Lord of an Intergalactic Empire! [English Sub]
-(15) Lord of Vermilion: The Crimson King [English Sub]
-(16) (Full Series) Is the Order a Rabbit? [English Sub]
-(17) Crayon Shinchan movies [English Sub]
-(18) Just Because! [English Sub]
-(19) [English Dub] Frieren: Beyond Journey's End
-(20) Cells at Work! [English Sub]
-(21) BanG Dream! Ave Mujica [English Sub]
-(22) MOMENTARY LILY [English Sub]
-(23) Even Given the Worthless "Appraiser" Class, I'm Actually the Strongest [English Sub]
-(24) From Bureaucrat to Villainess: Dad's Been Reincarnated! [English Sub]
-
-Select (13): 17
-```
-
-___
-
+# Demo ([v0.13.0rc3](https://github.com/CleveTok3125/AniYT/releases/tag/v0.13.0rc3))
 ![Demo](./demo.png)
 
 # Key Features

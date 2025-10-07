@@ -1,8 +1,9 @@
 import os
+import shutil
 import sys
 from datetime import datetime
 from typing import Dict, List
-import shutil
+
 from wcwidth import wcswidth
 
 from .bookmarking_handler import BookmarkingHandler
@@ -137,7 +138,10 @@ class DisplayMenu(Display, DisplayExtension):
 
         # Constant
         self.no_opts = {
-            "option_toggle": [f"{self.BRIGHT_BLUE}{self.BOLD}(O) Hide all options{self.RESET}", f"{self.BRIGHT_BLUE}{self.BOLD}(O) Show all options{self.RESET}"],
+            "option_toggle": [
+                f"{self.BRIGHT_BLUE}{self.BOLD}(O) Hide all options{self.RESET}",
+                f"{self.BRIGHT_BLUE}{self.BOLD}(O) Show all options{self.RESET}",
+            ],
         }
         self.pages_opts = {
             "N": "(N/→) Next page",
@@ -189,7 +193,14 @@ class DisplayMenu(Display, DisplayExtension):
                 != "viewed"
             ):
                 return idx
-        return start_idx
+
+        for idx in range(0, start_idx):
+            if (
+                self.history_map.get(self.data[idx]["video_url"], "").lower()
+                != "viewed"
+            ):
+                return idx
+        return 0
 
     def _render_dynamic_opts(self):
         self.combined_opts = self.pages_opts.copy()
@@ -247,6 +258,7 @@ class DisplayMenu(Display, DisplayExtension):
         self.cursor_moved = False
         self.show_link = self.opts.show_link
         self.bookmark = self.opts.bookmark
+        self._last_played = None
 
     def mark_viewed(self, url: str):
         """
@@ -269,13 +281,18 @@ class DisplayMenu(Display, DisplayExtension):
             self.history_map[url] = "viewed"
 
     def valid_index_item(self):
-        if self.choosed_item >= self.len_data:
-            self.choosed_item = False
-
         if self.index_item >= self.len_data:
             self.index_item = 0
         elif self.index_item <= -1:
             self.index_item = self.len_data - 1
+
+        if self.splited_data:
+            self.cursor_in_page = (
+                self.choosed_item - self.index_item * self.opts.items_per_list
+            )
+            self.cursor_in_page = min(
+                self.cursor_in_page, len(self.splited_data[self.index_item]) - 1
+            )
 
     def pagination(self):
         self.valid_index_item()
@@ -302,9 +319,7 @@ class DisplayMenu(Display, DisplayExtension):
         page_colored = f"{self.BRIGHT_BLUE}{self.BOLD}Page:{self.RESET}"
         page_indicator_colored = f"{self.index_item + 1}/{self.BRIGHT_BLUE}{self.BOLD}{self.len_data}{self.RESET}"
         total_item_colored = f"({showed_item}/{self.BRIGHT_BLUE}{self.BOLD}{self.total_items}{self.RESET})"
-        print(
-            f"{page_colored} {page_indicator_colored} {total_item_colored}\n"
-        )
+        print(f"{page_colored} {page_indicator_colored} {total_item_colored}\n")
 
     def text_wrap(self, text: str, width: int, indent: int = 0) -> str:
         indent_str = " " * indent
@@ -333,7 +348,6 @@ class DisplayMenu(Display, DisplayExtension):
 
     def print_menu(self):
         self.len_data_items = len(self.splited_data_items)
-        first_unviewed_set = False
 
         unviewed_indicator = f"{self.YELLOW} ❯ {self.RESET}"
         cursor_in_page = f"{self.BRIGHT_BLUE} ❯ {self.RESET}"
@@ -351,10 +365,6 @@ class DisplayMenu(Display, DisplayExtension):
                 if self.history_map.get(item_url, "").lower() == "viewed"
                 else ""
             )
-
-            if not first_unviewed_set and color_viewed == "" and not self.cursor_moved:
-                self.choosed_item = item_number - 1
-                first_unviewed_set = True
 
             color_bookmarked = (
                 self.YELLOW
@@ -378,26 +388,32 @@ class DisplayMenu(Display, DisplayExtension):
             if is_cursor_in_page:
                 indicate_item = cursor_in_page
 
-            selected_bg = self.SELECTED_BG_COLOR if is_cursor_in_page or is_unviewed_indicator else ""
+            selected_bg = (
+                self.SELECTED_BG_COLOR
+                if is_cursor_in_page or is_unviewed_indicator
+                else ""
+            )
 
             colored_item_number = f"{self.BRIGHT_BLUE}{self.BOLD}{selected_bg}{color_viewed}{color_bookmarked}{item_number} {self.RESET}"
-            spaces_num = ( len(str(self.total_items)) - len(str(item_number)) )
-            spaces_fill = f"{self.LIGHT_GRAY}{selected_bg}{"0" * spaces_num}{self.RESET}"
+            spaces_num = len(str(self.total_items)) - len(str(item_number))
+            spaces_fill = (
+                f"{self.LIGHT_GRAY}{selected_bg}{"0" * spaces_num}{self.RESET}"
+            )
 
             prefix = f"{self.RESET}{indicate_item}{spaces_fill}{colored_item_number}"
-            visible_prefix_len = indicate_item_len + spaces_num + len(str(item_number)) + 1
+            visible_prefix_len = (
+                indicate_item_len + spaces_num + len(str(item_number)) + 1
+            )
 
             wrapped_item_title = wrapped_item_title = self.text_wrap(
                 text=item_title,
                 width=term_width - visible_prefix_len - 2,
-                indent=visible_prefix_len
+                indent=visible_prefix_len,
             )
-            padding = ( term_width - visible_prefix_len - wcswidth(item_title) ) * " "
+            padding = (term_width - visible_prefix_len - wcswidth(item_title)) * " "
             colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{self.LINK_COLOR}{link}{self.RESET}"
 
-            print(
-                f"{prefix}{colored_item}{self.RESET}"
-            )
+            print(f"{prefix}{colored_item}{self.RESET}")
         print()
 
     def map_user_input(self, prompt=None):
@@ -438,10 +454,13 @@ class DisplayMenu(Display, DisplayExtension):
             return False
 
         match (user_input_upper, is_cursor_option):
+            case ("B:", _):
+                self.bookmark_processing(user_int)
+            case ("T:", _):
+                self.show_thumbnail(user_int)
             case ("P:", False):
                 self.index_item = user_int - 1
-            case ("B:", True):
-                self.bookmark_processing(user_int)
+                self.valid_index_item()
             case ("I:", False):
                 self.opts.items_per_list = (
                     user_int
@@ -449,8 +468,6 @@ class DisplayMenu(Display, DisplayExtension):
                     else self.total_items if user_int > self.total_items else 1
                 )
                 self.pagination()
-            case ("T:", _):
-                self.show_thumbnail(user_int)
             case _:
                 return False
 
@@ -473,8 +490,13 @@ class DisplayMenu(Display, DisplayExtension):
                 if (
                     hasattr(self, "_last_played")
                     and self._last_played == self.choosed_item
+                    and any(
+                        self.history_map.get(v["video_url"], "").lower() == "viewed"
+                        for v in self.data
+                    )
                 ):
-                    self.choosed_item += 1
+                    if self._last_played != 0:
+                        self.choosed_item += 1
 
     def _handle_numeric_input(self):
         idx = int(self.user_input) - 1
@@ -492,8 +514,17 @@ class DisplayMenu(Display, DisplayExtension):
                 raise ValueError()
 
             ans: Video = self.data[self.choosed_item]
-            # save the episode just played to enter next time auto next
-            self._last_played = self.choosed_item
+            # self.mark_viewed(ans["video_url"]) # To avoid hidden actions, should not be used internally in functions should only have display handling functions
+            self._last_played = (
+                self.choosed_item
+            )  # save the episode just played to enter next time auto next
+
+            self.choosed_item = self._find_next_unviewed_index(self.choosed_item + 1)
+            self.valid_index_item()
+            self.index_item = self.choosed_item // self.opts.items_per_list
+            self.cursor_in_page = self.choosed_item % self.opts.items_per_list
+            self.cursor_moved = False
+
             return ans["video_title"], ans["video_url"]
 
         except ValueError:
@@ -514,25 +545,36 @@ class DisplayMenu(Display, DisplayExtension):
                 self._render_dynamic_opts()
             case "N":
                 self.index_item += 1
+                self.index_item = min(self.index_item, self.len_data - 1)
+                self.choosed_item = self.index_item * self.opts.items_per_list
                 self.cursor_in_page = 0
                 self.cursor_moved = False
+                self.valid_index_item()
             case "P":
                 self.index_item -= 1
+                self.index_item = max(self.index_item, 0)
+                self.choosed_item = self.index_item * self.opts.items_per_list
                 self.cursor_in_page = 0
                 self.cursor_moved = False
+                self.valid_index_item()
             case "J":
                 self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
+                self.valid_index_item()
                 self.index_item = self.choosed_item // self.opts.items_per_list
             case "U":
                 if self.cursor_in_page > 0:
                     self.cursor_in_page -= 1
                 self.cursor_moved = True
-                self.choosed_item = self.index_item * self.opts.items_per_list + self.cursor_in_page
+                self.choosed_item = (
+                    self.index_item * self.opts.items_per_list + self.cursor_in_page
+                )
             case "D":
                 if self.cursor_in_page < len(self.splited_data_items) - 1:
                     self.cursor_in_page += 1
                 self.cursor_moved = True
-                self.choosed_item = self.index_item * self.opts.items_per_list + self.cursor_in_page
+                self.choosed_item = (
+                    self.index_item * self.opts.items_per_list + self.cursor_in_page
+                )
             case "L":
                 self.show_link = not self.show_link
                 self._render_dynamic_opts()
