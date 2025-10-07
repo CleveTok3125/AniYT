@@ -124,13 +124,12 @@ class DisplayMenu(Display, DisplayExtension):
         self.choosed_item = False
 
         # Constant
-        self.RESET = "\033[0m"
-        self.YELLOW = "\033[33m"
-        self.LIGHT_GRAY = "\033[38;5;247m"
-        self.BLUE = "\033[0;34;49m"
-        self.BRIGHT_BLUE = "\033[0;94;49m"
-        self.LINK_COLOR = "\033[3;4;94;49m"
-        self.BOLD = "\033[1;39;49m"
+        self.RESET = "\033[0;24;38;2;255;255;255;49m"
+        self.YELLOW = "\033[38;2;255;255;0m"
+        self.LIGHT_GRAY = "\033[0;38;2;187;187;187;49m"
+        self.BRIGHT_BLUE = "\033[38;2;0;191;255m"
+        self.LINK_COLOR = "\033[3;38;2;0;191;255m"
+        self.BOLD = "\033[1m"
         self.SELECTED_BG_COLOR = "\033[48;5;236m"
 
         # Variable
@@ -373,7 +372,9 @@ class DisplayMenu(Display, DisplayExtension):
                 else ""
             )
 
-            link = f"\n\t{item_url}" if self.show_link else ""
+            link_colored = (
+                f"\n\t{self.LINK_COLOR}{item_url}{self.RESET}" if self.show_link else ""
+            )
 
             indicate_item_len = 3
             indicate_item = " " * indicate_item_len
@@ -411,7 +412,7 @@ class DisplayMenu(Display, DisplayExtension):
                 indent=visible_prefix_len,
             )
             padding = (term_width - visible_prefix_len - wcswidth(item_title)) * " "
-            colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{self.LINK_COLOR}{link}{self.RESET}"
+            colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{link_colored}{self.RESET}"
 
             print(f"{prefix}{colored_item}{self.RESET}")
         print()
@@ -545,18 +546,18 @@ class DisplayMenu(Display, DisplayExtension):
                 self._render_dynamic_opts()
             case "N":
                 self.index_item += 1
-                self.index_item = min(self.index_item, self.len_data - 1)
-                self.choosed_item = self.index_item * self.opts.items_per_list
-                self.cursor_in_page = 0
-                self.cursor_moved = False
                 self.valid_index_item()
+                start_idx = self.index_item * self.opts.items_per_list
+                self.choosed_item = self._find_next_unviewed_index(start_idx)
+                self.cursor_in_page = self.choosed_item - self.index_item * self.opts.items_per_list
+                self.cursor_moved = False
             case "P":
                 self.index_item -= 1
-                self.index_item = max(self.index_item, 0)
-                self.choosed_item = self.index_item * self.opts.items_per_list
-                self.cursor_in_page = 0
-                self.cursor_moved = False
                 self.valid_index_item()
+                start_idx = self.index_item * self.opts.items_per_list
+                self.choosed_item = self._find_next_unviewed_index(start_idx)
+                self.cursor_in_page = self.choosed_item - self.index_item * self.opts.items_per_list
+                self.cursor_moved = False
             case "J":
                 self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
                 self.valid_index_item()
