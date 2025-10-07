@@ -311,14 +311,20 @@ class DisplayMenu(Display, DisplayExtension):
             output = self.page_opts_display
         else:
             output = self.no_opts["option_toggle"][1]
-        print(f"{output}\n")
+
+        print_option_buffer = [output, ""]
+        return print_option_buffer
 
     def print_page_indicator(self):
         showed_item = self.len_data_items + self.index_item * self.opts.items_per_list
         page_colored = f"{self.BRIGHT_BLUE}{self.BOLD}Page:{self.RESET}"
         page_indicator_colored = f"{self.index_item + 1}/{self.BRIGHT_BLUE}{self.BOLD}{self.len_data}{self.RESET}"
         total_item_colored = f"({showed_item}/{self.BRIGHT_BLUE}{self.BOLD}{self.total_items}{self.RESET})"
-        print(f"{page_colored} {page_indicator_colored} {total_item_colored}\n")
+
+        print_page_indicator_buffer = [
+            f"{page_colored} {page_indicator_colored} {total_item_colored}\n"
+        ]
+        return print_page_indicator_buffer
 
     def text_wrap(self, text: str, width: int, indent: int = 0) -> str:
         indent_str = " " * indent
@@ -346,6 +352,8 @@ class DisplayMenu(Display, DisplayExtension):
         return ("\n" + indent_str).join(lines)
 
     def print_menu(self):
+        print_menu_buffer = []
+
         self.len_data_items = len(self.splited_data_items)
 
         unviewed_indicator = f"{self.YELLOW} ❯ {self.RESET}"
@@ -414,8 +422,9 @@ class DisplayMenu(Display, DisplayExtension):
             padding = (term_width - visible_prefix_len - wcswidth(item_title)) * " "
             colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{link_colored}{self.RESET}"
 
-            print(f"{prefix}{colored_item}{self.RESET}")
-        print()
+            print_menu_buffer.append(f"{prefix}{colored_item}{self.RESET}")
+        print_menu_buffer.append("")
+        return print_menu_buffer
 
     def map_user_input(self, prompt=None):
         input_handler = InputHandler()
@@ -549,14 +558,18 @@ class DisplayMenu(Display, DisplayExtension):
                 self.valid_index_item()
                 start_idx = self.index_item * self.opts.items_per_list
                 self.choosed_item = self._find_next_unviewed_index(start_idx)
-                self.cursor_in_page = self.choosed_item - self.index_item * self.opts.items_per_list
+                self.cursor_in_page = (
+                    self.choosed_item - self.index_item * self.opts.items_per_list
+                )
                 self.cursor_moved = False
             case "P":
                 self.index_item -= 1
                 self.valid_index_item()
                 start_idx = self.index_item * self.opts.items_per_list
                 self.choosed_item = self._find_next_unviewed_index(start_idx)
-                self.cursor_in_page = self.choosed_item - self.index_item * self.opts.items_per_list
+                self.cursor_in_page = (
+                    self.choosed_item - self.index_item * self.opts.items_per_list
+                )
                 self.cursor_moved = False
             case "J":
                 self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
@@ -591,6 +604,10 @@ class DisplayMenu(Display, DisplayExtension):
 
         return handled
 
+    def prepare_buffer(self, *args):
+        print_buffer = "\n".join(line for arg in args for line in arg)
+        return print_buffer
+
     def choose_menu(self, playlists, clear_choosed_item=False):
         playlists = LegacyCompatibility.normalize_playlist(playlists)
 
@@ -605,16 +622,21 @@ class DisplayMenu(Display, DisplayExtension):
 
         try:
             while True:
-                self.clscr()
-
                 self.valid_index_item()
 
                 self.splited_data_items = self.splited_data[self.index_item]
                 self.len_data_items = len(self.splited_data_items)
 
-                self.print_option()
-                self.print_page_indicator()
-                self.print_menu()
+                print_option_buffer = self.print_option()
+                print_page_indicator_buffer = self.print_page_indicator()
+                print_menu_buffer = self.print_menu()
+
+                print_buffer = self.prepare_buffer(
+                    print_option_buffer, print_page_indicator_buffer, print_menu_buffer
+                )
+
+                self.clscr()
+                print(print_buffer)
 
                 self.print_user_input()
 
