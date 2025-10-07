@@ -81,7 +81,7 @@ ___
 To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/AniYT/blob/artifacts/artifacts/help/cli_help.txt)
 
 # Dependencies
-- Python >= 3.9 (recommended >= 3.13)
+- Python >= 3.10 (recommended >= 3.13)
 - _Go >= 1.22 (recommended >= 1.25.1)_*
 - MPV or MPV-X11
 - YT-DLP

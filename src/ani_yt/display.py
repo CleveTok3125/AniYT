@@ -2,6 +2,8 @@ import os
 import sys
 from datetime import datetime
 from typing import Dict, List
+import shutil
+from wcwidth import wcswidth
 
 from .bookmarking_handler import BookmarkingHandler
 from .data_processing import DataProcessing
@@ -26,7 +28,7 @@ class Display_Options:
 
 class Display:
     @staticmethod
-    @IOHelper.gracefully_terminate
+    @IOHelper.gracefully_terminate_exit
     def search():
         return str(input("Search: "))
 
@@ -125,25 +127,29 @@ class DisplayMenu(Display, DisplayExtension):
         self.YELLOW = "\033[33m"
         self.LIGHT_GRAY = "\033[38;5;247m"
         self.BLUE = "\033[0;34;49m"
+        self.BRIGHT_BLUE = "\033[0;94;49m"
+        self.LINK_COLOR = "\033[3;4;94;49m"
+        self.BOLD = "\033[1;39;49m"
+        self.SELECTED_BG_COLOR = "\033[48;5;236m"
 
         # Variable
         self._init_loop_values_()
 
         # Constant
         self.no_opts = {
-            "option_toggle": ["(O) Hide all options", "(O) Show all options"],
+            "option_toggle": [f"{self.BRIGHT_BLUE}{self.BOLD}(O) Hide all options{self.RESET}", f"{self.BRIGHT_BLUE}{self.BOLD}(O) Show all options{self.RESET}"],
         }
         self.pages_opts = {
-            "N": "(N) Next page",
-            "P": "(P) Previous page",
+            "N": "(N/→) Next page",
+            "P": "(P/←) Previous page",
             "P_int": "(P:<integer>) Jump to page",
             "J": "(J) Jump to next unviewed",
-            "U": "(U) Move cursor up",
-            "D": "(D) Move cursor down",
-            "L": "(L) Toggle link",
-            "B_int": "(B:<integer>) Add/remove bookmark",
-            "T_int": "(T:<integer>) View thumbnail",
+            "U": "(U/↑) Move cursor up",
+            "D": "(D/↓) Move cursor down",
+            "B_int": "(B:[<integer>]) Add/remove bookmark",
+            "T_int": "(T:[<integer>]) View thumbnail",
             "I_int": "(I:<integer>) number of items per page",
+            "R": "(R) Re-render the interface",
             "Q": "(Q) Quit",
         }
 
@@ -191,10 +197,13 @@ class DisplayMenu(Display, DisplayExtension):
         self.combined_opts["B_toggle"] = (
             f"{self.YELLOW if self.bookmark else ''}(B) Toggle bookmark{self.RESET}"
         )
+        self.combined_opts["L"] = (
+            f"{self.LINK_COLOR if self.show_link else ''}(L) Toggle link{self.RESET}"
+        )
         self.combined_opts["O_toggle"] = (
-            self.no_opts["option_toggle"][0]
+            self.no_opts["option_toggle"][1]
             if not self.opts.show_opts
-            else self.no_opts["option_toggle"][1]
+            else self.no_opts["option_toggle"][0]
         )
 
         key_order = [
@@ -210,6 +219,7 @@ class DisplayMenu(Display, DisplayExtension):
             "B_int",
             "T_int",
             "I_int",
+            "R",
             "Q",
         ]
 
@@ -284,21 +294,51 @@ class DisplayMenu(Display, DisplayExtension):
         if self.opts.show_opts:
             output = self.page_opts_display
         else:
-            output = self.no_opts["option_toggle"][0]
+            output = self.no_opts["option_toggle"][1]
         print(f"{output}\n")
 
     def print_page_indicator(self):
         showed_item = self.len_data_items + self.index_item * self.opts.items_per_list
+        page_colored = f"{self.BRIGHT_BLUE}{self.BOLD}Page:{self.RESET}"
+        page_indicator_colored = f"{self.index_item + 1}/{self.BRIGHT_BLUE}{self.BOLD}{self.len_data}{self.RESET}"
+        total_item_colored = f"({showed_item}/{self.BRIGHT_BLUE}{self.BOLD}{self.total_items}{self.RESET})"
         print(
-            f"Page: {self.index_item + 1}/{self.len_data} ({showed_item}/{self.total_items})\n"
+            f"{page_colored} {page_indicator_colored} {total_item_colored}\n"
         )
+
+    def text_wrap(self, text: str, width: int, indent: int = 0) -> str:
+        indent_str = " " * indent
+        words = text.split(" ")
+        lines = []
+        cur_line = ""
+        cur_len = 0
+
+        for word in words:
+            word_len = wcswidth(word)
+            if cur_len + word_len + (1 if cur_line else 0) > width:
+                lines.append(cur_line)
+                cur_line = word
+                cur_len = word_len
+            else:
+                if cur_line:
+                    cur_line += " "
+                    cur_len += 1
+                cur_line += word
+                cur_len += word_len
+
+        if cur_line:
+            lines.append(cur_line)
+
+        return ("\n" + indent_str).join(lines)
 
     def print_menu(self):
         self.len_data_items = len(self.splited_data_items)
         first_unviewed_set = False
 
-        unviewed_indicator = f"{self.YELLOW}❯{self.RESET}"
-        cursor_in_page = f"{self.BLUE}❯{self.RESET}"
+        unviewed_indicator = f"{self.YELLOW} ❯ {self.RESET}"
+        cursor_in_page = f"{self.BRIGHT_BLUE} ❯ {self.RESET}"
+
+        term_width = shutil.get_terminal_size().columns
 
         for index, item in enumerate(self.splited_data_items):
             item_title = item["video_title"]
@@ -325,7 +365,8 @@ class DisplayMenu(Display, DisplayExtension):
 
             link = f"\n\t{item_url}" if self.show_link else ""
 
-            indicate_item = " "
+            indicate_item_len = 3
+            indicate_item = " " * indicate_item_len
             is_unviewed_indicator = (
                 item_number - 1 == self.choosed_item
                 and self.choosed_item is not False
@@ -337,8 +378,25 @@ class DisplayMenu(Display, DisplayExtension):
             if is_cursor_in_page:
                 indicate_item = cursor_in_page
 
+            selected_bg = self.SELECTED_BG_COLOR if is_cursor_in_page or is_unviewed_indicator else ""
+
+            colored_item_number = f"{self.BRIGHT_BLUE}{self.BOLD}{selected_bg}{color_viewed}{color_bookmarked}{item_number} {self.RESET}"
+            spaces_num = ( len(str(self.total_items)) - len(str(item_number)) )
+            spaces_fill = f"{self.LIGHT_GRAY}{selected_bg}{"0" * spaces_num}{self.RESET}"
+
+            prefix = f"{self.RESET}{indicate_item}{spaces_fill}{colored_item_number}"
+            visible_prefix_len = indicate_item_len + spaces_num + len(str(item_number)) + 1
+
+            wrapped_item_title = wrapped_item_title = self.text_wrap(
+                text=item_title,
+                width=term_width - visible_prefix_len - 2,
+                indent=visible_prefix_len
+            )
+            padding = ( term_width - visible_prefix_len - wcswidth(item_title) ) * " "
+            colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{self.LINK_COLOR}{link}{self.RESET}"
+
             print(
-                f"{self.RESET} {indicate_item} {color_viewed}{color_bookmarked}({item_number}) {item_title}{link}{self.RESET}"
+                f"{prefix}{colored_item}{self.RESET}"
             )
         print()
 
@@ -360,32 +418,43 @@ class DisplayMenu(Display, DisplayExtension):
 
     def print_user_input(self):
         try:
-            prompt = "Select: "
+            prompt = f"{self.BRIGHT_BLUE}{self.BOLD}Select: {self.RESET}"
             self.user_input = self.map_user_input(prompt)
         except KeyboardInterrupt:
             OSManager.exit(0)
 
     def advanced_options(self):
+        user_input_upper = self.user_input[:2].upper()
+        is_cursor_option = len(self.user_input) == 2
+
         if len(self.user_input) >= 3 and (user_int := self.user_input[2:]).isdigit():
             user_int = int(user_int)
-            user_input = self.user_input[:2].upper()
-            if user_input == "P:":
+        elif is_cursor_option:
+            if self.cursor_moved:
+                user_int = self.cursor_in_page + 1
+            else:
+                user_int = self.choosed_item + 1
+        else:
+            return False
+
+        match (user_input_upper, is_cursor_option):
+            case ("P:", False):
                 self.index_item = user_int - 1
-            elif user_input == "B:":
+            case ("B:", True):
                 self.bookmark_processing(user_int)
-            elif user_input == "I:":
+            case ("I:", False):
                 self.opts.items_per_list = (
                     user_int
                     if user_int > 0
                     else self.total_items if user_int > self.total_items else 1
                 )
                 self.pagination()
-            elif user_input == "T:":
+            case ("T:", _):
                 self.show_thumbnail(user_int)
-            else:
+            case _:
                 return False
-            return True
-        return False
+
+        return True
 
     def _handle_enter_input(self):
         # If enter is pressed when the cursor is already on a specific item
@@ -437,49 +506,47 @@ class DisplayMenu(Display, DisplayExtension):
 
     def standard_options(self):
         user_input = self.user_input.upper()
-        if user_input == "O":
-            self.opts.show_opts = not self.opts.show_opts
-            return True
-        if user_input == "N":
-            self.index_item += 1
-            self.cursor_in_page = 0
-            self.cursor_moved = False
-            return True
-        if user_input == "P":
-            self.index_item -= 1
-            self.cursor_in_page = 0
-            self.cursor_moved = False
-            return True
-        if user_input == "J":
-            self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
-            self.index_item = self.choosed_item // self.opts.items_per_list
-            return True
-        if user_input == "U":
-            if self.cursor_in_page > 0:
-                self.cursor_in_page -= 1
-            self.cursor_moved = True
-            self.choosed_item = (
-                self.index_item * self.opts.items_per_list + self.cursor_in_page
-            )
-            return True
-        if user_input == "D":
-            if self.cursor_in_page < len(self.splited_data_items) - 1:
-                self.cursor_in_page += 1
-            self.cursor_moved = True
-            self.choosed_item = (
-                self.index_item * self.opts.items_per_list + self.cursor_in_page
-            )
-            return True
-        if user_input == "L":
-            self.show_link = not self.show_link
-            return True
-        if user_input == "B":
-            self.bookmark = not self.bookmark
-            self._render_dynamic_opts()
-            return True
-        if user_input == "Q":
-            OSManager.exit(0)
-        return False
+        handled = True
+
+        match user_input:
+            case "O":
+                self.opts.show_opts = not self.opts.show_opts
+                self._render_dynamic_opts()
+            case "N":
+                self.index_item += 1
+                self.cursor_in_page = 0
+                self.cursor_moved = False
+            case "P":
+                self.index_item -= 1
+                self.cursor_in_page = 0
+                self.cursor_moved = False
+            case "J":
+                self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
+                self.index_item = self.choosed_item // self.opts.items_per_list
+            case "U":
+                if self.cursor_in_page > 0:
+                    self.cursor_in_page -= 1
+                self.cursor_moved = True
+                self.choosed_item = self.index_item * self.opts.items_per_list + self.cursor_in_page
+            case "D":
+                if self.cursor_in_page < len(self.splited_data_items) - 1:
+                    self.cursor_in_page += 1
+                self.cursor_moved = True
+                self.choosed_item = self.index_item * self.opts.items_per_list + self.cursor_in_page
+            case "L":
+                self.show_link = not self.show_link
+                self._render_dynamic_opts()
+            case "B":
+                self.bookmark = not self.bookmark
+                self._render_dynamic_opts()
+            case "R":
+                self._render_dynamic_opts()
+            case "Q":
+                OSManager.exit(0)
+            case _:
+                handled = False
+
+        return handled
 
     def choose_menu(self, playlists, clear_choosed_item=False):
         playlists = LegacyCompatibility.normalize_playlist(playlists)
