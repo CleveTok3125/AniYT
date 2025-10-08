@@ -2,6 +2,7 @@ import functools
 import shutil
 import subprocess
 import sys
+from typing import Dict, List, Tuple, Union
 
 
 class IOHelper:
@@ -71,7 +72,9 @@ class SubprocessHelper:
 
 class LegacyCompatibility:
     @staticmethod
-    def normalize_playlist(playlist):
+    def normalize_playlist(
+        playlist: Union[List[Tuple[str, str]], List[Dict[str, str]]],
+    ) -> List[Dict[str, str]]:
         if not playlist:
             return []
 

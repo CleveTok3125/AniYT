@@ -122,7 +122,6 @@ class Main:
 
     def _update_multiple(self, channel_urls, no_update_history=False):
         print("Getting playlist from multiple channels...")
-        merged_playlist_videos = []  # list of Video dict (for merged video playlist)
         merged_playlist_lists = []  # list of [title, url] for file_handler cache
 
         for ch_url in channel_urls:
@@ -130,11 +129,6 @@ class Main:
                 dlp = YT_DLP(ch_url, self.ydl_options)
                 playlist_data = dlp.get_playlist()
                 playlist_videos = self.dp.omit(playlist_data)  # List[Video]
-
-                # Merge preserving order of merged_playlist_videos: append only new video URLs
-                merged_playlist_videos = self.dp.merge_list_preserve_order(
-                    merged_playlist_videos, playlist_videos
-                )
 
                 # For cache, operate on list-of-lists: map playlist_videos -> [[title,url],...]
                 playlist_list = [

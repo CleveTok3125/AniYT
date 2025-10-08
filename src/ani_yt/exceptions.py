@@ -20,10 +20,11 @@ class InvalidHistoryFile(Exception):
 
 class PauseableException(Exception):
     @IOHelper.gracefully_terminate
-    def __init__(self, message, delay=3):
+    def __init__(self, message="", *, delay=3):
         super().__init__(message)
         if delay < 0:
-            input(f"{message}\n")
+            print(message)
+            input("<Enter to continue>\n")
         else:
             print(message)
             sleep(delay)

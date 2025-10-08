@@ -3,6 +3,7 @@ import sys
 
 from . import __version__
 from .ani_tracker_handler import TrackerWrapper
+from .exceptions import PauseableException
 from .extension import Extension
 from .file_handler import Initialize
 from .helper import IOHelper
@@ -416,6 +417,15 @@ class ArgsHandler:
             "source_update": self.main.source_update,
             "source_rebuild": self.main.source_rebuild,
         }
+
+        # Notes
+        if self.args.viewed_mode:
+            print(
+                "[WARNING] Using --viewed-mode will load directly from cache, if cache is modified it may cause the application to malfunction.",
+                "[INFO] Use --viewed-refresh to avoid this, it also updates the latest video list in the playlist.",
+                sep="\n",
+            )
+            PauseableException(delay=-1)
 
     @IOHelper.gracefully_terminate_exit
     def run_main(self, action):
