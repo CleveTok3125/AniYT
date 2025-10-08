@@ -1,13 +1,20 @@
-import readchar
+from sys import platform
+
+if platform.startswith(("linux", "darwin", "freebsd", "openbsd")):
+    from .readchar_posix import ReadChar as readchar
+elif platform in ("win32", "cygwin"):
+    from .readchar_win import ReadChar as readchar
+else:
+    raise NotImplementedError(f"The platform {platform} is not supported yet")
 
 
 class InputMap:
-    enter = ("\n", "\r")
-    backspace = "\x7f"
-    arrow_up = "\x1b[A"
-    arrow_down = "\x1b[B"
-    arrow_right = "\x1b[C"
-    arrow_left = "\x1b[D"
+    enter = ("\n", "\r", "\r\n")
+    backspace = ("\x7f", "\x08")
+    arrow_up = ("\x1b[A", "\xe0H")
+    arrow_down = ("\x1b[B", "\xe0P")
+    arrow_right = ("\x1b[C", "\xe0M")
+    arrow_left = ("\x1b[D", "\xe0K")
 
 
 class ReturnCodeMeta(type):
@@ -72,19 +79,30 @@ class InputHandler:
     def __init__(self):
         self.input_chars = []
         self.on_pressed = OnPressed(self)
-        self.key_actions = {
-            **{k: self.on_pressed.enter for k in InputMap.enter},
-            InputMap.backspace: self.on_pressed.backspace,
-            InputMap.arrow_left: self.on_pressed.arrow_left,
-            InputMap.arrow_right: self.on_pressed.arrow_right,
-            InputMap.arrow_up: self.on_pressed.arrow_up,
-            InputMap.arrow_down: self.on_pressed.arrow_down,
-        }
+        self.key_actions = {}
 
-    def get_input(self, prompt=None, verbose=False):
+        self._map_keys(InputMap.enter, self.on_pressed.enter)
+        self._map_keys(InputMap.backspace, self.on_pressed.backspace)
+        self._map_keys(InputMap.arrow_left, self.on_pressed.arrow_left)
+        self._map_keys(InputMap.arrow_right, self.on_pressed.arrow_right)
+        self._map_keys(InputMap.arrow_up, self.on_pressed.arrow_up)
+        self._map_keys(InputMap.arrow_down, self.on_pressed.arrow_down)
+
+    def _map_keys(self, keys, action):
+        for k in keys:
+            if isinstance(k, (tuple, list)):
+                for subk in k:
+                    self.key_actions[subk] = action
+            else:
+                self.key_actions[k] = action
+
+    def get_input(self, prompt=None, *, flush_before_read=True, verbose=False):
         print(prompt, end="", flush=True)
 
         while True:
+            if flush_before_read:
+                readchar.flush_input()
+
             char = readchar.readkey()
 
             if verbose:

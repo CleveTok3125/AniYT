@@ -14,13 +14,13 @@ idna==3.10
     # via requests
 rapidfuzz==3.13.0
     # via AniYT (pyproject.toml)
-readchar==4.2.1
-    # via AniYT (pyproject.toml)
 requests==2.32.4
     # via AniYT (pyproject.toml)
 ujson==5.10.0
     # via AniYT (pyproject.toml)
 urllib3==2.5.0
     # via requests
+wcwidth==0.2.14
+    # via AniYT (pyproject.toml)
 yt-dlp==2025.4.30
     # via AniYT (pyproject.toml)

@@ -118,7 +118,6 @@ class DisplayMenu(Display, DisplayExtension):
         self.len_last_item = 0
         self.total_items = 0
         self.len_data_items = 0
-        self._busy = False
 
         # Variable
         # These are variables that are manually cleared for caching purposes. Remember to clear these variables when running functions in the class multiple times.
@@ -445,9 +444,6 @@ class DisplayMenu(Display, DisplayExtension):
 
     def print_user_input(self):
         try:
-            if self._busy:
-                return
-
             prompt = f"{self.BRIGHT_BLUE}{self.BOLD}Select: {self.RESET}"
             self.user_input = self.map_user_input(prompt)
         except KeyboardInterrupt:
@@ -626,8 +622,6 @@ class DisplayMenu(Display, DisplayExtension):
 
         try:
             while True:
-                self._busy = True
-
                 self.valid_index_item()
 
                 self.splited_data_items = self.splited_data[self.index_item]
@@ -643,8 +637,6 @@ class DisplayMenu(Display, DisplayExtension):
 
                 self.clscr()
                 print(print_buffer)
-
-                self._busy = False
 
                 self.print_user_input()
 
