@@ -300,6 +300,20 @@ class DisplayMenu(Display, DisplayExtension):
             self.data, self.opts.items_per_list
         )
         self.len_data = len(self.splited_data)
+
+        # Fallback
+        if self.len_data == 0:
+            self.len_last_item = 0
+            self.total_items = 0
+            self.splited_data_items = []
+            return
+
+        # Validation
+        if self.index_item >= self.len_data:
+            self.index_item = self.len_data - 1
+        elif self.index_item < 0:
+            self.index_item = 0
+
         self.len_last_item = len(self.splited_data[self.len_data - 1])
         self.total_items = (
             self.opts.items_per_list * (self.len_data - 1)
@@ -443,9 +457,24 @@ class DisplayMenu(Display, DisplayExtension):
         return user_input
 
     def print_user_input(self):
+        current_index = (
+            self.index_item * self.opts.items_per_list + self.cursor_in_page + 1
+            if self.splited_data and self.splited_data_items
+            else 0
+        )
+
+        prompt = (
+            f"{self.BRIGHT_BLUE}{self.BOLD}"
+            f"Select ({self.YELLOW}{current_index}{self.BRIGHT_BLUE}): "
+            f"{self.RESET}"
+        )
+
+        print_user_input_buffer = [prompt]
+        return print_user_input_buffer
+
+    def get_user_input(self):
         try:
-            prompt = f"{self.BRIGHT_BLUE}{self.BOLD}Select: {self.RESET}"
-            self.user_input = self.map_user_input(prompt)
+            self.user_input = self.map_user_input()
         except KeyboardInterrupt:
             OSManager.exit(0)
 
@@ -578,6 +607,8 @@ class DisplayMenu(Display, DisplayExtension):
             case "U":
                 if self.cursor_in_page > 0:
                     self.cursor_in_page -= 1
+                else:
+                    self.cursor_in_page = len(self.splited_data_items) - 1
                 self.cursor_moved = True
                 self.choosed_item = (
                     self.index_item * self.opts.items_per_list + self.cursor_in_page
@@ -585,6 +616,8 @@ class DisplayMenu(Display, DisplayExtension):
             case "D":
                 if self.cursor_in_page < len(self.splited_data_items) - 1:
                     self.cursor_in_page += 1
+                else:
+                    self.cursor_in_page = 0
                 self.cursor_moved = True
                 self.choosed_item = (
                     self.index_item * self.opts.items_per_list + self.cursor_in_page
@@ -630,15 +663,19 @@ class DisplayMenu(Display, DisplayExtension):
                 print_option_buffer = self.print_option()
                 print_page_indicator_buffer = self.print_page_indicator()
                 print_menu_buffer = self.print_menu()
+                print_user_input_buffer = self.print_user_input()
 
                 print_buffer = self.prepare_buffer(
-                    print_option_buffer, print_page_indicator_buffer, print_menu_buffer
+                    print_option_buffer,
+                    print_page_indicator_buffer,
+                    print_menu_buffer,
+                    print_user_input_buffer,
                 )
 
                 self.clscr()
-                print(print_buffer)
+                print(print_buffer, end="")
 
-                self.print_user_input()
+                self.get_user_input()
 
                 if self.advanced_options():
                     continue

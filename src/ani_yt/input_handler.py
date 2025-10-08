@@ -97,7 +97,8 @@ class InputHandler:
                 self.key_actions[k] = action
 
     def get_input(self, prompt=None, *, flush_before_read=True, verbose=False):
-        print(prompt, end="", flush=True)
+        if prompt:
+            print(prompt, end="", flush=True)
 
         while True:
             if flush_before_read:
