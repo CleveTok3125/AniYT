@@ -2,6 +2,7 @@ import os
 import shlex
 
 from .helper import SubprocessHelper
+from .input_handler import InputHandler
 from .os_manager import OSManager
 
 
@@ -137,7 +138,7 @@ class Player:
                     f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
                 )
                 try:
-                    input("Press Enter to continue...\t")
+                    InputHandler.press_any_key()
                 except KeyboardInterrupt:
                     pass
             case "termux-x11":

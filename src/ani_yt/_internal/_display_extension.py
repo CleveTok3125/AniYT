@@ -157,9 +157,13 @@ class DisplayExtension(HistoryExtension, InputExtension):
             else:
                 self.bookmarking_handler.update(item)
         except ValueError:
-            PauseableException("ValueError: only non-negative integers are accepted.")
+            PauseableException(
+                "ValueError: only non-negative integers are accepted.", delay=-1
+            )
         except IndexError:
-            PauseableException("IndexError: The requested item is not listed.")
+            PauseableException(
+                "IndexError: The requested item is not listed.", delay=-1
+            )
 
     def open_image_with_mpv(self, url):
         Player.start_with_mode(url=url, opts=self.extra_opts.get("mode", "auto"))

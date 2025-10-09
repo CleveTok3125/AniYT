@@ -1,6 +1,7 @@
 from time import sleep
 
 from .helper import IOHelper
+from .input_handler import InputHandler
 from .os_manager import OSManager
 
 
@@ -23,8 +24,10 @@ class PauseableException(Exception):
     def __init__(self, message="", *, delay=3):
         super().__init__(message)
         if delay < 0:
-            print(message)
-            input("<Enter to continue>\n")
+            if message:
+                print(message)
+
+            InputHandler.press_any_key()
         else:
             print(message)
             sleep(delay)

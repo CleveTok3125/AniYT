@@ -1,4 +1,4 @@
-from sys import platform
+from sys import platform, stdout
 
 if platform.startswith(("linux", "darwin", "freebsd", "openbsd")):
     from .readchar_posix import ReadChar as readchar
@@ -64,39 +64,76 @@ class OnPressed:
         return ReturnCode.BREAK
 
     def backspace(self, char):
-        if self.input_obj.input_chars:
-            self.input_obj.input_chars.pop()
-            print("\b \b", end="", flush=True)
+        self.input_obj.state.backspace()
+        print("\b \b", end="", flush=True)
         return ReturnCode.CONTINUE
 
     def default(self, char):
-        self.input_obj.input_chars.append(char)
+        self.input_obj.state.append(char)
         print(char, end="", flush=True)
         return ReturnCode.CONTINUE
 
 
+class InputState:
+    def __init__(self):
+        self.buffer = []
+
+    def clear(self):
+        self.buffer.clear()
+
+    def append(self, char: str):
+        self.buffer.append(char)
+
+    def backspace(self):
+        if self.buffer:
+            self.buffer.pop()
+
+    def get_value(self) -> str:
+        return "".join(self.buffer)
+
+    def __repr__(self):
+        return f"InputState(buffer={self.buffer!r})"
+
+
 class InputHandler:
     def __init__(self):
-        self.input_chars = []
+        self.state = InputState()
+
         self.on_pressed = OnPressed(self)
         self.key_actions = {}
 
-        self._map_keys(InputMap.enter, self.on_pressed.enter)
-        self._map_keys(InputMap.backspace, self.on_pressed.backspace)
-        self._map_keys(InputMap.arrow_left, self.on_pressed.arrow_left)
-        self._map_keys(InputMap.arrow_right, self.on_pressed.arrow_right)
-        self._map_keys(InputMap.arrow_up, self.on_pressed.arrow_up)
-        self._map_keys(InputMap.arrow_down, self.on_pressed.arrow_down)
+        self._config_key_map()
+
+    def _config_key_map(self):
+        keymap = (
+            "enter",
+            "backspace",
+            "arrow_left",
+            "arrow_right",
+            "arrow_up",
+            "arrow_down",
+        )
+
+        for name in keymap:
+            keys = getattr(InputMap, name, None)
+            action = getattr(self.on_pressed, name, None)
+            if keys and callable(action):
+                self._map_keys(keys, action)
+            else:
+                raise NotImplementedError(
+                    f"Key mapping '{name}' is not fully implemented — "
+                    f"{'missing InputMap' if keys is None else 'missing OnPressed action'}"
+                )
 
     def _map_keys(self, keys, action):
         for k in keys:
-            if isinstance(k, (tuple, list)):
-                for subk in k:
-                    self.key_actions[subk] = action
-            else:
-                self.key_actions[k] = action
+            self.key_actions[k] = action
 
     def get_input(self, prompt=None, *, flush_before_read=True, verbose=False):
+        self.state.clear()
+
+        stdout.flush()
+
         if prompt:
             print(prompt, end="", flush=True)
 
@@ -107,7 +144,7 @@ class InputHandler:
             char = readchar.readkey()
 
             if verbose:
-                print(repr(char))
+                print(f"[DEBUG] char={repr(char)}, buffer={self.state.buffer}")
 
             action = self.key_actions.get(char, self.on_pressed.default)
             code = action(char)
@@ -121,4 +158,16 @@ class InputHandler:
 
             return code
 
-        return "".join(self.input_chars)
+        return self.state.get_value()
+
+    @staticmethod
+    def press_any_key(prompt=None):
+        if prompt is None:
+            prompt = "Press any key to continue..."
+
+        stdout.flush()
+
+        if prompt is not False:
+            print(prompt, end="", flush=True)
+
+        return bool(readchar.readchar())

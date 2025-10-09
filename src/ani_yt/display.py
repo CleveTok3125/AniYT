@@ -424,10 +424,13 @@ class DisplayMenu(Display, DisplayExtension):
 
         except ValueError:
             PauseableException(
-                "ValueError: only options and non-negative integers are accepted."
+                "ValueError: only options and non-negative integers are accepted.",
+                delay=-1,
             )
         except IndexError:
-            PauseableException("IndexError: The requested item is not listed.")
+            PauseableException(
+                "IndexError: The requested item is not listed.", delay=-1
+            )
         return
 
     def standard_options(self):
