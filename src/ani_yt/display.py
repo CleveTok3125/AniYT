@@ -95,6 +95,28 @@ class DisplayMenu(Display, DisplayExtension):
         # Dynamic
         self._render_dynamic_opts()
 
+    def _init_loop_values_(self):
+        """
+        These values are used to process in the while loop.
+        Whenever the while loop exits, these values need to be reset if the associated function is to be reused.
+
+        def example(lst):
+                index_item = 0
+                show_link = False
+                bookmark = True
+                while index_item < 10:
+                        print(lst[index_item] + 'link' if show_link else lst[index_item] + 'bookmark' if bookmark else lst[index_item])
+
+        The values of index_item, show_link and bookmark will always be reset each time the function is called.
+        Calling the class every time will not have the problem of instance attributes but will have performance problems.
+        """
+        self.index_item = 0
+        self.cursor_in_page = 0
+        self.cursor_moved = False
+        self.show_link = self.opts.show_link
+        self.bookmark = self.opts.bookmark
+        self._last_played = None
+
     def _render_dynamic_opts(self):
         self.combined_opts = self.pages_opts.copy()
 
@@ -131,41 +153,23 @@ class DisplayMenu(Display, DisplayExtension):
             [self.combined_opts[k] for k in key_order if k in self.combined_opts]
         )
 
-    def _init_loop_values_(self):
-        """
-        These values are used to process in the while loop.
-        Whenever the while loop exits, these values need to be reset if the associated function is to be reused.
-
-        def example(lst):
-                index_item = 0
-                show_link = False
-                bookmark = True
-                while index_item < 10:
-                        print(lst[index_item] + 'link' if show_link else lst[index_item] + 'bookmark' if bookmark else lst[index_item])
-
-        The values of index_item, show_link and bookmark will always be reset each time the function is called.
-        Calling the class every time will not have the problem of instance attributes but will have performance problems.
-        """
-        self.index_item = 0
-        self.cursor_in_page = 0
-        self.cursor_moved = False
-        self.show_link = self.opts.show_link
-        self.bookmark = self.opts.bookmark
-        self._last_played = None
-
     def valid_index_item(self):
         if self.index_item >= self.len_data:
             self.index_item = 0
         elif self.index_item <= -1:
             self.index_item = self.len_data - 1
 
-        if self.splited_data:
-            self.cursor_in_page = (
-                self.choosed_item - self.index_item * self.opts.items_per_list
-            )
-            self.cursor_in_page = min(
-                self.cursor_in_page, len(self.splited_data[self.index_item]) - 1
-            )
+    def sync_cursor_with_item(self):
+        if not self.splited_data:
+            return
+
+        self.cursor_in_page = (
+            self.choosed_item - self.index_item * self.opts.items_per_list
+        )
+
+        self.cursor_in_page = max(
+            0, min(self.cursor_in_page, len(self.splited_data[self.index_item]) - 1)
+        )
 
     def pagination(self):
         self.valid_index_item()
@@ -193,6 +197,10 @@ class DisplayMenu(Display, DisplayExtension):
             self.opts.items_per_list * (self.len_data - 1)
         ) + self.len_last_item
         self.splited_data_items = self.splited_data[self.index_item]
+
+        # Make sure the cursor doesn't stray when changing items_per_list
+        if self.choosed_item is not False:
+            self.sync_cursor_with_item()
 
     def print_option(self):
         if self.opts.show_opts:
@@ -356,6 +364,12 @@ class DisplayMenu(Display, DisplayExtension):
             case ("P:", False):
                 self.index_item = user_int - 1
                 self.valid_index_item()
+
+                # Automatically jump to and sync cursor when jumping to specific page
+                self.choosed_item = self.find_next_unviewed_index(
+                    self.index_item * self.opts.items_per_list
+                )
+                self.sync_cursor_with_item()
             case ("I:", False):
                 self.opts.items_per_list = (
                     user_int
@@ -363,6 +377,10 @@ class DisplayMenu(Display, DisplayExtension):
                     else self.total_items if user_int > self.total_items else 1
                 )
                 self.pagination()
+
+                # Sync fix
+                self.valid_index_item()
+                self.sync_cursor_with_item()
             case _:
                 return False
 
@@ -417,7 +435,7 @@ class DisplayMenu(Display, DisplayExtension):
             self.choosed_item = self.find_next_unviewed_index(self.choosed_item + 1)
             self.valid_index_item()
             self.index_item = self.choosed_item // self.opts.items_per_list
-            self.cursor_in_page = self.choosed_item % self.opts.items_per_list
+            self.sync_cursor_with_item()
             self.cursor_moved = False
 
             return ans["video_title"], ans["video_url"]
@@ -446,23 +464,20 @@ class DisplayMenu(Display, DisplayExtension):
                 self.valid_index_item()
                 start_idx = self.index_item * self.opts.items_per_list
                 self.choosed_item = self.find_next_unviewed_index(start_idx)
-                self.cursor_in_page = (
-                    self.choosed_item - self.index_item * self.opts.items_per_list
-                )
+                self.sync_cursor_with_item()
                 self.cursor_moved = False
             case "P":
                 self.index_item -= 1
                 self.valid_index_item()
                 start_idx = self.index_item * self.opts.items_per_list
                 self.choosed_item = self.find_next_unviewed_index(start_idx)
-                self.cursor_in_page = (
-                    self.choosed_item - self.index_item * self.opts.items_per_list
-                )
+                self.sync_cursor_with_item()
                 self.cursor_moved = False
             case "J":
                 self.choosed_item = self.find_next_unviewed_index(self.choosed_item)
                 self.valid_index_item()
                 self.index_item = self.choosed_item // self.opts.items_per_list
+                self.sync_cursor_with_item()
             case "U":
                 if self.cursor_in_page > 0:
                     self.cursor_in_page -= 1
@@ -520,6 +535,7 @@ class DisplayMenu(Display, DisplayExtension):
             self.choosed_item = self.find_first_unviewed_index()
 
         self.index_item = self.choosed_item // self.opts.items_per_list
+        self.sync_cursor_with_item()
 
         try:
             while True:
