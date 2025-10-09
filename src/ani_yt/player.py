@@ -126,20 +126,21 @@ class Player:
 
         player = Player(url)
 
-        if opts == "auto":
-            player.start()
-        elif opts == "android":
-            player.run_mpv_android()
-        elif opts == "ssh":
-            print("Copy one of the commands below:")
-            print(
-                f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
-            )
-            try:
-                input("Press Enter to continue...\t")
-            except KeyboardInterrupt:
-                pass
-        elif opts == "termux-x11":
-            player.run_mpv_x(url)
-        else:
-            player.run_mpv()
+        match opts:
+            case "auto":
+                player.start()
+            case "android":
+                player.run_mpv_android()
+            case "ssh":
+                print("Copy one of the commands below:")
+                print(
+                    f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
+                )
+                try:
+                    input("Press Enter to continue...\t")
+                except KeyboardInterrupt:
+                    pass
+            case "termux-x11":
+                player.run_mpv_x(url)
+            case _:
+                player.run_mpv()

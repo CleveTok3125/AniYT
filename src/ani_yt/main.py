@@ -32,6 +32,7 @@ class Main:
                 "yt-dlp": self.ydl_options,
                 "mode": self.opts,
                 "bookmark": self.bookmarking_handler,
+                "history": self.history_handler,
             },
         )
         self.url = ""

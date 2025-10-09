@@ -3,12 +3,12 @@ from typing import Dict, List, Literal, Optional
 
 import ujson as json
 
+from .common import Typing
 from .data_processing import DataProcessing
 from .exceptions import InvalidHistoryFile
 from .os_manager import OSManager
 
-Video = Dict[str, str]
-VideoData = List[Video]
+VideoData = List[Typing.Video]
 Playlist = Dict[str, object]  # keys: playlist_title, playlist_url, videos
 
 

@@ -1,22 +1,26 @@
 import os
 import shutil
 import sys
-from datetime import datetime
-from typing import Dict, List
+from typing import List
 
 from wcwidth import wcswidth
 
-from .bookmarking_handler import BookmarkingHandler
+from ._internal._display_extension import DisplayExtension
+from .common import Typing
 from .data_processing import DataProcessing
 from .exceptions import PauseableException
 from .helper import IOHelper, LegacyCompatibility
-from .history_handler import HistoryHandler
-from .input_handler import InputHandler, ReturnCode
 from .os_manager import OSManager
-from .player import Player
-from .yt_dlp_handler import YT_DLP, YT_DLP_Options
 
-Video = Dict[str, str]
+
+class DisplayColor:
+    RESET = "\033[0;24;38;2;255;255;255;49m"
+    YELLOW = "\033[38;2;255;255;0m"
+    LIGHT_GRAY = "\033[0;38;2;187;187;187;49m"
+    BRIGHT_BLUE = "\033[38;2;0;191;255m"
+    LINK_COLOR = "\033[3;38;2;0;191;255m"
+    BOLD = "\033[1m"
+    SELECTED_BG_COLOR = "\033[48;5;236m"
 
 
 class Display_Options:
@@ -41,65 +45,6 @@ class Display:
             os.system("clear")
 
 
-class DisplayExtension:
-    def _inject_dependencies(
-        self,
-    ):  # Only used when you want to declare an instance, other values ​​like str, int, list, etc can be taken directly from extra_opts
-        self.bookmarking_handler = self._get_dependencies(
-            "bookmark",
-            BookmarkingHandler,
-        )
-
-        self.yt_dlp_opts = self._get_dependencies(
-            "yt-dlp",
-            YT_DLP_Options,
-        )
-
-    def _init_extra_opts(self, extra_opts):
-        self.extra_opts = extra_opts
-
-        if not isinstance(extra_opts, dict):
-            raise TypeError(
-                f"The parameter passed should be a dictionary, but got {type(extra_opts)}"
-            )
-
-    def _get_dependencies(
-        self, requirement: object, requirement_suggestion: type, fallback_factory=None
-    ):
-        dependency = self.extra_opts.get(requirement)
-
-        if dependency is None:
-            raise ValueError(f"Missing required dependency: {requirement}")
-        if not isinstance(dependency, requirement_suggestion):
-            raise TypeError(
-                f"Dependency '{requirement}' must be an instance of {requirement_suggestion}"
-            )
-
-        return dependency
-
-    def bookmark_processing(self, user_int):
-        try:
-            item: Video = self.data[user_int - 1]
-            if self.bookmarking_handler.is_bookmarked(item["video_url"]):
-                self.bookmarking_handler.remove_bookmark(item["video_url"])
-            else:
-                self.bookmarking_handler.update(item)
-        except ValueError:
-            PauseableException("ValueError: only non-negative integers are accepted.")
-        except IndexError:
-            PauseableException("IndexError: The requested item is not listed.")
-
-    def open_image_with_mpv(self, url):
-        Player.start_with_mode(url=url, opts=self.extra_opts.get("mode", "auto"))
-
-    def show_thumbnail(self, user_int):
-        item: Video = self.data[user_int - 1]
-        url = item["video_url"]
-
-        thumbnail_url = YT_DLP.standalone_get_thumbnail(url, self.yt_dlp_opts.ydl_opts)
-        self.open_image_with_mpv(thumbnail_url)
-
-
 class DisplayMenu(Display, DisplayExtension):
     def __init__(self, opts: Display_Options, extra_opts={}):
         # Dependencies
@@ -112,7 +57,7 @@ class DisplayMenu(Display, DisplayExtension):
         # These values are always created new each time the class is called or are always overwritten.
         self.opts = opts
         self.user_input = ""
-        self.data: List[Video] = []
+        self.data: List[Typing.Video] = []
         self.splited_data = []
         self.len_data = 0
         self.len_last_item = 0
@@ -123,23 +68,14 @@ class DisplayMenu(Display, DisplayExtension):
         # These are variables that are manually cleared for caching purposes. Remember to clear these variables when running functions in the class multiple times.
         self.choosed_item = False
 
-        # Constant
-        self.RESET = "\033[0;24;38;2;255;255;255;49m"
-        self.YELLOW = "\033[38;2;255;255;0m"
-        self.LIGHT_GRAY = "\033[0;38;2;187;187;187;49m"
-        self.BRIGHT_BLUE = "\033[38;2;0;191;255m"
-        self.LINK_COLOR = "\033[3;38;2;0;191;255m"
-        self.BOLD = "\033[1m"
-        self.SELECTED_BG_COLOR = "\033[48;5;236m"
-
         # Variable
         self._init_loop_values_()
 
         # Constant
         self.no_opts = {
             "option_toggle": [
-                f"{self.BRIGHT_BLUE}{self.BOLD}(O) Hide all options{self.RESET}",
-                f"{self.BRIGHT_BLUE}{self.BOLD}(O) Show all options{self.RESET}",
+                f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}(O) Hide all options{DisplayColor.RESET}",
+                f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}(O) Show all options{DisplayColor.RESET}",
             ],
         }
         self.pages_opts = {
@@ -159,56 +95,14 @@ class DisplayMenu(Display, DisplayExtension):
         # Dynamic
         self._render_dynamic_opts()
 
-        # History handler
-        self.history_handler = HistoryHandler()
-        self.history_map = {}
-        if self.history_handler and self.history_handler.is_history():
-            try:
-                history = self.history_handler.load()
-                # Build video_url -> status map
-                self.history_map = {
-                    video["video_url"]: video.get("status", "")
-                    for playlist in history.get("playlists", [])
-                    for video in playlist.get("videos", [])
-                }
-            except Exception:
-                self.history_map = {}
-
-    def _find_first_unviewed_index(self):
-        if not hasattr(self, "data") or not self.data:
-            return 0
-
-        for idx, video in enumerate(self.data):
-            if self.history_map.get(video["video_url"], "").lower() != "viewed":
-                return idx
-        return 0
-
-    def _find_next_unviewed_index(self, start_idx=0):
-        if not self.data:
-            return 0
-        for idx in range(start_idx, len(self.data)):
-            if (
-                self.history_map.get(self.data[idx]["video_url"], "").lower()
-                != "viewed"
-            ):
-                return idx
-
-        for idx in range(0, start_idx):
-            if (
-                self.history_map.get(self.data[idx]["video_url"], "").lower()
-                != "viewed"
-            ):
-                return idx
-        return 0
-
     def _render_dynamic_opts(self):
         self.combined_opts = self.pages_opts.copy()
 
         self.combined_opts["B_toggle"] = (
-            f"{self.YELLOW if self.bookmark else ''}(B) Toggle bookmark{self.RESET}"
+            f"{DisplayColor.YELLOW if self.bookmark else ''}(B) Toggle bookmark{DisplayColor.RESET}"
         )
         self.combined_opts["L"] = (
-            f"{self.LINK_COLOR if self.show_link else ''}(L) Toggle link{self.RESET}"
+            f"{DisplayColor.LINK_COLOR if self.show_link else ''}(L) Toggle link{DisplayColor.RESET}"
         )
         self.combined_opts["O_toggle"] = (
             self.no_opts["option_toggle"][1]
@@ -258,26 +152,6 @@ class DisplayMenu(Display, DisplayExtension):
         self.show_link = self.opts.show_link
         self.bookmark = self.opts.bookmark
         self._last_played = None
-
-    def mark_viewed(self, url: str):
-        """
-        Mark the video as viewed in both history file and local map, and update last_viewed timestamp.
-        """
-        history = self.history_handler.load()
-
-        p_idx, v_idx = self.history_handler.search(url, history)
-        if p_idx != -1 and v_idx != -1:
-            history["playlists"][p_idx]["videos"][v_idx]["status"] = "viewed"
-
-            now = datetime.now().astimezone().isoformat()
-            history["playlists"][p_idx]["videos"][v_idx]["last_viewed"] = now
-
-            # persist
-            self.history_handler.update(
-                curr=history.get("current"), playlists=history.get("playlists")
-            )
-            # update local map
-            self.history_map[url] = "viewed"
 
     def valid_index_item(self):
         if self.index_item >= self.len_data:
@@ -331,9 +205,11 @@ class DisplayMenu(Display, DisplayExtension):
 
     def print_page_indicator(self):
         showed_item = self.len_data_items + self.index_item * self.opts.items_per_list
-        page_colored = f"{self.BRIGHT_BLUE}{self.BOLD}Page:{self.RESET}"
-        page_indicator_colored = f"{self.index_item + 1}/{self.BRIGHT_BLUE}{self.BOLD}{self.len_data}{self.RESET}"
-        total_item_colored = f"({showed_item}/{self.BRIGHT_BLUE}{self.BOLD}{self.total_items}{self.RESET})"
+        page_colored = (
+            f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Page:{DisplayColor.RESET}"
+        )
+        page_indicator_colored = f"{self.index_item + 1}/{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{self.len_data}{DisplayColor.RESET}"
+        total_item_colored = f"({showed_item}/{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{self.total_items}{DisplayColor.RESET})"
 
         print_page_indicator_buffer = [
             f"{page_colored} {page_indicator_colored} {total_item_colored}\n"
@@ -370,8 +246,8 @@ class DisplayMenu(Display, DisplayExtension):
 
         self.len_data_items = len(self.splited_data_items)
 
-        unviewed_indicator = f"{self.YELLOW} ❯ {self.RESET}"
-        cursor_in_page = f"{self.BRIGHT_BLUE} ❯ {self.RESET}"
+        unviewed_indicator = f"{DisplayColor.YELLOW} ❯ {DisplayColor.RESET}"
+        cursor_in_page = f"{DisplayColor.BRIGHT_BLUE} ❯ {DisplayColor.RESET}"
 
         term_width = shutil.get_terminal_size().columns
 
@@ -382,20 +258,22 @@ class DisplayMenu(Display, DisplayExtension):
             item_number = self.index_item * self.opts.items_per_list + index + 1
 
             color_viewed = (
-                self.LIGHT_GRAY
+                DisplayColor.LIGHT_GRAY
                 if self.history_map.get(item_url, "").lower() == "viewed"
                 else ""
             )
 
             color_bookmarked = (
-                self.YELLOW
+                DisplayColor.YELLOW
                 if getattr(self, "bookmark", True)
                 and self.bookmarking_handler.is_bookmarked(item_url)
                 else ""
             )
 
             link_colored = (
-                f"\n\t{self.LINK_COLOR}{item_url}{self.RESET}" if self.show_link else ""
+                f"\n\t{DisplayColor.LINK_COLOR}{item_url}{DisplayColor.RESET}"
+                if self.show_link
+                else ""
             )
 
             indicate_item_len = 3
@@ -412,18 +290,18 @@ class DisplayMenu(Display, DisplayExtension):
                 indicate_item = cursor_in_page
 
             selected_bg = (
-                self.SELECTED_BG_COLOR
+                DisplayColor.SELECTED_BG_COLOR
                 if is_cursor_in_page or is_unviewed_indicator
                 else ""
             )
 
-            colored_item_number = f"{self.BRIGHT_BLUE}{self.BOLD}{selected_bg}{color_viewed}{color_bookmarked}{item_number} {self.RESET}"
+            colored_item_number = f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{selected_bg}{color_viewed}{color_bookmarked}{item_number} {DisplayColor.RESET}"
             spaces_num = len(str(self.total_items)) - len(str(item_number))
-            spaces_fill = (
-                f"{self.LIGHT_GRAY}{selected_bg}{"0" * spaces_num}{self.RESET}"
-            )
+            spaces_fill = f"{DisplayColor.LIGHT_GRAY}{selected_bg}{"0" * spaces_num}{DisplayColor.RESET}"
 
-            prefix = f"{self.RESET}{indicate_item}{spaces_fill}{colored_item_number}"
+            prefix = (
+                f"{DisplayColor.RESET}{indicate_item}{spaces_fill}{colored_item_number}"
+            )
             visible_prefix_len = (
                 indicate_item_len + spaces_num + len(str(item_number)) + 1
             )
@@ -434,27 +312,11 @@ class DisplayMenu(Display, DisplayExtension):
                 indent=visible_prefix_len,
             )
             padding = (term_width - visible_prefix_len - wcswidth(item_title)) * " "
-            colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{link_colored}{self.RESET}"
+            colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{link_colored}{DisplayColor.RESET}"
 
-            print_menu_buffer.append(f"{prefix}{colored_item}{self.RESET}")
+            print_menu_buffer.append(f"{prefix}{colored_item}{DisplayColor.RESET}")
         print_menu_buffer.append("")
         return print_menu_buffer
-
-    def map_user_input(self, prompt=None):
-        input_handler = InputHandler()
-        user_input = input_handler.get_input(prompt).strip()
-
-        input_map = {
-            ReturnCode.NEXT_PAGE: "N",
-            ReturnCode.PREV_PAGE: "P",
-            ReturnCode.LINE_UP: "U",
-            ReturnCode.LINE_DOWN: "D",
-        }
-
-        if mapped_key := input_map.get(user_input):
-            return mapped_key
-
-        return user_input
 
     def print_user_input(self):
         current_index = (
@@ -464,19 +326,13 @@ class DisplayMenu(Display, DisplayExtension):
         )
 
         prompt = (
-            f"{self.BRIGHT_BLUE}{self.BOLD}"
-            f"Select ({self.YELLOW}{current_index}{self.BRIGHT_BLUE}): "
-            f"{self.RESET}"
+            f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}"
+            f"Select ({DisplayColor.YELLOW}{current_index}{DisplayColor.BRIGHT_BLUE}): "
+            f"{DisplayColor.RESET}"
         )
 
         print_user_input_buffer = [prompt]
         return print_user_input_buffer
-
-    def get_user_input(self):
-        try:
-            self.user_input = self.map_user_input()
-        except KeyboardInterrupt:
-            OSManager.exit(0)
 
     def advanced_options(self):
         user_input_upper = self.user_input[:2].upper()
@@ -552,13 +408,13 @@ class DisplayMenu(Display, DisplayExtension):
             else:
                 raise ValueError()
 
-            ans: Video = self.data[self.choosed_item]
+            ans: Typing.Video = self.data[self.choosed_item]
             # self.mark_viewed(ans["video_url"]) # To avoid hidden actions, should not be used internally in functions should only have display handling functions
             self._last_played = (
                 self.choosed_item
             )  # save the episode just played to enter next time auto next
 
-            self.choosed_item = self._find_next_unviewed_index(self.choosed_item + 1)
+            self.choosed_item = self.find_next_unviewed_index(self.choosed_item + 1)
             self.valid_index_item()
             self.index_item = self.choosed_item // self.opts.items_per_list
             self.cursor_in_page = self.choosed_item % self.opts.items_per_list
@@ -586,7 +442,7 @@ class DisplayMenu(Display, DisplayExtension):
                 self.index_item += 1
                 self.valid_index_item()
                 start_idx = self.index_item * self.opts.items_per_list
-                self.choosed_item = self._find_next_unviewed_index(start_idx)
+                self.choosed_item = self.find_next_unviewed_index(start_idx)
                 self.cursor_in_page = (
                     self.choosed_item - self.index_item * self.opts.items_per_list
                 )
@@ -595,13 +451,13 @@ class DisplayMenu(Display, DisplayExtension):
                 self.index_item -= 1
                 self.valid_index_item()
                 start_idx = self.index_item * self.opts.items_per_list
-                self.choosed_item = self._find_next_unviewed_index(start_idx)
+                self.choosed_item = self.find_next_unviewed_index(start_idx)
                 self.cursor_in_page = (
                     self.choosed_item - self.index_item * self.opts.items_per_list
                 )
                 self.cursor_moved = False
             case "J":
-                self.choosed_item = self._find_next_unviewed_index(self.choosed_item)
+                self.choosed_item = self.find_next_unviewed_index(self.choosed_item)
                 self.valid_index_item()
                 self.index_item = self.choosed_item // self.opts.items_per_list
             case "U":
@@ -638,7 +494,16 @@ class DisplayMenu(Display, DisplayExtension):
         return handled
 
     def prepare_buffer(self, *args):
-        print_buffer = "\n".join(line for arg in args for line in arg)
+        print_buffer_lines = []
+
+        for arg in args:
+            if isinstance(arg, (list, tuple)):
+                for line in arg:
+                    print_buffer_lines.append(str(line))
+            else:
+                print_buffer_lines.append(str(arg))
+
+        print_buffer = "\n".join(print_buffer_lines)
         return print_buffer
 
     def choose_menu(self, playlists, clear_choosed_item=False):
@@ -649,7 +514,7 @@ class DisplayMenu(Display, DisplayExtension):
         self.pagination()
 
         if self.clear_choosed_item or self.choosed_item is False:
-            self.choosed_item = self._find_first_unviewed_index()
+            self.choosed_item = self.find_first_unviewed_index()
 
         self.index_item = self.choosed_item // self.opts.items_per_list
 

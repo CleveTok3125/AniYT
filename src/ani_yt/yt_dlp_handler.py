@@ -22,30 +22,34 @@ class YT_DLP_Options:
 
 class YT_DLP:
     def __init__(self, channel_url, ydl_options: YT_DLP_Options):
-        self.channel_url = channel_url
+        if channel_url:
+            self.channel_url = self._parse_channel_url(channel_url)
 
-        if self.channel_url:
-            if not (
-                bool((parsed_url := urlparse(self.channel_url)).scheme)
-                and bool(parsed_url.netloc)
-            ):
-                if self.channel_url[:2] == "UC":
-                    self.channel_url = urljoin(
-                        "https://www.youtube.com/channel/", self.channel_url
-                    )
-                else:
-                    self.channel_url = urljoin(
-                        "https://www.youtube.com/", self.channel_url
-                    )
-            self.channel_url = urljoin(
-                (
-                    self.channel_url
-                    if self.channel_url.endswith("/")
-                    else self.channel_url + "/"
-                ),
-                "playlists",
-            )
         self.ydl_options = ydl_options
+
+    def _parse_channel_url(self, channel_url):
+        parsed_url = urlparse(channel_url)
+
+        if parsed_url.scheme and parsed_url.netloc:
+            base_url = self._ensure_trailing_slash(channel_url)
+        else:
+            prefix = self._parse_prefix_url(channel_url)
+            base_url = self._ensure_trailing_slash(urljoin(prefix, channel_url))
+
+        return self._parse_playlist_url(base_url)
+
+    def _parse_playlist_url(self, channel_url):
+        return urljoin(channel_url, "playlists")
+
+    def _parse_prefix_url(self, channel_url):
+        match channel_url[:2]:
+            case "UC":
+                return "https://www.youtube.com/channel/"
+            case _:
+                return "https://www.youtube.com/"
+
+    def _ensure_trailing_slash(self, channel_url):
+        return channel_url.rstrip("/") + "/"
 
     def get_playlist(self):
         try:
