@@ -12,7 +12,15 @@ echo "=== Install dependencies ==="
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 pip install setuptools cython flake8 black isort pytest
-pip install -e .
+
+echo "=== Build Go binary and Cython extensions ==="
+mkdir -p bin
+cd src/ani_tracker
+go build -o ../../bin/ani-tracker .
+cd "$REPO_ROOT"
+
+python setup.py build_ext --inplace
+pip install .
 
 go install golang.org/x/tools/cmd/goimports@latest
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
@@ -53,6 +61,6 @@ if [ -f "tests/test_main.py" ]; then
 fi
 
 echo "=== Generate Full Help ==="
-PYTHONPATH=src python -m ani_yt.ani_yt --full-help | tee cli_help.txt
+ani-yt --full-help | tee cli_help.txt
 
 echo "=== CI Completed ==="
