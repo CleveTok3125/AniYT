@@ -1,48 +1,53 @@
-from setuptools import Extension, setup
-from setuptools.command.build_py import build_py as _build_py
 import os
 import shutil
 import subprocess
+from setuptools import Extension, setup
 
-SOURCE_ONLY = os.environ.get("SOURCE_ONLY") == "1"
-USE_CYTHON = not SOURCE_ONLY
+print("Building Go binary...")
+go_executable = shutil.which("go")
+if go_executable:
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    go_source_dir = os.path.join(repo_root, "src", "ani_tracker")
+    output_dir = os.path.join(repo_root, "bin")
+    output_path = os.path.join(output_dir, "ani-tracker")
 
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+        # Execute the Go build command
+        subprocess.check_call(
+            [go_executable, "build", "-o", output_path, "."],
+            cwd=go_source_dir,
+        )
+        print(f"Go binary successfully built at: {output_path}")
+    except Exception as e:
+        print(f"ERROR: Go build failed: {e}")
+else:
+    print("WARNING: 'go' command not found. Skipping Go binary build.")
+
+print("Configuring extensions...")
 try:
     from Cython.Build import cythonize
     USE_CYTHON = True
+    ext_suffix = ".pyx"
+    print("Cython detected. Using .pyx sources.")
 except ImportError:
     USE_CYTHON = False
+    ext_suffix = ".c"
+    print("Cython not found. Using pre-compiled .c sources.")
 
-
-class build_py(_build_py):
-    def run(self):
-        if shutil.which("go") is None or os.environ.get("GO_BUILD") == "0":
-            print("Skipping Go build, 'go' not found")
-        else:
-            print(f"Building Go binary at {output_bin} ...")
-            repo_root = os.path.abspath(os.path.dirname(__file__))
-            bin_dir = os.path.join(repo_root, "bin")
-            os.makedirs(bin_dir, exist_ok=True)
-
-            go_src = os.path.join(repo_root, "src", "ani_tracker")
-            output_bin = os.path.join(bin_dir, "ani-tracker")
-            subprocess.check_call(["go", "build", "-o", output_bin, "."], cwd=go_src)
-
-        super().run()
+query_ext_source = os.path.join("src", "ani_yt", "_internal", "_query" + ext_suffix)
 
 extensions = [
     Extension(
         name="ani_yt._internal._query",
-        sources=[os.path.join("src", "ani_yt", "_internal", "_query" + (".pyx" if USE_CYTHON else ".c"))],
+        sources=[query_ext_source],
     )
 ]
 
-
 if USE_CYTHON:
-    extensions = cythonize(extensions, language_level=3)
+    extensions = cythonize(extensions)
 
+print("Running setup()...")
 setup(
-    name="AniYT",
     ext_modules=extensions,
-    package_dir={"": "src"},
 )
