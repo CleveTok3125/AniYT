@@ -64,8 +64,9 @@ class OnPressed:
         return ReturnCode.BREAK
 
     def backspace(self, char):
-        self.input_obj.state.backspace()
-        print("\b \b", end="", flush=True)
+        if self.input_obj.state.buffer:
+            self.input_obj.state.backspace()
+            print("\b \b", end="", flush=True)
         return ReturnCode.CONTINUE
 
     def default(self, char):
