@@ -32,8 +32,8 @@ class build_py(_build_py):
 
 extensions = [
     Extension(
-        name="ani_yt._query",
-        sources=[os.path.join("src", "ani_yt", "_query" + (".pyx" if USE_CYTHON else ".c"))],
+        name="ani_yt._internal._query",
+        sources=[os.path.join("src", "ani_yt", "_internal", "_query" + (".pyx" if USE_CYTHON else ".c"))],
     )
 ]
 
