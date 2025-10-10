@@ -94,18 +94,15 @@ class ArgsHandler:
         )
         self.group_mpv.add_argument(
             "--mpv-args",
-            nargs="*",
-            default=None,
+            nargs=argparse.REMAINDER,
             help="Pass args to MPV, or show current default args if none are provided. Must be the LAST option.",
+        )
+        self.group_mpv.add_argument(
+            "--show-mpv-args", action="store_true",
+            help="Show the current MPV arguments.",
         )
 
         self.termux_x11_options = self.parser.add_argument_group("Termux-X11 options")
-
-        self.termux_x11_options.add_argument(
-            "--termux-configs",
-            action="store_true",
-            help="Show current default termux-x11 player configs.",
-        )
 
         self.termux_x11_options.add_argument(
             "--monitor",
@@ -168,6 +165,12 @@ class ArgsHandler:
             dest="gestures",
             action="store_false",
             help="Disable MPV touch/mouse gestures.",
+        )
+
+        self.termux_x11_options.add_argument(
+            "--termux-configs",
+            action="store_true",
+            help="Show current termux-x11 player configs.",
         )
 
         self.group_cache = self.parser.add_argument_group("Cache and History Options")
@@ -395,16 +398,16 @@ class ArgsHandler:
             TermuxPlayerConfig if self.args.mpv_player == "termux-x11" else PlayerConfig
         )
 
-        if self.args.mpv_args is not None:
-            if self.args.mpv_args:
-                active_player_config.update(mpv_args=self.args.mpv_args)
+        if self.args.mpv_args:
+            active_player_config.update(mpv_args=self.args.mpv_args)
+
+        if self.args.show_mpv_args:
+            current_args = active_player_config.get("mpv_args")
+            if current_args:
+                print(f"Current default MPV args: {' '.join(current_args)}")
             else:
-                current_args = active_player_config.get("mpv_args")
-                if current_args:
-                    print(f"Current default MPV args: {' '.join(current_args)}")
-                else:
-                    print("No default MPV args configured.")
-                InputHandler.press_any_key()
+                print("No default MPV args configured.")
+            InputHandler.press_any_key()
 
         if self.args.mpv_player == "termux-x11":
             args_to_config_map = {
