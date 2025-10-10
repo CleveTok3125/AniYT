@@ -98,7 +98,8 @@ class ArgsHandler:
             help="Pass args to MPV, or show current default args if none are provided. Must be the LAST option.",
         )
         self.group_mpv.add_argument(
-            "--show-mpv-args", action="store_true",
+            "--show-mpv-args",
+            action="store_true",
             help="Show the current MPV arguments.",
         )
 

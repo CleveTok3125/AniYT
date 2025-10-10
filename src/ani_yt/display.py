@@ -86,6 +86,7 @@ class DisplayMenu(Display, DisplayExtension):
             "U": "(U/↑) Move cursor up",
             "D": "(D/↓) Move cursor down",
             "B_int": "(B:[<integer>]) Add/remove bookmark",
+            "V_int": "(V:[<integer>]) Toggle viewed status",
             "T_int": "(T:[<integer>]) View thumbnail",
             "I_int": "(I:<integer>) number of items per page",
             "R": "(R) Re-render the interface",
@@ -143,6 +144,7 @@ class DisplayMenu(Display, DisplayExtension):
             "L",
             "B_toggle",
             "B_int",
+            "V_int",
             "T_int",
             "I_int",
             "R",
@@ -342,6 +344,15 @@ class DisplayMenu(Display, DisplayExtension):
         print_user_input_buffer = [prompt]
         return print_user_input_buffer
 
+    def toggle_viewed_processing(self, item_number):
+        """Gets item number, finds the URL, and calls the toggle handler."""
+        index = item_number - 1
+        if 0 <= index < len(self.data):
+            video_url = self.data[index]["video_url"]
+            self.toggle_viewed_status(video_url)
+        else:
+            PauseableException("IndexError: Invalid item number.", delay=-1)
+
     def advanced_options(self):
         user_input_upper = self.user_input[:2].upper()
         is_cursor_option = len(self.user_input) == 2
@@ -359,6 +370,8 @@ class DisplayMenu(Display, DisplayExtension):
         match (user_input_upper, is_cursor_option):
             case ("B:", _):
                 self.bookmark_processing(user_int)
+            case ("V:", _):
+                self.toggle_viewed_processing(user_int)
             case ("T:", _):
                 self.show_thumbnail(user_int)
             case ("P:", False):

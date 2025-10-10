@@ -54,6 +54,35 @@ class HistoryExtension:
             # update local map
             self.history_map[url] = "viewed"
 
+    def remove_viewed_status(self, url: str):
+        """
+        Remove the 'viewed' status from a video.
+        """
+        history = self.history_handler.load()
+        p_idx, v_idx = self.history_handler.search(url, history)
+        if p_idx != -1 and v_idx != -1:
+            video = history["playlists"][p_idx]["videos"][v_idx]
+            if "status" in video:
+                video["status"] = ""
+            if "last_viewed" in video:
+                del video["last_viewed"]
+
+            self.history_handler.update(
+                curr=history.get("current"), playlists=history.get("playlists")
+            )
+            self.history_map[url] = ""
+
+    def toggle_viewed_status(self, url: str):
+        """
+        Toggle the 'viewed' status of a video.
+        If it's viewed, un-view it. If it's not viewed, mark it as viewed.
+        """
+        current_status = self.history_map.get(url, "").lower()
+        if current_status == "viewed":
+            self.remove_viewed_status(url)
+        else:
+            self.mark_viewed(url)
+
     def find_first_unviewed_index(self):
         if not hasattr(self, "data") or not self.data:
             return 0
