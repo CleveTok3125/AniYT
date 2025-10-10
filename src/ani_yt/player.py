@@ -6,25 +6,64 @@ from .input_handler import InputHandler
 from .os_manager import OSManager
 
 
-class Termux_X11_OPTS:
-    monitor: int = 1
-    open_app: bool = True
-    return_app: bool = True
-    mpv_fullscreen_playback: bool = True
-    touch_mouse_gestures: bool = True
+class PlayerConfig:
+    _settings = {
+        "mpv_args": [
+            "--save-position-on-quit=yes",
+            "--script=./mpv-scripts/sponsorblock_minimal.lua",
+        ],
+    }
+
+    @classmethod
+    def update(cls, **kwargs):
+        for key, value in kwargs.items():
+            if key in cls._settings:
+                cls._settings[key] = value
+            else:
+                raise KeyError(f"'{key}' is not a valid configuration setting.")
+
+    @classmethod
+    def get(cls, key):
+        return cls._settings.get(key)
+
+    @classmethod
+    def get_all_settings(cls):
+        return cls._settings.copy()
+
+
+class TermuxPlayerConfig(PlayerConfig):
+    _settings = PlayerConfig._settings.copy()
+    _settings.update(
+        {
+            "monitor": 1,
+            "open_app": True,
+            "return_app": True,
+            "mpv_fullscreen_playback": True,
+            "touch_mouse_gestures": True,
+        }
+    )
 
 
 class Player:
     def __init__(self, url, args=None):
-        mpv_config_path = "./mpv-config/custom.conf"
-        custom_config_exists = OSManager.exists(mpv_config_path)
-        if args is None and custom_config_exists:
-            self.args = [f"--input-conf={mpv_config_path}"]
-        elif args is None and not custom_config_exists:
-            self.args = []
-        else:
-            self.args = args
-        self.command = ["mpv"] + self.args + [url]
+        self.url = url
+
+        mpv_input_config_path = "./mpv-config/custom.conf"
+        custom_input_config_exists = OSManager.exists(mpv_input_config_path)
+        initial_args = []
+
+        match (args, custom_input_config_exists):
+            case (None, True):
+                initial_args = [f"--input-conf={mpv_input_config_path}"]
+            case (None, False):
+                initial_args = []
+            case (provided_args, _):
+                initial_args = provided_args
+
+        mpv_args = PlayerConfig.get("mpv_args")
+
+        self.args = mpv_args + initial_args
+        self.command = ["mpv"] + self.args + [self.url]
 
         self.android_command = [
             "am",
@@ -53,53 +92,29 @@ class Player:
             self.android_command, note="Current OS may not be Android."
         )
 
-    def run_mpv_x(
-        self,
-        url,
-        *,
-        monitor=None,
-        open_app=None,
-        return_app=None,
-        mpv_fullscreen_playback=None,
-        touch_mouse_gestures=None,
-    ):
-        defaults = Termux_X11_OPTS
-
-        if monitor is None:
-            monitor = defaults.monitor
-
-        if open_app is None:
-            open_app = defaults.open_app
-
-        if return_app is None:
-            return_app = defaults.return_app
-
-        if mpv_fullscreen_playback is None:
-            mpv_fullscreen_playback = defaults.mpv_fullscreen_playback
-
-        if touch_mouse_gestures is None:
-            touch_mouse_gestures = defaults.touch_mouse_gestures
+    def run_mpv_x(self):
+        config = TermuxPlayerConfig.get_all_settings()
 
         mpv_args = self.args.copy()
 
-        os.environ["DISPLAY"] = f":{monitor}"
+        os.environ["DISPLAY"] = f":{config['monitor']}"
 
-        if mpv_fullscreen_playback is True:
-            mpv_args += ["--fs"]
+        if config["mpv_fullscreen_playback"] is True and "--fs" not in mpv_args:
+            mpv_args.append("--fs")
 
-        mpv_command = ["mpv"] + mpv_args
-
-        if touch_mouse_gestures:
-            mpv_command += [
+        if config["touch_mouse_gestures"]:
+            gestures_args = [
                 "--no-window-dragging",
                 "--script=./mpv-scripts/gestures.lua",
-                "--script=./mpv-scripts/sponsorblock_minimal.lua",
             ]
 
-        mpv_command += [url]
+            for arg in gestures_args:
+                if arg not in mpv_args:
+                    mpv_args.append(arg)
+
+        mpv_command = ["mpv"] + mpv_args + [self.url]
 
         termux_x11_command = ["am", "start", "-n", "com.termux.x11/.MainActivity"]
-
         termux_command = [
             "am",
             "start",
@@ -107,29 +122,29 @@ class Player:
             "com.termux/com.termux.app.TermuxActivity",
         ]
 
-        if open_app:
+        if config["open_app"]:
             SubprocessHelper.app_subprocess_help(termux_x11_command, "termux-x11")
 
         SubprocessHelper.app_subprocess_help(mpv_command)
 
-        if return_app:
+        if config["return_app"]:
             SubprocessHelper.app_subprocess_help(termux_command, "termux")
 
-    def start(self):
+    def classic_start(self):
         if OSManager.android_check():
             self.run_mpv_android()
         else:
             self.run_mpv()
 
-    @staticmethod
-    def start_with_mode(url, opts="auto"):
+    @classmethod
+    def start_with_mode(cls, url, opts="auto"):
         print("Playing...")
 
-        player = Player(url)
+        player = cls(url)
 
         match opts:
             case "auto":
-                player.start()
+                player.classic_start()
             case "android":
                 player.run_mpv_android()
             case "ssh":
@@ -137,11 +152,8 @@ class Player:
                 print(
                     f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
                 )
-                try:
-                    InputHandler.press_any_key()
-                except KeyboardInterrupt:
-                    pass
+                InputHandler.press_any_key()
             case "termux-x11":
-                player.run_mpv_x(url)
+                player.run_mpv_x()
             case _:
                 player.run_mpv()

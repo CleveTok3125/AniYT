@@ -170,4 +170,8 @@ class InputHandler:
         if prompt is not False:
             print(prompt, end="", flush=True)
 
-        return bool(readchar.readchar())
+        result = bool(readchar.readchar())
+
+        print()
+
+        return result

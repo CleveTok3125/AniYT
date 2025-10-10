@@ -4,6 +4,8 @@ import subprocess
 import sys
 from typing import Dict, List, Tuple, Union
 
+import ujson as json
+
 
 class IOHelper:
     @staticmethod
@@ -95,3 +97,9 @@ class LegacyCompatibility:
             return normalized
 
         raise TypeError("Unsupported playlist format")
+
+
+class FormatHelper:
+    @staticmethod
+    def beautify_json(json_str):
+        return json.dumps(json_str, indent=4)

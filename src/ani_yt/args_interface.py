@@ -6,10 +6,11 @@ from .ani_tracker_handler import TrackerWrapper
 from .exceptions import PauseableException
 from .extension import Extension
 from .file_handler import Initialize
-from .helper import IOHelper
+from .helper import FormatHelper, IOHelper
+from .input_handler import InputHandler
 from .main import Main
 from .os_manager import OSManager
-from .player import Termux_X11_OPTS
+from .player import PlayerConfig, TermuxPlayerConfig
 
 
 class ArgsHandler:
@@ -90,6 +91,83 @@ class ArgsHandler:
             choices=["auto", "default", "android", "ssh", "termux-x11"],
             default="auto",
             help="MPV player mode.",
+        )
+        self.group_mpv.add_argument(
+            "--mpv-args",
+            nargs="*",
+            default=None,
+            help="Pass args to MPV, or show current default args if none are provided. Must be the LAST option.",
+        )
+
+        self.termux_x11_options = self.parser.add_argument_group("Termux-X11 options")
+
+        self.termux_x11_options.add_argument(
+            "--termux-configs",
+            action="store_true",
+            help="Show current default termux-x11 player configs.",
+        )
+
+        self.termux_x11_options.add_argument(
+            "--monitor",
+            type=int,
+            default=TermuxPlayerConfig.get("monitor"),
+            help=f"X server monitor number (default: {TermuxPlayerConfig.get("monitor")})",
+        )
+
+        self.termux_x11_options.add_argument(
+            "--open-app",
+            dest="open_app",
+            action="store_true",
+            default=TermuxPlayerConfig.get("open_app"),
+            help=f"Enable auto-opening Termux-X11 app (default: {TermuxPlayerConfig.get("open_app")})",
+        )
+        self.termux_x11_options.add_argument(
+            "--no-open-app",
+            dest="open_app",
+            action="store_false",
+            help="Disable auto-opening Termux-X11 app.",
+        )
+
+        self.termux_x11_options.add_argument(
+            "--return-app",
+            dest="return_app",
+            action="store_true",
+            default=TermuxPlayerConfig.get("return_app"),
+            help=f"Enable auto-return Termux after playback (default: {TermuxPlayerConfig.get("return_app")})",
+        )
+        self.termux_x11_options.add_argument(
+            "--no-return-app",
+            dest="return_app",
+            action="store_false",
+            help="Disable auto-return Termux after playback.",
+        )
+
+        self.termux_x11_options.add_argument(
+            "--fullscreen",
+            dest="fullscreen",
+            action="store_true",
+            default=TermuxPlayerConfig.get("mpv_fullscreen_playback"),
+            help=f"Enable fullscreen playback (default: {TermuxPlayerConfig.get("mpv_fullscreen_playback")})",
+        )
+        self.termux_x11_options.add_argument(
+            "--no-fullscreen",
+            dest="fullscreen",
+            action="store_false",
+            help="Disable fullscreen playback.",
+        )
+
+        self.termux_x11_options.add_argument(
+            "--gestures",
+            dest="gestures",
+            action="store_true",
+            default=TermuxPlayerConfig.get("touch_mouse_gestures"),
+            help=f"Enable MPV touch/mouse gestures (default: {TermuxPlayerConfig.get("touch_mouse_gestures")})",
+        )
+        self.termux_x11_options.add_argument(
+            "--no-gestures",
+            dest="gestures",
+            action="store_false",
+            help="Disable MPV touch/mouse gestures.",
         )
 
         self.group_cache = self.parser.add_argument_group("Cache and History Options")
@@ -219,72 +297,7 @@ class ArgsHandler:
         self.mpv_parsers.add_argument(
             "input",
             type=str,
-            help="Video url or file path. File path are currently not supported on Android.",
-        )
-
-        self.termux_x11_options = self.parser.add_argument_group("Termux-X11 options")
-
-        self.termux_x11_options.add_argument(
-            "--monitor",
-            type=int,
-            default=Termux_X11_OPTS.monitor,
-            help=f"X server monitor number (default: {Termux_X11_OPTS.monitor})",
-        )
-
-        self.termux_x11_options.add_argument(
-            "--open-app",
-            dest="open_app",
-            action="store_true",
-            default=Termux_X11_OPTS.open_app,
-            help=f"Enable auto-opening Termux-X11 app (default: {Termux_X11_OPTS.open_app})",
-        )
-        self.termux_x11_options.add_argument(
-            "--no-open-app",
-            dest="open_app",
-            action="store_false",
-            help="Disable auto-opening Termux-X11 app.",
-        )
-
-        self.termux_x11_options.add_argument(
-            "--return-app",
-            dest="return_app",
-            action="store_true",
-            default=Termux_X11_OPTS.return_app,
-            help=f"Enable auto-return Termux after playback (default: {Termux_X11_OPTS.return_app})",
-        )
-        self.termux_x11_options.add_argument(
-            "--no-return-app",
-            dest="return_app",
-            action="store_false",
-            help="Disable auto-return Termux after playback.",
-        )
-
-        self.termux_x11_options.add_argument(
-            "--fullscreen",
-            dest="fullscreen",
-            action="store_true",
-            default=Termux_X11_OPTS.mpv_fullscreen_playback,
-            help=f"Enable fullscreen playback (default: {Termux_X11_OPTS.mpv_fullscreen_playback})",
-        )
-        self.termux_x11_options.add_argument(
-            "--no-fullscreen",
-            dest="fullscreen",
-            action="store_false",
-            help="Disable fullscreen playback.",
-        )
-
-        self.termux_x11_options.add_argument(
-            "--gestures",
-            dest="gestures",
-            action="store_true",
-            default=Termux_X11_OPTS.touch_mouse_gestures,
-            help=f"Enable MPV touch/mouse gestures (default: {Termux_X11_OPTS.touch_mouse_gestures})",
-        )
-        self.termux_x11_options.add_argument(
-            "--no-gestures",
-            dest="gestures",
-            action="store_false",
-            help="Disable MPV touch/mouse gestures.",
+            help="Video url or file path.",
         )
 
         self.search_parsers = self.subparsers.add_parser(
@@ -378,16 +391,52 @@ class ArgsHandler:
         if self.args.no_extension_update:
             Extension.check_update_enabled = False
 
-        if self.args.mpv_player == "termux-x11":
-            if self.args.monitor < 1:
-                print("Error: Monitor number must be >= 1")
-                OSManager.exit(1)
+        active_player_config = (
+            TermuxPlayerConfig if self.args.mpv_player == "termux-x11" else PlayerConfig
+        )
 
-            Termux_X11_OPTS.monitor = self.args.monitor
-            Termux_X11_OPTS.open_app = self.args.open_app
-            Termux_X11_OPTS.return_app = self.args.return_app
-            Termux_X11_OPTS.mpv_fullscreen_playback = self.args.fullscreen
-            Termux_X11_OPTS.touch_mouse_gestures = self.args.gestures
+        if self.args.mpv_args is not None:
+            if self.args.mpv_args:
+                active_player_config.update(mpv_args=self.args.mpv_args)
+            else:
+                current_args = active_player_config.get("mpv_args")
+                if current_args:
+                    print(f"Current default MPV args: {' '.join(current_args)}")
+                else:
+                    print("No default MPV args configured.")
+                InputHandler.press_any_key()
+
+        if self.args.mpv_player == "termux-x11":
+            args_to_config_map = {
+                "monitor": "monitor",
+                "open_app": "open_app",
+                "return_app": "return_app",
+                "fullscreen": "mpv_fullscreen_playback",
+                "gestures": "touch_mouse_gestures",
+            }
+
+            termux_configs = {}
+
+            for arg_name, config_key in args_to_config_map.items():
+                value = getattr(self.args, arg_name, None)
+
+                if value is not None:
+                    if arg_name == "monitor" and value < 1:
+                        print("Error: Monitor number must be >= 1")
+                        OSManager.exit(1)
+
+                    termux_configs[config_key] = value
+
+            if termux_configs:
+                TermuxPlayerConfig.update(**termux_configs)
+
+            if self.args.termux_configs:
+                current_args = TermuxPlayerConfig.get_all_settings()
+                if current_args:
+                    print(f"Current args: {FormatHelper.beautify_json(current_args)}")
+                else:
+                    print("No default args configured.")
+                InputHandler.press_any_key()
 
         self.main = Main(
             channel_url=self.args.channel,
