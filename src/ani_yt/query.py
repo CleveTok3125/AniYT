@@ -1,6 +1,6 @@
 from rapidfuzz import process
 
-from . import _query
+from ._internal import _query
 from .data_processing import DataProcessing
 
 
