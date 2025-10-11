@@ -21,6 +21,12 @@ class DisplayColor:
     LINK_COLOR = "\033[3;38;2;0;191;255m"
     BOLD = "\033[1m"
     SELECTED_BG_COLOR = "\033[48;5;236m"
+    BLOCK = "███"
+
+    COLOR_MAP = {
+        YELLOW: "Bookmarked item",
+        LIGHT_GRAY: "Viewed item",
+    }
 
 
 class Display_Options:
@@ -118,6 +124,17 @@ class DisplayMenu(Display, DisplayExtension):
         self.bookmark = self.opts.bookmark
         self._last_played = None
 
+    def _generate_color_palette(self) -> str:
+        max_len = max(len(desc) for desc in DisplayColor.COLOR_MAP.values()) + 2
+
+        lines = ["( ) Color Palette"]
+        for color, description in DisplayColor.COLOR_MAP.items():
+            formatted_desc = f"{description}:".ljust(max_len)
+            lines.append(
+                f"    {formatted_desc}{color}{DisplayColor.BLOCK}{DisplayColor.RESET}"
+            )
+        return "\n".join(lines)
+
     def _render_dynamic_opts(self):
         self.combined_opts = self.pages_opts.copy()
 
@@ -132,6 +149,7 @@ class DisplayMenu(Display, DisplayExtension):
             if not self.opts.show_opts
             else self.no_opts["option_toggle"][0]
         )
+        self.combined_opts["palette"] = self._generate_color_palette()
 
         key_order = [
             "O_toggle",
@@ -149,6 +167,7 @@ class DisplayMenu(Display, DisplayExtension):
             "I_int",
             "R",
             "Q",
+            "palette",
         ]
 
         self.page_opts_display = "\n".join(
