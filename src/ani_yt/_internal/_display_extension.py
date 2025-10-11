@@ -178,13 +178,15 @@ class DisplayExtension(HistoryExtension, InputExtension):
 
         return dependency
 
-    def bookmark_processing(self, user_int):
+    def mark_bookmark(self, user_int, category):
         try:
             item: Typing.Video = self.data[user_int - 1]
-            if self.bookmarking_handler.is_bookmarked(item["video_url"]):
-                self.bookmarking_handler.remove_bookmark(item["video_url"])
+            video_url = item["video_url"]
+
+            if self.bookmarking_handler.is_item_exist(video_url, category=category):
+                self.bookmarking_handler.remove_item(video_url, category=category)
             else:
-                self.bookmarking_handler.update(item)
+                self.bookmarking_handler.update_item(item, category=category)
         except ValueError:
             PauseableException(
                 "ValueError: only non-negative integers are accepted.", delay=-1
@@ -193,6 +195,9 @@ class DisplayExtension(HistoryExtension, InputExtension):
             PauseableException(
                 "IndexError: The requested item is not listed.", delay=-1
             )
+
+    def is_item_bookmarked(self, item_url, category):
+        return self.bookmarking_handler.is_item_exist(item_url, category=category)
 
     def open_image_with_mpv(self, url):
         Player.start_with_mode(url=url, opts=self.extra_opts.get("mode", "auto"))

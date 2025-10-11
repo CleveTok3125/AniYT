@@ -19,6 +19,13 @@ class InvalidHistoryFile(Exception):
         OSManager.exit(n=1)
 
 
+class InvalidBookmarkFile(Exception):
+    def __init__(self, message, filepath):
+        print(f"FATAL ERROR: {message}. Please check '{filepath}'")
+        super().__init__(message)
+        OSManager.exit(n=1)
+
+
 class PauseableException(Exception):
     @IOHelper.gracefully_terminate
     def __init__(self, message="", *, delay=3):

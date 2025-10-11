@@ -102,4 +102,4 @@ class LegacyCompatibility:
 class FormatHelper:
     @staticmethod
     def beautify_json(json_str):
-        return json.dumps(json_str, indent=4)
+        return json.dumps(json_str, indent=4, ensure_ascii=False)

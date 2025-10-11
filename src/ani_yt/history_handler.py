@@ -121,7 +121,7 @@ class HistoryHandler:
                         playlist["last_viewed"] = now
 
         with open(self.filename, "w", encoding=self.encoding) as f:
-            json.dump(content, f, indent=4)
+            json.dump(content, f, indent=4, ensure_ascii=False)
 
     def search(self, curr_url, history):  # -> (playlist_index, video_index)
         if not isinstance(history, dict) or "playlists" not in history:
@@ -193,7 +193,7 @@ class HistoryHandler:
 
         # Persist
         with open(self.filename, "w", encoding=self.encoding) as f:
-            json.dump(content, f, indent=4)
+            json.dump(content, f, indent=4, ensure_ascii=False)
 
         print(
             f"History cleared. Mode: {mode}\nKept {keep_recent} most recent playlists."

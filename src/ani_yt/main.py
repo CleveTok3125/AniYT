@@ -5,7 +5,7 @@ import os
 
 from .bookmarking_handler import BookmarkingHandler
 from .data_processing import DataProcessing
-from .display import Display_Options, DisplayMenu
+from .display import Display_Options, DisplayColor, DisplayMenu
 from .exceptions import MissingChannelUrl
 from .file_handler import FileHandler, FileSourceHandler
 from .helper import IOHelper
@@ -182,7 +182,7 @@ class Main:
 
     @IOHelper.gracefully_terminate
     def delete_bookmark(self):
-        self.bookmarking_handler.delete_bookmark()
+        self.bookmarking_handler.delete_file()
 
     @IOHelper.gracefully_terminate_exit
     def load_playlist(self):
@@ -289,11 +289,17 @@ class Main:
 
     @IOHelper.gracefully_terminate
     def show_bookmark(self):
-        bms = self.bookmarking_handler.load()
-        for key, value in bms.items():
-            print(
-                f"{self.display_menu.YELLOW}{key}{self.display_menu.RESET}\n\t{value}"
-            )
+        bms = self.bookmarking_handler.load_full_data()
+        for category in bms.keys():
+            category_items = bms[category].items()
+            if category_items:
+                print(
+                    f"{DisplayColor.BRIGHT_BLUE}{category.title()}{DisplayColor.RESET}"
+                )
+            for video_title, video_url in category_items:
+                print(
+                    f"{" " * 2}{DisplayColor.YELLOW}{video_title}{DisplayColor.RESET}\n{" " * 4}{DisplayColor.LINK_COLOR}{video_url}{DisplayColor.RESET}"
+                )
 
     @IOHelper.gracefully_terminate_exit
     def list(self):

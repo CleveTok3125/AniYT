@@ -18,14 +18,19 @@ class DisplayColor:
     YELLOW = "\033[38;2;255;255;0m"
     LIGHT_GRAY = "\033[0;38;2;187;187;187;49m"
     BRIGHT_BLUE = "\033[38;2;0;191;255m"
+    GREEN = "\033[38;2;0;128;0;49m"
     LINK_COLOR = "\033[3;38;2;0;191;255m"
     BOLD = "\033[1m"
     SELECTED_BG_COLOR = "\033[48;5;236m"
+    ALT_BG_1 = ""
+    ALT_BG_2 = "\033[48;5;236m"
     BLOCK = "███"
+    CONTINUATION_SYMBOL = "↳ "
 
     COLOR_MAP = {
-        YELLOW: "Bookmarked item",
-        LIGHT_GRAY: "Viewed item",
+        YELLOW: "Bookmarked",
+        LIGHT_GRAY: "Viewed",
+        GREEN: "Completed",
     }
 
 
@@ -79,24 +84,39 @@ class DisplayMenu(Display, DisplayExtension):
 
         # Constant
         self.no_opts = {
-            "option_toggle": [
-                f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}(O) Hide all options{DisplayColor.RESET}",
-                f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}(O) Show all options{DisplayColor.RESET}",
-            ],
+            "option_toggle": {
+                "hide": {
+                    "key": "(O)",
+                    "desc": f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Hide all options{DisplayColor.RESET}",
+                },
+                "show": {
+                    "key": "(O)",
+                    "desc": f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Show all options{DisplayColor.RESET}",
+                },
+            }
         }
         self.pages_opts = {
-            "N": "(N/→) Next page",
-            "P": "(P/←) Previous page",
-            "P_int": "(P:<integer>) Jump to page",
-            "J": "(J) Jump to next unviewed",
-            "U": "(U/↑) Move cursor up",
-            "D": "(D/↓) Move cursor down",
-            "B_int": "(B:[<integer>]) Add/remove bookmark",
-            "V_int": "(V:[<integer>]) Toggle viewed status",
-            "T_int": "(T:[<integer>]) View thumbnail",
-            "I_int": "(I:<integer>) number of items per page",
-            "R": "(R) Re-render the interface",
-            "Q": "(Q) Quit",
+            "N": {"key": "(N/→)", "desc": "Next page"},
+            "P": {"key": "(P/←)", "desc": "Previous page"},
+            "P_int": {"key": "(P:<id>)", "desc": "Jump to page"},
+            "J": {"key": "(J)", "desc": "Jump to next unviewed"},
+            "U": {"key": "(U/↑)", "desc": "Move cursor up"},
+            "D": {"key": "(D/↓)", "desc": "Move cursor down"},
+            "B_int": {
+                "key": "(B:[<id>]",
+                "desc": "Add/remove bookmark",
+                "is_multiline_start": True,
+            },
+            "B_int_ext": {
+                "key": "[:<cat>{bookmark,completed}])",
+                "desc": "",
+                "is_multiline_ext": True,
+            },
+            "V_int": {"key": "(V:<id>)", "desc": "Toggle viewed status"},
+            "T_int": {"key": "(T:<id>)", "desc": "View thumbnail"},
+            "I_int": {"key": "(I:<id>)", "desc": "Number of items per page"},
+            "R": {"key": "(R)", "desc": "Re-render the interface"},
+            "Q": {"key": "(Q)", "desc": "Quit"},
         }
 
         # Dynamic
@@ -138,16 +158,22 @@ class DisplayMenu(Display, DisplayExtension):
     def _render_dynamic_opts(self):
         self.combined_opts = self.pages_opts.copy()
 
-        self.combined_opts["B_toggle"] = (
-            f"{DisplayColor.YELLOW if self.bookmark else ''}(B) Toggle bookmark{DisplayColor.RESET}"
-        )
-        self.combined_opts["L"] = (
-            f"{DisplayColor.LINK_COLOR if self.show_link else ''}(L) Toggle link{DisplayColor.RESET}"
-        )
+        self.combined_opts["B_toggle"] = {
+            "key": "(B)",
+            "desc": "Toggle bookmark",
+            "is_active": self.bookmark,
+            "active_color": DisplayColor.YELLOW,
+        }
+        self.combined_opts["L"] = {
+            "key": "(L)",
+            "desc": "Toggle link",
+            "is_active": self.show_link,
+            "active_color": DisplayColor.LINK_COLOR,
+        }
         self.combined_opts["O_toggle"] = (
-            self.no_opts["option_toggle"][1]
+            self.no_opts["option_toggle"]["show"]
             if not self.opts.show_opts
-            else self.no_opts["option_toggle"][0]
+            else self.no_opts["option_toggle"]["hide"]
         )
         self.combined_opts["palette"] = self._generate_color_palette()
 
@@ -162,6 +188,7 @@ class DisplayMenu(Display, DisplayExtension):
             "L",
             "B_toggle",
             "B_int",
+            "B_int_ext",
             "V_int",
             "T_int",
             "I_int",
@@ -170,9 +197,70 @@ class DisplayMenu(Display, DisplayExtension):
             "palette",
         ]
 
-        self.page_opts_display = "\n".join(
-            [self.combined_opts[k] for k in key_order if k in self.combined_opts]
+        term_width = shutil.get_terminal_size().columns
+
+        max_key_len = max(
+            wcswidth(opt["key"])
+            for opt in self.combined_opts.values()
+            if isinstance(opt, dict) and not opt.get("is_multiline_ext")
         )
+
+        output_lines = []
+        line_idx = 0
+        for k in key_order:
+            if k in self.combined_opts:
+                opt = self.combined_opts[k]
+
+                # Ignore non-dictionary items (like palette)
+                if not isinstance(opt, dict):
+                    output_lines.append(str(opt))
+                    continue
+
+                # Defines alternating background colors
+                bg_color = (
+                    DisplayColor.ALT_BG_1
+                    if line_idx % 2 == 0
+                    else DisplayColor.ALT_BG_2
+                )
+
+                key = opt.get("key", "")
+                desc = opt.get("desc", "")
+
+                # Define foreground color
+                fg_color = ""
+                if opt.get("is_active"):
+                    fg_color = opt.get("active_color", DisplayColor.YELLOW)
+
+                # Handle extended key lines (indented, same background color as main line)
+                if opt.get("is_multiline_ext"):
+                    prev_bg_color = (
+                        DisplayColor.ALT_BG_1
+                        if (line_idx - 1) % 2 == 0
+                        else DisplayColor.ALT_BG_2
+                    )
+                    line_content = f"{DisplayColor.CONTINUATION_SYMBOL}{key}".ljust(
+                        term_width
+                    )
+                    output_lines.append(
+                        f"{prev_bg_color}{fg_color}{line_content}{DisplayColor.RESET}"
+                    )
+                    continue  # Do not increment line_idx for sub-lines
+
+                left_part = key.ljust(max_key_len)
+                full_line = f"{left_part} : {desc}"
+
+                full_line = full_line.ljust(term_width)
+
+                output_lines.append(
+                    f"{bg_color}{fg_color}{full_line}{DisplayColor.RESET}"
+                )
+                line_idx += 1
+
+        self.page_opts_display = "\n".join(output_lines)
+
+    def _get_page_start_index(self) -> int:
+        """Calculates the starting index of the items on the current page."""
+        return self.index_item * self.opts.items_per_list
 
     def valid_index_item(self):
         if self.index_item >= self.len_data:
@@ -184,9 +272,7 @@ class DisplayMenu(Display, DisplayExtension):
         if not self.splited_data:
             return
 
-        self.cursor_in_page = (
-            self.choosed_item - self.index_item * self.opts.items_per_list
-        )
+        self.cursor_in_page = self.choosed_item - self._get_page_start_index()
 
         self.cursor_in_page = max(
             0, min(self.cursor_in_page, len(self.splited_data[self.index_item]) - 1)
@@ -227,13 +313,14 @@ class DisplayMenu(Display, DisplayExtension):
         if self.opts.show_opts:
             output = self.page_opts_display
         else:
-            output = self.no_opts["option_toggle"][1]
+            opt_to_show = self.no_opts["option_toggle"]["show"]
+            output = f"{opt_to_show['key']}: {opt_to_show['desc']}"
 
         print_option_buffer = [output, ""]
         return print_option_buffer
 
     def print_page_indicator(self):
-        showed_item = self.len_data_items + self.index_item * self.opts.items_per_list
+        showed_item = self.len_data_items + self._get_page_start_index()
         page_colored = (
             f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Page:{DisplayColor.RESET}"
         )
@@ -284,7 +371,7 @@ class DisplayMenu(Display, DisplayExtension):
             item_title = item["video_title"]
             item_url = item["video_url"]
 
-            item_number = self.index_item * self.opts.items_per_list + index + 1
+            item_number = self._get_page_start_index() + index + 1
 
             color_viewed = (
                 DisplayColor.LIGHT_GRAY
@@ -292,12 +379,12 @@ class DisplayMenu(Display, DisplayExtension):
                 else ""
             )
 
-            color_bookmarked = (
-                DisplayColor.YELLOW
-                if getattr(self, "bookmark", True)
-                and self.bookmarking_handler.is_bookmarked(item_url)
-                else ""
-            )
+            color_bookmarked = ""
+            if getattr(self, "bookmark", True):
+                if self.is_item_bookmarked(item_url, "bookmark"):
+                    color_bookmarked = DisplayColor.YELLOW
+                elif self.is_item_bookmarked(item_url, "completed"):
+                    color_bookmarked = DisplayColor.GREEN
 
             link_colored = (
                 f"\n\t{DisplayColor.LINK_COLOR}{item_url}{DisplayColor.RESET}"
@@ -349,7 +436,7 @@ class DisplayMenu(Display, DisplayExtension):
 
     def print_user_input(self):
         current_index = (
-            self.index_item * self.opts.items_per_list + self.cursor_in_page + 1
+            self._get_page_start_index() + self.cursor_in_page + 1
             if self.splited_data and self.splited_data_items
             else 0
         )
@@ -373,22 +460,37 @@ class DisplayMenu(Display, DisplayExtension):
             PauseableException("IndexError: Invalid item number.", delay=-1)
 
     def advanced_options(self):
-        user_input_upper = self.user_input[:2].upper()
-        is_cursor_option = len(self.user_input) == 2
+        # K:integer:option
 
-        if len(self.user_input) >= 3 and (user_int := self.user_input[2:]).isdigit():
+        user_input_parts = self.user_input.split(":")
+        len_user_input_parts = len(user_input_parts)
+
+        user_input_upper = (f"{user_input_parts[0]}:").upper()
+        has_item_specified = (
+            len_user_input_parts >= 2 and (user_int := user_input_parts[1]).isdigit()
+        )
+        is_cursor_option = len_user_input_parts >= 2 and user_input_parts[1] == ""
+        is_user_option = len_user_input_parts >= 3 and user_input_parts[2] != ""
+
+        if is_user_option:
+            user_option = user_input_parts[2]
+
+        if has_item_specified:
             user_int = int(user_int)
-        elif is_cursor_option:
+
+        if is_cursor_option and not has_item_specified:
             if self.cursor_moved:
-                user_int = self.cursor_in_page + 1
+                user_int = self._get_page_start_index() + self.cursor_in_page + 1
             else:
                 user_int = self.choosed_item + 1
-        else:
+
+        if not is_cursor_option and not has_item_specified:
             return False
 
         match (user_input_upper, is_cursor_option):
             case ("B:", _):
-                self.bookmark_processing(user_int)
+                category = user_option if is_user_option else "bookmark"
+                self.mark_bookmark(user_int, category=category)
             case ("V:", _):
                 self.toggle_viewed_processing(user_int)
             case ("T:", _):
@@ -399,7 +501,7 @@ class DisplayMenu(Display, DisplayExtension):
 
                 # Automatically jump to and sync cursor when jumping to specific page
                 self.choosed_item = self.find_next_unviewed_index(
-                    self.index_item * self.opts.items_per_list
+                    self._get_page_start_index()
                 )
                 self.sync_cursor_with_item()
             case ("I:", False):
@@ -421,9 +523,7 @@ class DisplayMenu(Display, DisplayExtension):
     def _handle_enter_input(self):
         # If enter is pressed when the cursor is already on a specific item
         if self.cursor_moved:
-            self.choosed_item = (
-                self.index_item * self.opts.items_per_list + self.cursor_in_page
-            )
+            self.choosed_item = self._get_page_start_index() + self.cursor_in_page
             self.cursor_moved = False
         else:
             # If just enter (no auto-play yet) then play correct self.choosed_item
@@ -494,14 +594,14 @@ class DisplayMenu(Display, DisplayExtension):
             case "N":
                 self.index_item += 1
                 self.valid_index_item()
-                start_idx = self.index_item * self.opts.items_per_list
+                start_idx = self._get_page_start_index()
                 self.choosed_item = self.find_next_unviewed_index(start_idx)
                 self.sync_cursor_with_item()
                 self.cursor_moved = False
             case "P":
                 self.index_item -= 1
                 self.valid_index_item()
-                start_idx = self.index_item * self.opts.items_per_list
+                start_idx = self._get_page_start_index()
                 self.choosed_item = self.find_next_unviewed_index(start_idx)
                 self.sync_cursor_with_item()
                 self.cursor_moved = False
@@ -516,18 +616,14 @@ class DisplayMenu(Display, DisplayExtension):
                 else:
                     self.cursor_in_page = len(self.splited_data_items) - 1
                 self.cursor_moved = True
-                self.choosed_item = (
-                    self.index_item * self.opts.items_per_list + self.cursor_in_page
-                )
+                self.choosed_item = self._get_page_start_index() + self.cursor_in_page
             case "D":
                 if self.cursor_in_page < len(self.splited_data_items) - 1:
                     self.cursor_in_page += 1
                 else:
                     self.cursor_in_page = 0
                 self.cursor_moved = True
-                self.choosed_item = (
-                    self.index_item * self.opts.items_per_list + self.cursor_in_page
-                )
+                self.choosed_item = self._get_page_start_index() + self.cursor_in_page
             case "L":
                 self.show_link = not self.show_link
                 self._render_dynamic_opts()

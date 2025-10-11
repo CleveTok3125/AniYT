@@ -26,7 +26,7 @@ class FileHandler:
 
     def dump(self, video_list):
         with open(self.filename, "w", encoding=self.encoding) as f:
-            json.dump(video_list, f, indent=4)
+            json.dump(video_list, f, indent=4, ensure_ascii=False)
 
     def load(self):
         with open(self.filename, "r", encoding=self.encoding) as f:
