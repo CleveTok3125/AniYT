@@ -126,7 +126,8 @@ class DisplayRendering:
             output = self.page_opts_display
         else:
             opt_to_show = self.no_opts["option_toggle"]["show"]
-            output = f"{opt_to_show['key']}: {opt_to_show['desc']}"
+            fg_color = opt_to_show["active_color"] if opt_to_show["is_active"] else ""
+            output = f"{fg_color}{opt_to_show['key']} {opt_to_show['desc']}{DisplayColor.RESET}"
 
         print_option_buffer = [output, ""]
         return print_option_buffer

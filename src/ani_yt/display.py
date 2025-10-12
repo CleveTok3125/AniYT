@@ -65,11 +65,15 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             "option_toggle": {
                 "hide": {
                     "key": "(O)",
-                    "desc": f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Hide all options{DisplayColor.RESET}",
+                    "desc": "Hide all options",
+                    "is_active": True,
+                    "active_color": f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}",
                 },
                 "show": {
                     "key": "(O)",
-                    "desc": f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Show all options{DisplayColor.RESET}",
+                    "desc": "Show all options",
+                    "is_active": True,
+                    "active_color": f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}",
                 },
             }
         }
