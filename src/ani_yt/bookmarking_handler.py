@@ -2,7 +2,7 @@ import functools
 
 import ujson as json
 
-from .exceptions import InvalidBookmarkFile
+from .exceptions import CategoryNotExist, InvalidBookmarkFile
 from .os_manager import OSManager
 
 
@@ -57,11 +57,17 @@ class BookmarkingHandler:
         full_data = self.load_full_data()
         return full_data.get(category, {})
 
-    def update_item(self, data, category):
+    def update_item(self, data, category, create_new=False):
         full_data = self.load_full_data()
 
         if category not in full_data:
-            full_data[category] = {}
+            if create_new:
+                full_data[category] = {}
+            else:
+                raise CategoryNotExist(
+                    f"Category '{category}' does not exist, need to create a new one.",
+                    delay=-1,
+                )
 
         bookmarks = full_data[category]
 

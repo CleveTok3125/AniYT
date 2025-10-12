@@ -38,3 +38,7 @@ class PauseableException(Exception):
         else:
             print(message)
             sleep(delay)
+
+
+class CategoryNotExist(PauseableException):
+    pass

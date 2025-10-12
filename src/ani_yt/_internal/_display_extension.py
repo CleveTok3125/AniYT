@@ -2,7 +2,7 @@ from datetime import datetime
 
 from ..bookmarking_handler import BookmarkingHandler
 from ..common import Typing
-from ..exceptions import PauseableException
+from ..exceptions import CategoryNotExist, PauseableException
 from ..history_handler import HistoryHandler
 from ..input_handler import InputHandler, ReturnCode
 from ..os_manager import OSManager
@@ -178,7 +178,15 @@ class DisplayExtension(HistoryExtension, InputExtension):
 
         return dependency
 
-    def mark_bookmark(self, user_int, category):
+    def _update_bookmark(self, item, category, create_new=False):
+        try:
+            self.bookmarking_handler.update_item(
+                item, category=category, create_new=create_new
+            )
+        except CategoryNotExist:
+            pass
+
+    def mark_bookmark(self, user_int, category, create_new=False):
         try:
             item: Typing.Video = self.data[user_int - 1]
             video_url = item["video_url"]
@@ -186,7 +194,7 @@ class DisplayExtension(HistoryExtension, InputExtension):
             if self.bookmarking_handler.is_item_exist(video_url, category=category):
                 self.bookmarking_handler.remove_item(video_url, category=category)
             else:
-                self.bookmarking_handler.update_item(item, category=category)
+                self._update_bookmark(item, category=category, create_new=create_new)
         except ValueError:
             PauseableException(
                 "ValueError: only non-negative integers are accepted.", delay=-1
