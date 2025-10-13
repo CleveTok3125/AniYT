@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from ..bookmarking_handler import BookmarkingHandler
-from ..common import Typing
+from ..common import HistoryData, Video
 from ..exceptions import CategoryNotExist, PauseableException
 from ..history_handler import HistoryHandler
 from ..input_handler import InputHandler, ReturnCode
@@ -24,7 +24,7 @@ class HistoryExtension:
             return
 
         try:
-            history = self.history_handler.load()
+            history: HistoryData = self.history_handler.load()
             # Build video_url -> status map
             self.history_map = {
                 video["video_url"]: video.get("status", "")
@@ -38,7 +38,7 @@ class HistoryExtension:
         """
         Mark the video as viewed in both history file and local map, and update last_viewed timestamp.
         """
-        history = self.history_handler.load()
+        history: HistoryData = self.history_handler.load()
 
         p_idx, v_idx = self.history_handler.search(url, history)
         if p_idx != -1 and v_idx != -1:
@@ -58,7 +58,7 @@ class HistoryExtension:
         """
         Remove the 'viewed' status from a video.
         """
-        history = self.history_handler.load()
+        history: HistoryData = self.history_handler.load()
         p_idx, v_idx = self.history_handler.search(url, history)
         if p_idx != -1 and v_idx != -1:
             video = history["playlists"][p_idx]["videos"][v_idx]
@@ -188,7 +188,7 @@ class DisplayExtension(HistoryExtension, InputExtension):
 
     def mark_bookmark(self, user_int, category, create_new=False):
         try:
-            item: Typing.Video = self.data[user_int - 1]
+            item: Video = self.data[user_int - 1]
             video_url = item["video_url"]
 
             if self.bookmarking_handler.is_item_exist(video_url, category=category):
@@ -211,7 +211,7 @@ class DisplayExtension(HistoryExtension, InputExtension):
         Player.start_with_mode(url=url, opts=self.extra_opts.get("mode", "auto"))
 
     def show_thumbnail(self, user_int):
-        item: Typing.Video = self.data[user_int - 1]
+        item: Video = self.data[user_int - 1]
         url = item["video_url"]
 
         thumbnail_url = YT_DLP.standalone_get_thumbnail(url, self.yt_dlp_opts.ydl_opts)

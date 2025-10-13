@@ -3,13 +3,10 @@ from typing import Dict, List, Literal, Optional
 
 import ujson as json
 
-from .common import Typing
+from .common import HistoryData, Playlist, Video
 from .data_processing import DataProcessing
 from .exceptions import InvalidHistoryFile
 from .os_manager import OSManager
-
-VideoData = List[Typing.Video]
-Playlist = Dict[str, object]  # keys: playlist_title, playlist_url, videos
 
 
 class HistoryHandler:
@@ -37,7 +34,7 @@ class HistoryHandler:
         return OSManager.exists(self.filename)
 
     @safe_history_load
-    def load(self):
+    def load(self) -> HistoryData:
         with open(self.filename, "r", encoding=self.encoding) as f:
             return json.load(f)
 
@@ -45,10 +42,10 @@ class HistoryHandler:
         self,
         curr: Optional[Dict] = None,
         playlists: Optional[List[Playlist]] = None,
-        videos: Optional[VideoData] = None,
+        videos: Optional[List[Video]] = None,
         viewed: bool = False,
         truncate: bool = True,
-    ):
+    ) -> None:
         """
         Update the history file.
 
@@ -70,9 +67,9 @@ class HistoryHandler:
 
         # Load or initialize history
         if self.is_history():
-            content = self.load()
+            content: HistoryData = self.load()
         else:
-            content = {"current": {}, "playlists": []}
+            content: HistoryData = {"current": {}, "playlists": []}
 
         now = datetime.now().astimezone().isoformat()  # system timezone timestamp
 
@@ -123,7 +120,9 @@ class HistoryHandler:
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(content, f, indent=4, ensure_ascii=False)
 
-    def search(self, curr_url, history):  # -> (playlist_index, video_index)
+    def search(
+        self, curr_url: str, history: HistoryData
+    ) -> (int, int):  # -> (playlist_index, video_index)
         if not isinstance(history, dict) or "playlists" not in history:
             raise InvalidHistoryFile(self.filename)
 

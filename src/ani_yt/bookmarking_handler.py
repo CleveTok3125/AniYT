@@ -1,7 +1,9 @@
 import functools
+from typing import Dict, Union
 
 import ujson as json
 
+from .common import BookmarkData, Video
 from .exceptions import CategoryNotExist, InvalidBookmarkFile
 from .os_manager import OSManager
 
@@ -12,7 +14,7 @@ class BookmarkingHandler:
         self.encoding = "utf-8"
         self.required_categories = ["bookmark", "completed"]
 
-    def _save_full_data(self, data):
+    def _save_full_data(self, data: BookmarkData) -> None:
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
@@ -43,7 +45,7 @@ class BookmarkingHandler:
         return wrapper
 
     @validate_structure
-    def load_full_data(self):
+    def load_full_data(self) -> BookmarkData:
         if not OSManager.exists(self.filename):
             return {}
         try:
@@ -53,12 +55,14 @@ class BookmarkingHandler:
         except (json.JSONDecodeError, IOError):
             return {}
 
-    def get_category(self, category):
-        full_data = self.load_full_data()
+    def get_category(self, category: str) -> Dict[str, str]:
+        full_data: BookmarkData = self.load_full_data()
         return full_data.get(category, {})
 
-    def update_item(self, data, category, create_new=False):
-        full_data = self.load_full_data()
+    def update_item(
+        self, data: Union[Video, list], category: str, create_new: bool = False
+    ) -> None:
+        full_data: BookmarkData = self.load_full_data()
 
         if category not in full_data:
             if create_new:
@@ -69,7 +73,7 @@ class BookmarkingHandler:
                     delay=-1,
                 )
 
-        bookmarks = full_data[category]
+        bookmarks: Dict[str, str] = full_data[category]
 
         if isinstance(data, dict):
             key, value = data.get("video_title"), data.get("video_url")
@@ -82,17 +86,17 @@ class BookmarkingHandler:
         bookmarks[key] = value
         self._save_full_data(full_data)
 
-    def is_item_exist(self, url, category):
-        items = self.get_category(category)
+    def is_item_exist(self, url: str, category: str) -> bool:
+        items: Dict[str, str] = self.get_category(category)
         return url in items.values()
 
-    def remove_item(self, url, category):
-        full_data = self.load_full_data()
+    def remove_item(self, url: str, category: str) -> None:
+        full_data: BookmarkData = self.load_full_data()
 
         if category not in full_data:
             return
 
-        items = full_data[category]
+        items: Dict[str, str] = full_data[category]
 
         key_to_delete = None
         for key, value in items.items():

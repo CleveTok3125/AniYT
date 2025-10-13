@@ -1,11 +1,11 @@
 import os
 import sys
-from typing import List
+from typing import Dict, List, Tuple, Union
 
 from ._internal._display_color import DisplayColor
 from ._internal._display_extension import DisplayExtension
 from ._internal._display_rendering import DisplayRendering
-from .common import Typing
+from .common import Video
 from .data_processing import DataProcessing
 from .exceptions import PauseableException
 from .helper import IOHelper, LegacyCompatibility
@@ -46,7 +46,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         # These values are always created new each time the class is called or are always overwritten.
         self.opts = opts
         self.user_input = ""
-        self.data: List[Typing.Video] = []
+        self.data: List[Video] = []
         self.splited_data = []
         self.len_data = 0
         self.len_last_item = 0
@@ -182,7 +182,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         if self.choosed_item is not False:
             self.sync_cursor_with_item()
 
-    def toggle_viewed_processing(self, item_number):
+    def toggle_viewed_processing(self, item_number: int):
         """Gets item number, finds the URL, and calls the toggle handler."""
         index = item_number - 1
         if 0 <= index < len(self.data):
@@ -191,7 +191,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         else:
             PauseableException("IndexError: Invalid item number.", delay=-1)
 
-    def advanced_options(self):
+    def advanced_options(self) -> bool:
         # K:integer:option
 
         user_input_parts = self.user_input.split(":")
@@ -286,7 +286,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             raise IndexError()
         self.choosed_item = idx
 
-    def choose_item_option(self):
+    def choose_item_option(self) -> Union[Tuple[str, str], None]:
         try:
             if self.user_input == "":
                 self._handle_enter_input()
@@ -295,7 +295,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             else:
                 raise ValueError()
 
-            ans: Typing.Video = self.data[self.choosed_item]
+            ans: Video = self.data[self.choosed_item]
             # self.mark_viewed(ans["video_url"]) # To avoid hidden actions, should not be used internally in functions should only have display handling functions
             self._last_played = (
                 self.choosed_item
@@ -320,7 +320,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             )
         return
 
-    def standard_options(self):
+    def standard_options(self) -> bool:
         user_input = self.user_input.upper()
         handled = True
 
@@ -376,8 +376,14 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
 
         return handled
 
-    def choose_menu(self, playlists, clear_choosed_item=False):
-        playlists = LegacyCompatibility.normalize_playlist(playlists)
+    def choose_menu(
+        self,
+        playlists: Union[List[Tuple[str, str]], List[Dict[str, str]]],
+        clear_choosed_item=False,
+    ):
+        playlists: List[Dict[str, str]] = LegacyCompatibility.normalize_playlist(
+            playlists
+        )
 
         self.data = playlists
         self.clear_choosed_item = clear_choosed_item

@@ -1,20 +1,12 @@
-from typing import List, TypedDict
+from typing import List
 
-
-class Video(TypedDict):
-    video_title: str
-    video_url: str
-    status: str
-
-
-class VideoData(TypedDict):
-    videos: List[Video]
+from .common import Video
 
 
 class DataProcessing:
     @staticmethod
-    def omit(data, status="") -> VideoData:
-        videos = []
+    def omit(data: dict, status: str = "") -> List[Video]:
+        videos: List[Video] = []
 
         for entry in data.get("entries", []):
             if entry.get("_type") == "url":
@@ -29,17 +21,17 @@ class DataProcessing:
         return videos
 
     @staticmethod
-    def split_list(lst, n):
+    def split_list(lst: list, n: int) -> list:
         return [lst[i : i + n] for i in range(0, len(lst), n)]
 
     @staticmethod
-    def sort(lst, key=lambda x: x[0], reverse=False):
+    def sort(lst: list, key=lambda x: x[0], reverse: bool = False) -> list:
         return sorted(lst, key=key, reverse=reverse)
 
     @staticmethod
     def merge_list(
-        old_videos: VideoData, new_videos: VideoData, truncate=True
-    ) -> VideoData:
+        old_videos: List[Video], new_videos: List[Video], truncate: bool = True
+    ) -> List[Video]:
         new_urls = {v["video_url"] for v in new_videos}
 
         if truncate:
@@ -58,7 +50,7 @@ class DataProcessing:
         return DataProcessing.sort(old_videos, key=lambda x: x["video_title"])
 
     @staticmethod
-    def merge_list_preserve_order(old_list, new_list):
+    def merge_list_preserve_order(old_list: list, new_list: list) -> list:
         existing_urls = {item[1] for item in old_list}
         for item in new_list:
             if item[1] not in existing_urls:
@@ -67,7 +59,7 @@ class DataProcessing:
         return old_list
 
     @staticmethod
-    def merge_args(default_args, extra_args):
+    def merge_args(default_args: list, extra_args: list) -> list:
         merged = []
         seen = set()
 
@@ -84,7 +76,7 @@ class DataProcessing:
         return merged
 
     @staticmethod
-    def dedup_args(args):
+    def dedup_args(args: list) -> list:
         seen = set()
         result = []
         for arg in args:
@@ -93,7 +85,7 @@ class DataProcessing:
                 seen.add(arg)
         return result
 
-    def dedup_args_keep_last(args):
+    def dedup_args_keep_last(args: list) -> list:
         seen = set()
         result = []
         for arg in reversed(args):
