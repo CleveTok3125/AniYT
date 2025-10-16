@@ -15,6 +15,7 @@ class InputMap:
     arrow_down = ("\x1b[B", "\xe0P")
     arrow_right = ("\x1b[C", "\xe0M")
     arrow_left = ("\x1b[D", "\xe0K")
+    del_key = ("\x1b[3~",)
 
 
 class ReturnCodeMeta(type):
@@ -25,6 +26,7 @@ class ReturnCodeMeta(type):
         "PREV_PAGE",
         "LINE_UP",
         "LINE_DOWN",
+        "DEL_KEY",
     }
 
     def __getattr__(cls, name):
@@ -47,6 +49,13 @@ class ReturnCode(metaclass=ReturnCodeMeta):
 class OnPressed:
     def __init__(self, input_obj):
         self.input_obj = input_obj
+
+    def del_key(self, char):
+        line_len = len(self.input_obj.state.buffer)
+        if line_len > 0:
+            # print("\b" * line_len + " " * line_len + "\b" * line_len, end="", flush=True)
+            self.input_obj.state.clear()
+        return ReturnCode.DEL_KEY
 
     def arrow_left(self, char):
         return ReturnCode.PREV_PAGE
@@ -113,6 +122,7 @@ class InputHandler:
             "arrow_right",
             "arrow_up",
             "arrow_down",
+            "del_key",
         )
 
         for name in keymap:

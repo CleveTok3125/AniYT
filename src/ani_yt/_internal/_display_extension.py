@@ -123,6 +123,7 @@ class InputExtension:
             ReturnCode.PREV_PAGE: "P",
             ReturnCode.LINE_UP: "U",
             ReturnCode.LINE_DOWN: "D",
+            ReturnCode.DEL_KEY: "R",
         }
 
         return input_map.get(user_input, user_input)
