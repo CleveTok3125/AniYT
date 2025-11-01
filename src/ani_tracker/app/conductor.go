@@ -48,7 +48,7 @@ func (cfg *Config) Conductor() error {
 	cmp.Diff(historyHandler.GetCompareList(), ytdlpHandler.GetCompareList())
 
 	if !cfg.Silent && cmp.HasChanges {
-		notify.NotifyDiff(cmp.Summary)
+		notify.Diff(cmp.Summary)
 	}
 
 	return nil

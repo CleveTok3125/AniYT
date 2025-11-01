@@ -1,13 +1,25 @@
+// Package notify Send notifications to users
 package notify
 
 import (
 	"ani-tracker/common"
+	"ani-tracker/os_manager"
 	"fmt"
+	"os/exec"
 
 	"github.com/gen2brain/beeep"
 )
 
-func NotifyDiff(summary common.DiffSummary) error {
+func notifyTermux(title, message string) error {
+	cmd := exec.Command("termux-notification",
+		"--title", title,
+		"--content", message,
+	)
+	return cmd.Run()
+}
+
+// Diff Send notifications about changes in data to users
+func Diff(summary common.DiffSummary) error {
 	if summary.TotalChanges == 0 {
 		return nil
 	}
@@ -31,5 +43,8 @@ func NotifyDiff(summary common.DiffSummary) error {
 		message += line + "\n"
 	}
 
+	if os_manager.IsAndroid() {
+		return notifyTermux(title, message)
+	}
 	return beeep.Notify(title, message, "")
 }

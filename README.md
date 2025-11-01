@@ -55,12 +55,12 @@ To see the full features, see [cli_help.txt](https://github.com/CleveTok3125/Ani
 
 # Supported OS/Arch (Pre-built Binaries)
 
-|          OS         	| x86_64 	| notes 	| arm64/aarch64 	|                       notes                      	|
-|:-------------------:	|:------:	|:-----:	|:-------------:	|:------------------------------------------------:	|
-| Windows             	|    ✅   	|   -   	|       ✅       	|                         -                        	|
-| macOS               	|    ✅   	|   -   	|       ✅       	|                         -                        	|
-| Linux               	|    ✅   	| glibc 	|       ✅       	|                       glibc                      	|
-| Android<br>(Termux) 	|    ⚠️   	|   -   	|       🟡       	| bionic libc<br>toolchain not fully supported yet 	|
+|          OS         	| x86_64 	| notes 	| arm64/aarch64 	|    notes    	|
+|:-------------------:	|:------:	|:-----:	|:-------------:	|:-----------:	|
+|       Windows       	|    ✅   	|   -   	|       ✅       	|      -      	|
+|        macOS        	|    ✅   	|   -   	|       ✅       	|      -      	|
+|        Linux        	|    ✅   	| glibc 	|       ✅       	|    glibc    	|
+| Android<br>(Termux) 	|    ⚠️   	|   -   	|       ✅       	| bionic libc 	|
 
 * ✅: Full support
 * 🟡: Partial support - some features may not work
@@ -182,6 +182,8 @@ Mainly to reduce repeated calls to YT-DLP API which slows down retrieval signifi
    ```bash
    bash ./AniYT/tools/tmux-x11-start ani-yt --mpv-player termux-x11 -h
    ```
+- To get `ani-tracker` to display notifications, termux-api needs to be installed: `pkg install termux-api` **AND** the [APP](https://github.com/termux/termux-api) (not the package) is installed.
+   *If the app is not running in the background, API calls may cause program to hang.*
 
 # Non-project-related notification
 _This notification is for the anime fan community, not related to this project._
