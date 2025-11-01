@@ -32,31 +32,19 @@ jobs:
 
             ln -s $PREFIX/lib/libexpat.so $PREFIX/lib/libexpat.so.1
 
-            DEBIAN_FRONTEND=noninteractive pkg install -y python python-pip clang make git curl ca-certificates
+            DEBIAN_FRONTEND=noninteractive pkg install -y python python-pip clang make git curl ca-certificates golang
 
             python -m pip install --upgrade pip setuptools wheel cython build
 
-            curl -LO https://go.dev/dl/go1.25.1.linux-arm64.tar.gz
-            tar -C /data/data/com.termux/files/usr -xzf go1.25.1.linux-arm64.tar.gz
-
             ln -s $PREFIX/etc/tls/cert.pem /etc/ssl/certs/ca-certificates.crt
             export SSL_CERT_FILE="/data/data/com.termux/files/usr/etc/tls/cert.pem"
-            export PATH="/data/data/com.termux/files/usr/go/bin:$PATH"
-            export GODEBUG=x509ignoreCN=0
-            export CGO_ENABLED=0
-            export GOOS=linux
-            export GOARCH=arm64
-
-            go env -w GOPROXY=https://proxy.golang.org,direct
 
             git clone https://github.com/CleveTok3125/AniYT
             cd AniYT
 
-            cd src/ani_tracker
-            GOTOOLCHAIN=local go build -ldflags='-s -w' -o ../../bin/ani-tracker
-            cd ../../
-
             python -m build --wheel
+
+            [ -f bin/ani-tracker ] && echo "ani-tracker exists" || echo "ani-tracker missing"
           "
 
       - name: Run build container

@@ -15,7 +15,7 @@ if go_executable:
         os.makedirs(output_dir, exist_ok=True)
         # Execute the Go build command
         subprocess.check_call(
-            [go_executable, "build", "-o", output_path, "."],
+            [go_executable, "build", "-ldflags=-s -w", "-o", output_path, "."],
             cwd=go_source_dir,
         )
         print(f"Go binary successfully built at: {output_path}")
