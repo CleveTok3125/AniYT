@@ -33,7 +33,6 @@ func GetPlaylistVideosInfo(url string) (string, error) {
 
 	cmd := exec.Command("yt-dlp", "--flat-playlist", "-j", url)
 	output, err := cmd.CombinedOutput()
-
 	if err != nil {
 		errMsg := err.Error()
 		outStr := string(output)
@@ -63,9 +62,8 @@ func (playlist_handler *PlaylistHandler) ParseVideosToCompareList() error {
 		videos := make([]common.VideoInfo, 0)
 
 		parsedJson, err := json_utils.ParseMultipleJSON(playlistJSON)
-
 		if err != nil {
-			log.Fatalf("Failed to parse JSON: %v", err)
+			log.Fatalf("yt-dlp error: Failed to parse JSON: %v", err)
 		}
 
 		for _, obj := range parsedJson {

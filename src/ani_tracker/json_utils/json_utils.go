@@ -1,9 +1,8 @@
 package json_utils
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
+	"strings"
 
 	"github.com/tidwall/gjson"
 )
@@ -18,17 +17,18 @@ func GetStringArray(jsonStr string, path string) []string {
 }
 
 func ParseMultipleJSON(jsonStr string) ([]any, error) {
-	dec := json.NewDecoder(bytes.NewReader([]byte(jsonStr)))
+	lines := strings.Split(jsonStr, "\n")
 	var all []any
 
-	for {
-		var obj any
-		if err := dec.Decode(&obj); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || line[0] != '{' {
+			continue
+		}
 
+		var obj any
+		if err := json.Unmarshal([]byte(line), &obj); err != nil {
+			return nil, err
 		}
 		all = append(all, obj)
 	}
