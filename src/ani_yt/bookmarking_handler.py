@@ -18,6 +18,12 @@ class BookmarkingHandler:
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
+    def _init_default_data(self) -> BookmarkData:
+        # Return default valid structure.
+        default_data = {category: {} for category in self.required_categories}
+        self._save_full_data(default_data)
+        return default_data
+
     def validate_structure(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
@@ -47,13 +53,13 @@ class BookmarkingHandler:
     @validate_structure
     def load_full_data(self) -> BookmarkData:
         if not OSManager.exists(self.filename):
-            return {}
+            return self._init_default_data()
         try:
             with open(self.filename, "r", encoding=self.encoding) as f:
                 content = f.read()
                 return json.loads(content) if content else {}
         except (json.JSONDecodeError, IOError):
-            return {}
+            return self._init_default_data()
 
     def get_category(self, category: str) -> Dict[str, str]:
         full_data: BookmarkData = self.load_full_data()
