@@ -13,7 +13,7 @@ GO_MODULE_DIR=src/ani_tracker
 # --- Python ---
 echo "=== Python: auto-fix code style ==="
 source venv/bin/activate
-isort $PYTHON_FILES
+isort --float-to-top --atomic $PYTHON_FILES
 black $PYTHON_FILES
 flake8 $PYTHON_FILES
 deactivate
