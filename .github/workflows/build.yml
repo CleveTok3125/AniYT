@@ -55,9 +55,12 @@ jobs:
 
       - name: Rename wheels
         run: |
-            for f in dist/*.whl; do
-            mv "$f" "${f/linux/android}"
-            done
+          for f in dist/*.whl; do
+            target="${f/linux/android}"
+            if [ "$f" != "$target" ]; then
+              mv "$f" "$target"
+            fi
+          done
 
       - name: Clean up container
         run: docker rm termux_build
