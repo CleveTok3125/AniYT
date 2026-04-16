@@ -215,6 +215,7 @@ to-do.txt
 *.kate-swp
 gestures.lua
 sponsorblock_minimal.lua
+.co*
 
 # Other (Go)
 ani-tracker

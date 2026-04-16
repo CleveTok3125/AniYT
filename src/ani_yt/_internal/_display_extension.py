@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from ..bookmarking_handler import BookmarkingHandler
+from ..command_history import CommandHistory
 from ..common import HistoryData, Video
 from ..exceptions import CategoryNotExist, PauseableException
 from ..history_handler import HistoryHandler
@@ -113,7 +114,8 @@ class HistoryExtension:
 
 class InputExtension:
     def _init_input_handler(self):
-        self.input_handler = InputHandler()
+        self.command_history = CommandHistory()
+        self.input_handler = InputHandler(self.command_history)
 
     def map_user_input(self, prompt=None):
         user_input = self.input_handler.get_input(prompt).strip()
@@ -212,8 +214,13 @@ class DisplayExtension(HistoryExtension, InputExtension):
         Player.start_with_mode(url=url, opts=self.extra_opts.get("mode", "auto"))
 
     def show_thumbnail(self, user_int):
-        item: Video = self.data[user_int - 1]
-        url = item["video_url"]
+        try:
+            item: Video = self.data[user_int - 1]
+            url = item["video_url"]
 
-        thumbnail_url = YT_DLP.standalone_get_thumbnail(url, self.yt_dlp_opts.ydl_opts)
-        self.open_image_with_mpv(thumbnail_url)
+            thumbnail_url = YT_DLP.standalone_get_thumbnail(
+                url, self.yt_dlp_opts.ydl_opts
+            )
+            self.open_image_with_mpv(thumbnail_url)
+        except IndexError as e:
+            PauseableException(f"IndexError: {e}", delay=-1)
