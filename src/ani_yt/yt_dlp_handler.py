@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from urllib.parse import urljoin, urlparse
 
 import yt_dlp
@@ -113,6 +114,6 @@ class YT_DLP:
         args = DataProcessing.dedup_args_keep_last(args)
 
         command = ["yt-dlp"] + args
-        SubprocessHelper.app_subprocess_help("yt-dlp", check_only=True)
+        SubprocessHelper.require_app("yt-dlp", check_only=True)
         result = subprocess.run(command, capture_output=capture_output)
         return result.stdout

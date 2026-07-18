@@ -1,6 +1,5 @@
 import os
 import shlex
-import sys
 
 from .helper import SubprocessHelper
 from .input_handler import InputHandler
@@ -46,6 +45,8 @@ class TermuxPlayerConfig(PlayerConfig):
 
 
 class Player:
+    ANDROID_MPV_APPS = ["app.gyrolet.mpvrx", "is.xyz.mpv.ytdl"]
+
     def __init__(self, url, args=None):
         self.url = url
 
@@ -66,22 +67,40 @@ class Player:
         self.args = mpv_args + initial_args
         self.command = ["mpv"] + self.args + [self.url]
 
-    def run_mpv(self):  # optional: use sponsorblock for mpv to automatically skip op/en
-        SubprocessHelper.app_subprocess_help(
+        self.android_command = [
+            "am",
+            "start",
+            "-a",
+            "android.intent.action.VIEW",
+            "-t",
+            "video/any",
+            "-p",
+            "is.xyz.mpv.ytdl",
+            "-d",
+            url,
+        ]
+
+    def run_mpv(self):
+        SubprocessHelper.require_app(
             self.command,
             "MPV",
             note="\nSee https://mpv.io/installation/\nIf using MPV via Termux, use MPV-X: pkg install mpv-x",
         )
 
-    def run_mpv_android_fallback(self):
-        for pkg in ["app.gyrolet.mpvrx", "is.xyz.mpv.ytdl"]:
-            if SubprocessHelper.try_app(
-                ["am", "start", "-a", "android.intent.action.VIEW",
-                 "-t", "video/any", "-p", pkg, "-d", self.url],
+    def try_android_apps(self):
+        for pkg in self.ANDROID_MPV_APPS:
+            if SubprocessHelper.app_subprocess_help(
+                [
+                    "am", "start",
+                    "-a", "android.intent.action.VIEW",
+                    "-t", "video/any",
+                    "-p", pkg,
+                    "-d", self.url,
+                ],
                 note="Current OS may not be Android.",
             ):
-                return
-        sys.exit(127)
+                return True
+        return False
 
     def run_mpv_x(self):
         config = TermuxPlayerConfig.get_all_settings()
@@ -114,16 +133,16 @@ class Player:
         ]
 
         if config["open_app"]:
-            SubprocessHelper.app_subprocess_help(termux_x11_command, "termux-x11")
+            SubprocessHelper.require_app(termux_x11_command, "termux-x11")
 
-        SubprocessHelper.app_subprocess_help(mpv_command)
+        SubprocessHelper.require_app(mpv_command)
 
         if config["return_app"]:
-            SubprocessHelper.app_subprocess_help(termux_command, "termux")
+            SubprocessHelper.require_app(termux_command, "termux")
 
     def classic_start(self):
         if OSManager.android_check():
-            self.run_mpv_android_fallback()
+            self.try_android_apps()
         else:
             self.run_mpv()
 
@@ -137,17 +156,11 @@ class Player:
             case "auto":
                 player.classic_start()
             case "android":
-                player.run_mpv_android_fallback()
+                player.try_android_apps()
             case "ssh":
                 print("Copy one of the commands below:")
-                mpvrx_cmd = ["am", "start", "-a", "android.intent.action.VIEW",
-                             "-t", "video/any", "-p", "app.gyrolet.mpvrx", "-d", url]
-                mpvytdl_cmd = ["am", "start", "-a", "android.intent.action.VIEW",
-                               "-t", "video/any", "-p", "is.xyz.mpv.ytdl", "-d", url]
                 print(
-                    f"MPV:\n\n\t{shlex.join(player.command)}\n"
-                    f"\nMPV Android (mpvRx):\n\n\t{shlex.join(mpvrx_cmd)}\n"
-                    f"\nMPV Android (mpv+ytdl):\n\n\t{shlex.join(mpvytdl_cmd)}\n"
+                    f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
                 )
                 InputHandler.press_any_key()
             case "termux-x11":
