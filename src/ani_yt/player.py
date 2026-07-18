@@ -91,11 +91,16 @@ class Player:
         for pkg in self.ANDROID_MPV_APPS:
             if SubprocessHelper.app_subprocess_help(
                 [
-                    "am", "start",
-                    "-a", "android.intent.action.VIEW",
-                    "-t", "video/any",
-                    "-p", pkg,
-                    "-d", self.url,
+                    "am",
+                    "start",
+                    "-a",
+                    "android.intent.action.VIEW",
+                    "-t",
+                    "video/any",
+                    "-p",
+                    pkg,
+                    "-d",
+                    self.url,
                 ],
                 note="Current OS may not be Android.",
             ):
