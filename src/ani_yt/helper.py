@@ -71,6 +71,44 @@ class SubprocessHelper:
             print(f"Error running {app_name}: {e}")
             sys.exit(e.returncode)
 
+    @staticmethod
+    def try_app(commands, app_name=None, *, check_only=False, note=""):
+        if isinstance(commands, (list, tuple)) and commands:
+            cmd_name = commands[0]
+            cmd_list = list(commands)
+        elif isinstance(commands, str):
+            cmd_name = commands
+            cmd_list = [commands]
+        else:
+            print(
+                f"Expected list, tuple or str, but received {type(commands).__name__}"
+            )
+            return False
+
+        if app_name is None:
+            app_name = cmd_name
+
+        if shutil.which(cmd_name) is None:
+            print(
+                f"{app_name} is not installed. Please install before running.{' ' if note else ''}{note}"
+            )
+            return False
+
+        if check_only:
+            return True
+
+        try:
+            subprocess.run(cmd_list, check=True)
+            return True
+        except FileNotFoundError:
+            print(
+                f"Error: {cmd_name} could not be found when running.{' ' if note else ''}{note}"
+            )
+            return False
+        except subprocess.CalledProcessError as e:
+            print(f"Error running {app_name}: {e}")
+            return False
+
 
 class LegacyCompatibility:
     @staticmethod

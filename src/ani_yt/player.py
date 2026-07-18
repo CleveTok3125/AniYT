@@ -1,5 +1,6 @@
 import os
 import shlex
+import sys
 
 from .helper import SubprocessHelper
 from .input_handler import InputHandler
@@ -65,19 +66,6 @@ class Player:
         self.args = mpv_args + initial_args
         self.command = ["mpv"] + self.args + [self.url]
 
-        self.android_command = [
-            "am",
-            "start",
-            "-a",
-            "android.intent.action.VIEW",
-            "-t",
-            "video/any",
-            "-p",
-            "is.xyz.mpv.ytdl",
-            "-d",
-            url,
-        ]
-
     def run_mpv(self):  # optional: use sponsorblock for mpv to automatically skip op/en
         SubprocessHelper.app_subprocess_help(
             self.command,
@@ -85,12 +73,15 @@ class Player:
             note="\nSee https://mpv.io/installation/\nIf using MPV via Termux, use MPV-X: pkg install mpv-x",
         )
 
-    def run_mpv_android(
-        self,
-    ):  # require https://github.com/mpv-android/mpv-android/pull/58
-        SubprocessHelper.app_subprocess_help(
-            self.android_command, note="Current OS may not be Android."
-        )
+    def run_mpv_android_fallback(self):
+        for pkg in ["app.gyrolet.mpvrx", "is.xyz.mpv.ytdl"]:
+            if SubprocessHelper.try_app(
+                ["am", "start", "-a", "android.intent.action.VIEW",
+                 "-t", "video/any", "-p", pkg, "-d", self.url],
+                note="Current OS may not be Android.",
+            ):
+                return
+        sys.exit(127)
 
     def run_mpv_x(self):
         config = TermuxPlayerConfig.get_all_settings()
@@ -132,7 +123,7 @@ class Player:
 
     def classic_start(self):
         if OSManager.android_check():
-            self.run_mpv_android()
+            self.run_mpv_android_fallback()
         else:
             self.run_mpv()
 
@@ -146,11 +137,17 @@ class Player:
             case "auto":
                 player.classic_start()
             case "android":
-                player.run_mpv_android()
+                player.run_mpv_android_fallback()
             case "ssh":
                 print("Copy one of the commands below:")
+                mpvrx_cmd = ["am", "start", "-a", "android.intent.action.VIEW",
+                             "-t", "video/any", "-p", "app.gyrolet.mpvrx", "-d", url]
+                mpvytdl_cmd = ["am", "start", "-a", "android.intent.action.VIEW",
+                               "-t", "video/any", "-p", "is.xyz.mpv.ytdl", "-d", url]
                 print(
-                    f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
+                    f"MPV:\n\n\t{shlex.join(player.command)}\n"
+                    f"\nMPV Android (mpvRx):\n\n\t{shlex.join(mpvrx_cmd)}\n"
+                    f"\nMPV Android (mpv+ytdl):\n\n\t{shlex.join(mpvytdl_cmd)}\n"
                 )
                 InputHandler.press_any_key()
             case "termux-x11":
