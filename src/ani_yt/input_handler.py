@@ -2,7 +2,7 @@ from sys import platform, stdout
 
 from .command_history import CommandHistory
 
-if platform.startswith(("linux", "darwin", "freebsd", "openbsd")):
+if platform.startswith(("linux", "darwin", "freebsd", "openbsd", "android")):
     from .readchar_posix import ReadChar as readchar
 elif platform in ("win32", "cygwin"):
     from .readchar_win import ReadChar as readchar
