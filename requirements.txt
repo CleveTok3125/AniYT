@@ -16,7 +16,7 @@ rapidfuzz==3.13.0
     # via AniYT (pyproject.toml)
 requests==2.33.0
     # via AniYT (pyproject.toml)
-ujson==5.12.1
+ujson==5.13.0
     # via AniYT (pyproject.toml)
 urllib3==2.7.0
     # via requests
