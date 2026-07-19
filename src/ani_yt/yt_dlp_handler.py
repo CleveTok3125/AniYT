@@ -23,6 +23,7 @@ class YT_DLP_Options:
 
 class YT_DLP:
     def __init__(self, channel_url, ydl_options: YT_DLP_Options):
+        self.channel_url = None
         if channel_url:
             self.channel_url = self._parse_channel_url(channel_url)
 

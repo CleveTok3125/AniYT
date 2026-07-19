@@ -20,6 +20,7 @@ from .yt_dlp_handler import YT_DLP, YT_DLP_Options
 
 class Main:
     def __init__(self, channel_url: str, opts: str = "auto"):
+        self.channel_url = channel_url
         self.opts = opts.lower()
         self.ydl_options = YT_DLP_Options()
         self.dlp = YT_DLP(channel_url, self.ydl_options)
@@ -87,6 +88,9 @@ class Main:
     def update(self) -> None:
         print("Getting playlist...")
         try:
+            if not self.channel_url:
+                raise MissingChannelUrl("No channel url specified.")
+
             playlist_data = self.dlp.get_playlist()
             print("Saving...")
             playlist_videos = self.dp.omit(playlist_data)
