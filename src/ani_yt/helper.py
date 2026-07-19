@@ -1,10 +1,15 @@
 import functools
+import os.path
 import shutil
 import subprocess
 import sys
 from typing import Dict, List, Tuple, Union
 
 import ujson as json
+
+
+def get_script_name():
+    return os.path.basename(sys.argv[0])
 
 
 class IOHelper:

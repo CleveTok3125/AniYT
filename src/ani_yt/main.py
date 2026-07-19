@@ -1,7 +1,6 @@
 # `main` contains the main logic to run the program, but not the interface.
 # To use, import as a module and implement the interface or use the available *_interface
 
-import os
 from typing import List, Optional
 
 from .bookmarking_handler import BookmarkingHandler
@@ -10,7 +9,7 @@ from .data_processing import DataProcessing
 from .display import Display_Options, DisplayColor, DisplayMenu
 from .exceptions import MissingChannelUrl
 from .file_handler import FileHandler, FileSourceHandler
-from .helper import IOHelper
+from .helper import IOHelper, get_script_name
 from .history_handler import HistoryHandler
 from .os_manager import OSManager
 from .player import Player
@@ -101,7 +100,7 @@ class Main:
             print("Done!")
         except MissingChannelUrl:
             print(
-                f"Playlist info or channel not found.\nTo get playlist info: {os.path.basename(__file__)} -c/--channel CHANNEL"
+                f"Playlist info or channel not found.\nTo get playlist info: {get_script_name()} -c/--channel CHANNEL"
             )
             OSManager.exit(404)
 
