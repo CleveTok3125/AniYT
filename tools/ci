@@ -11,7 +11,7 @@ GO_MODULE_DIR=src/ani_tracker
 echo "=== Install dependencies ==="
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-pip install setuptools cython pytest
+pip install setuptools cython pytest ruff pyright
 
 echo "=== Build Go binary and Cython extensions ==="
 mkdir -p bin
@@ -25,10 +25,6 @@ pip install .
 go install golang.org/x/tools/cmd/goimports@latest
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
 golangci-lint --version
-
-echo "=== Build Cython extensions ==="
-python setup.py build_ext --inplace
-pip install .
 
 echo "=== Python checks ==="
 
