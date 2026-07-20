@@ -55,10 +55,15 @@ echo "=== Go: lint & style check ==="
 
 echo "=== Go checks done ==="
 
-if [ -f "tests/test_main.py" ]; then
-    echo "=== Run tests ==="
-    pytest tests
-fi
+echo "=== Run Go tests ==="
+(cd "$GO_MODULE_DIR" && go test ./... -v)
+
+echo "=== Go tests done ==="
+
+echo "=== Run Python tests ==="
+pytest tests -v
+
+echo "=== Python tests done ==="
 
 echo "=== Generate Full Help ==="
 ani-yt --full-help | tee cli_help.txt

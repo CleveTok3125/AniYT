@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR=$(dirname "$0")
+REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
+cd "$REPO_ROOT"
+
+echo "=== Python tests (pytest) ==="
+source venv/bin/activate
+python -m pytest tests -v
+echo ""
+
+echo "=== Go tests ==="
+cd src/ani_tracker
+go test ./... -v
