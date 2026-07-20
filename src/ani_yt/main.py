@@ -132,7 +132,7 @@ class Main:
 
     def _update_multiple(self, channel_urls: builtins.list[str], no_update_history: bool = False) -> None:
         print("Getting playlist from multiple channels...")
-        merged_playlist_lists: list[str, str] = []  # list of [title, url] for file_handler cache
+        merged_playlist_lists: list[tuple[str, str]] = []  # list of [title, url] for file_handler cache
 
         for ch_url in channel_urls:
             try:
@@ -202,7 +202,7 @@ class Main:
         return [[v.get("video_title", ""), v.get("video_url", "")] for v in videos]
 
     @IOHelper.gracefully_terminate
-    def start_player(self, url: str = None) -> None:
+    def start_player(self, url: str | None = None) -> None:
         if url:
             self.url = url
         Player.start_with_mode(url=self.url, opts=self.opts)
@@ -217,7 +217,7 @@ class Main:
 
             curr: Current = history.get("current", {})
 
-            curr_playlist_url: str = curr.get("playlist_url")
+            curr_playlist_url: str | None = curr.get("playlist_url")
             if not curr_playlist_url:
                 print("No current playlist configured in history.")
                 return
@@ -252,7 +252,7 @@ class Main:
                 self.history_handler.update(curr=curr, videos=videos)
                 history: HistoryData = self.history_handler.load()
 
-            videos: Video = history["playlists"][p_idx].get("videos", [])
+            videos: list[Video] = history["playlists"][p_idx].get("videos", [])
             menu_items: list[list[str]] = self._videos_to_pairs(videos)
 
             title, self.url = self.display_menu.choose_menu(menu_items)

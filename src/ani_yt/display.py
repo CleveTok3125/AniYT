@@ -317,7 +317,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             PauseableException("IndexError: The requested item is not listed.", delay=-1)
         return
 
-    def standard_options(self) -> bool:
+    def standard_options(self) -> bool | str:
         user_input = self.user_input.upper()
         handled = True
 
