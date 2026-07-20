@@ -7,7 +7,7 @@ from .os_manager import OSManager
 
 
 class PlayerConfig:
-    _settings = {
+    _settings: dict[str, list[str] | int | bool] = {
         "mpv_args": [
             "--save-position-on-quit=yes",
             "--script=./mpv-scripts/sponsorblock_minimal.lua",
@@ -63,6 +63,8 @@ class Player:
                 initial_args = provided_args
 
         mpv_args = PlayerConfig.get("mpv_args") or []
+        if not isinstance(mpv_args, list):
+            mpv_args = []
 
         self.args = mpv_args + initial_args
         self.command = ["mpv"] + self.args + [self.url]
@@ -165,10 +167,8 @@ class Player:
             case "ssh":
                 print("Copy one of the commands below:")
                 print(
-
-                        f"MPV: \n\n\t{shlex.join(player.command)}"
-                        f"\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
-
+                    f"MPV: \n\n\t{shlex.join(player.command)}"
+                    f"\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
                 )
                 InputHandler.press_any_key()
             case "termux-x11":

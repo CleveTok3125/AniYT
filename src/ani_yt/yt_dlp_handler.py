@@ -1,5 +1,6 @@
 import os
 import subprocess
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import yt_dlp
@@ -56,10 +57,10 @@ class YT_DLP:
             if not self.channel_url:
                 raise MissingChannelUrl("No channel url specified.")
 
-            with yt_dlp.YoutubeDL(self.ydl_options.ydl_opts) as ydl:
+            with yt_dlp.YoutubeDL(self.ydl_options.ydl_opts) as ydl:  # type: ignore
                 result = ydl.extract_info(self.channel_url, download=False)
             return result
-        except yt_dlp.utils.DownloadError:
+        except yt_dlp.DownloadError:  # type: ignore
             PauseableException(
                 "Failed to fetch playlist info. yt-dlp may be outdated or the URL may be invalid.",
                 delay=-1,
@@ -72,7 +73,7 @@ class YT_DLP:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 info = ydl.extract_info(url, download=False)
             return info
-        except yt_dlp.utils.DownloadError:
+        except yt_dlp.DownloadError:  # type: ignore
             PauseableException(
                 "Failed to fetch playlist videos. yt-dlp may be outdated or the URL may be invalid.",
                 delay=-1,
@@ -85,13 +86,19 @@ class YT_DLP:
     @staticmethod
     def standalone_get_thumbnail(url, opts):
         info = YT_DLP.standalone_get_video(url, opts)
-        return info["thumbnails"][-1]["url"]
+        if info is None:
+            return ""
+        info_d: Any = info
+        return info_d["thumbnails"][-1]["url"]
 
     def get_stream(self, url):
         formats = self.get_video(url)
+        if formats is None:
+            return "", ""
+        formats_d: Any = formats
         return (
-            formats["requested_formats"][0]["url"],
-            formats["requested_formats"][1]["url"],
+            formats_d["requested_formats"][0]["url"],
+            formats_d["requested_formats"][1]["url"],
         )
 
     @staticmethod
