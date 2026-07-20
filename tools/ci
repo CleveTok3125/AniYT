@@ -5,13 +5,13 @@ SCRIPT_DIR=$(dirname "$0")
 REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
 cd "$REPO_ROOT"
 
-PYTHON_FILES=src/ani_yt
+PYTHON_DIR=src/ani_yt
 GO_MODULE_DIR=src/ani_tracker
 
 echo "=== Install dependencies ==="
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-pip install setuptools cython flake8 black isort pytest
+pip install setuptools cython pytest
 
 echo "=== Build Go binary and Cython extensions ==="
 mkdir -p bin
@@ -32,14 +32,14 @@ pip install .
 
 echo "=== Python checks ==="
 
-echo "=== Run flake8 ==="
-black --check $PYTHON_FILES
+echo "=== Run ruff lint ==="
+ruff check $PYTHON_DIR
 
-echo "=== Run black (check only) ==="
-black --check $PYTHON_FILES
+echo "=== Run ruff format (check only) ==="
+ruff format --check $PYTHON_DIR
 
-echo "=== Run isort (check only) ==="
-isort --check-only $PYTHON_FILES
+echo "=== Run pyright type check ==="
+pyright $PYTHON_DIR
 
 echo "=== Python checks done ==="
 

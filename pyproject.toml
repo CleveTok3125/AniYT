@@ -28,5 +28,15 @@ ani-yt = "ani_yt.ani_yt:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+
 [tool.setuptools.data-files]
 "bin" = ["bin/ani-tracker*"]

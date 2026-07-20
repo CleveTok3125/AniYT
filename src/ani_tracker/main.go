@@ -10,8 +10,13 @@ import (
 	"os"
 )
 
+// HistoryFileName is the filename for storing playback history.
 const HistoryFileName = "history.json"
+
+// BookmarkFileName is the filename for storing bookmarked playlists.
 const BookmarkFileName = "bookmark.json"
+
+// DiffFileName is the filename for storing playlist diff data.
 const DiffFileName = "playlists.diff"
 
 var logFileHandle *os.File

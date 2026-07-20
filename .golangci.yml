@@ -1,15 +1,6 @@
-version: 2
 run:
   timeout: 1m
   tests: true
-
-linters:
-  enable:
-    - staticcheck
-    - govet
-    - revive
-    - errcheck
-    - ineffassign
 
 linters-settings:
   revive:
@@ -19,14 +10,18 @@ linters-settings:
       - name: exported
       - name: import-shadowing
 
+linters:
+  enable:
+    - staticcheck
+    - govet
+    - revive
+    - errcheck
+    - ineffassign
+
 issues:
   exclude-use-default: false
   max-same-issues: 0
   max-issues-per-linter: 0
   max-issues: 0
-
   exclude:
     - ".*_test.go"
-
-fix:
-  enabled: true

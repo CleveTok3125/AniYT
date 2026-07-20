@@ -7,16 +7,18 @@ SCRIPT_DIR=$(dirname "$0")
 REPO_ROOT=$(realpath "$SCRIPT_DIR/..")
 cd "$REPO_ROOT"
 
-PYTHON_FILES=src/ani_yt
+PYTHON_DIR=src/ani_yt
 GO_MODULE_DIR=src/ani_tracker
 
 # --- Python ---
-echo "=== Python: auto-fix code style ==="
-source venv/bin/activate
-isort --float-to-top --atomic $PYTHON_FILES
-black $PYTHON_FILES
-flake8 $PYTHON_FILES
-deactivate
+echo "=== Python: ruff format ==="
+ruff format $PYTHON_DIR
+
+echo "=== Python: ruff lint & fix ==="
+ruff check --fix $PYTHON_DIR
+
+echo "=== Python: pyright type check ==="
+pyright $PYTHON_DIR
 echo "=== Python done ==="
 
 # --- Go ---
