@@ -6,8 +6,8 @@ from typing import List, Optional
 from .bookmarking_handler import BookmarkingHandler
 from .common import BookmarkData, Current, HistoryData, Playlist, Video
 from .data_processing import DataProcessing
-from .display import Display_Options, DisplayColor, DisplayMenu
-from .exceptions import MissingChannelUrl
+from .display import BACK_SENTINEL_TITLE, Display_Options, DisplayColor, DisplayMenu
+from .exceptions import MissingChannelUrl, PauseableException
 from .file_handler import FileHandler, FileSourceHandler
 from .helper import IOHelper, get_script_name
 from .history_handler import HistoryHandler
@@ -91,6 +91,8 @@ class Main:
                 raise MissingChannelUrl("No channel url specified.")
 
             playlist_data = self.dlp.get_playlist()
+            if playlist_data is None:
+                OSManager.exit(404)
             print("Saving...")
             playlist_videos = self.dp.omit(playlist_data)
             playlist_list = [
@@ -118,6 +120,8 @@ class Main:
             return
 
         new_playlist_data = self.dlp.get_video(curr_playlist_url)
+        if new_playlist_data is None:
+            return
         print("Saving...")
         new_videos = self.dp.omit(new_playlist_data)  # List[Video]
 
@@ -138,6 +142,8 @@ class Main:
             try:
                 dlp = YT_DLP(ch_url, self.ydl_options)
                 playlist_data = dlp.get_playlist()
+                if playlist_data is None:
+                    continue
                 playlist_videos = self.dp.omit(playlist_data)  # List[Video]
 
                 # For cache, operate on list-of-lists: map playlist_videos -> [[title,url],...]
@@ -242,11 +248,20 @@ class Main:
                 try:
                     video_data = self.dlp.get_video(curr_playlist_url)
                 except MissingChannelUrl:
-                    print("Failed to fetch playlist videos.")
+                    return
+
+                if video_data is None:
                     return
 
                 videos = self.dp.omit(video_data)
                 videos = self.dp.sort(videos, key=lambda x: x["video_title"])
+
+                if not videos:
+                    PauseableException(
+                        "No videos found in this playlist. yt-dlp may be outdated or the URL may be invalid.",
+                        delay=-1,
+                    )
+                    return
 
                 self.history_handler.update(curr=curr, videos=videos)
                 history: HistoryData = self.history_handler.load()
@@ -255,6 +270,9 @@ class Main:
             menu_items: List[List[str]] = self._videos_to_pairs(videos)
 
             title, self.url = self.display_menu.choose_menu(menu_items)
+            if title == BACK_SENTINEL_TITLE:
+                return
+
             self.start_player()
             self.history_handler.update(curr=curr, viewed=True)
             self.display_menu.mark_viewed(self.url)
@@ -265,35 +283,51 @@ class Main:
             print("No playlist provided.")
             return
 
-        playlist_title, playlist_url = self.display_menu.choose_menu(playlist_list)
+        while True:
+            playlist_title, playlist_url = self.display_menu.choose_menu(
+                playlist_list, clear_choosed_item=True
+            )
+            if playlist_title == BACK_SENTINEL_TITLE:
+                return
 
-        try:
-            video_data = self.dlp.get_video(playlist_url)
-        except MissingChannelUrl:
-            print("Failed to fetch playlist videos.")
-            return
+            try:
+                video_data = self.dlp.get_video(playlist_url)
+            except MissingChannelUrl:
+                return
 
-        videos: List[Video] = self.dp.omit(video_data)
+            if video_data is None:
+                continue
 
-        videos = self.dp.sort(videos, key=lambda x: x["video_title"])
+            videos: List[Video] = self.dp.omit(video_data)
+            videos = self.dp.sort(videos, key=lambda x: x["video_title"])
+            menu_items = self._videos_to_pairs(videos)
 
-        menu_items = self._videos_to_pairs(videos)
-        title, self.url = self.display_menu.choose_menu(
-            menu_items, clear_choosed_item=True
-        )
+            if not menu_items:
+                PauseableException(
+                    "No videos found in this playlist. yt-dlp may be outdated or the URL may be invalid.",
+                    delay=-1,
+                )
+                continue
 
-        curr_obj = {
-            "video_title": title,
-            "video_url": self.url,
-            "playlist_title": playlist_title,
-            "playlist_url": playlist_url,
-        }
+            while True:
+                title, self.url = self.display_menu.choose_menu(
+                    menu_items, clear_choosed_item=True
+                )
+                if title == BACK_SENTINEL_TITLE:
+                    break
 
-        self.history_handler.update(curr=curr_obj, videos=videos, viewed=True)
+                curr_obj = {
+                    "video_title": title,
+                    "video_url": self.url,
+                    "playlist_title": playlist_title,
+                    "playlist_url": playlist_url,
+                }
 
-        self.start_player()
-        self.display_menu.mark_viewed(self.url)
-        self.loop()
+                self.history_handler.update(curr=curr_obj, videos=videos, viewed=True)
+
+                self.start_player()
+                self.display_menu.mark_viewed(self.url)
+                self.loop()
 
     @IOHelper.gracefully_terminate
     def show_bookmark(self):
@@ -359,6 +393,8 @@ class Main:
     @IOHelper.gracefully_terminate_exit
     def playlist_from_url(self, url: str):
         video_data = self.dlp.get_video(url)
+        if video_data is None:
+            return
         videos: List[Video] = self.dp.omit(video_data)
         videos = self.dp.sort(videos, key=lambda x: x["video_title"])
         menu_items = self._videos_to_pairs(videos)

@@ -1,14 +1,12 @@
 import os
 import subprocess
-import sys
 from urllib.parse import urljoin, urlparse
 
 import yt_dlp
 
 from .data_processing import DataProcessing
-from .exceptions import MissingChannelUrl
+from .exceptions import MissingChannelUrl, PauseableException
 from .helper import SubprocessHelper
-from .os_manager import OSManager
 
 
 class YT_DLP_Options:
@@ -62,7 +60,11 @@ class YT_DLP:
                 result = ydl.extract_info(self.channel_url, download=False)
             return result
         except yt_dlp.utils.DownloadError:
-            OSManager.exit(404)
+            PauseableException(
+                "Failed to fetch playlist info. yt-dlp may be outdated or the URL may be invalid.",
+                delay=-1,
+            )
+            return None
 
     @staticmethod
     def standalone_get_video(url, opts):
@@ -71,7 +73,11 @@ class YT_DLP:
                 info = ydl.extract_info(url, download=False)
             return info
         except yt_dlp.utils.DownloadError:
-            OSManager.exit(404)
+            PauseableException(
+                "Failed to fetch playlist videos. yt-dlp may be outdated or the URL may be invalid.",
+                delay=-1,
+            )
+            return None
 
     def get_video(self, url):
         return YT_DLP.standalone_get_video(url, self.ydl_options.ydl_opts)

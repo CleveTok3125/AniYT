@@ -25,7 +25,7 @@ class Extension:
                 new_ver = requests.get(
                     "https://pypi.org/pypi/yt-dlp/json", timeout=10
                 ).json()["info"]["version"]
-            except requests.exceptions.Timeout:
+            except requests.exceptions.Timeout, requests.exceptions.ConnectionError:
                 new_ver = old_ver
                 print("Update check request timed out.")
             return (old_ver == new_ver, name, old_ver, new_ver)
