@@ -165,7 +165,10 @@ class Player:
             case "ssh":
                 print("Copy one of the commands below:")
                 print(
-                    f"MPV: \n\n\t{shlex.join(player.command)}\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
+
+                        f"MPV: \n\n\t{shlex.join(player.command)}"
+                        f"\n\nMPV Android: \n\n\t{shlex.join(player.android_command)}\n\n"
+
                 )
                 InputHandler.press_any_key()
             case "termux-x11":

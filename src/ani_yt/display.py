@@ -41,7 +41,9 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         # Dependencies
         self._init_extra_opts(
             extra_opts
-        )  # Some features require additional settings, use it to pass in user settings. Related features should be implemented in DisplayExtension.
+        )
+        # Some features require additional settings, use it to pass in user settings.
+        # Related features should be implemented in DisplayExtension.
         self._inject_dependencies()
 
         # Variable
@@ -56,7 +58,8 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         self.len_data_items = 0
 
         # Variable
-        # These are variables that are manually cleared for caching purposes. Remember to clear these variables when running functions in the class multiple times.
+        # These are variables that are manually cleared for caching purposes.
+        # Remember to clear these variables when running functions in the class multiple times.
         self.choosed_item = False
 
         # Variable
@@ -122,10 +125,18 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
                 show_link = False
                 bookmark = True
                 while index_item < 10:
-                        print(lst[index_item] + 'link' if show_link else lst[index_item] + 'bookmark' if bookmark else lst[index_item])
+                        print(
+                            lst[index_item] + 'link'
+                            if show_link
+                            else lst[index_item] + 'bookmark'
+                            if bookmark
+                            else lst[index_item]
+                        )
 
-        The values of index_item, show_link and bookmark will always be reset each time the function is called.
-        Calling the class every time will not have the problem of instance attributes but will have performance problems.
+        The values of index_item, show_link and bookmark will always be reset each
+        time the function is called.
+        Calling the class every time will not have the problem of instance
+        attributes but will have performance problems.
         """
         self.index_item = 0
         self.cursor_in_page = 0
@@ -284,7 +295,9 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
                 raise ValueError()
 
             ans: Video = self.data[self.choosed_item]
-            # self.mark_viewed(ans["video_url"]) # To avoid hidden actions, should not be used internally in functions should only have display handling functions
+            # self.mark_viewed(ans["video_url"])
+            # To avoid hidden actions, should not be used internally in functions.
+            # Functions should only have display handling functions.
             self._last_played = self.choosed_item  # save the episode just played to enter next time auto next
 
             self.choosed_item = self.find_next_unviewed_index(self.choosed_item + 1)

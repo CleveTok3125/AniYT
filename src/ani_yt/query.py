@@ -5,8 +5,8 @@ from .data_processing import DataProcessing
 
 
 class Query:
-    def __init__(self, CASE=False):
-        self.case = CASE
+    def __init__(self, case_sensitive=False):
+        self.case = case_sensitive
 
     @staticmethod
     def calculate_match_score(title, query):

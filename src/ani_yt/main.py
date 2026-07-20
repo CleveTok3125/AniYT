@@ -110,7 +110,9 @@ class Main:
         print("Update history playlist...")
         history = self.history_handler.load()
 
-        # Only update the current list being viewed. For other lists in the history, the function will be automatically called when switching viewing history.
+        # Only update the current list being viewed.
+        # For other lists in the history, the function will be
+        # automatically called when switching viewing history.
         curr = history.get("current", {})
         curr_playlist_url = curr.get("playlist_url")
         if not curr_playlist_url:
@@ -318,7 +320,11 @@ class Main:
                 print(f"{DisplayColor.BRIGHT_BLUE}{category.title()}{DisplayColor.RESET}")
             for video_title, video_url in category_items:
                 print(
-                    f"{' ' * 2}{DisplayColor.YELLOW}{video_title}{DisplayColor.RESET}\n{' ' * 4}{DisplayColor.LINK_COLOR}{video_url}{DisplayColor.RESET}"
+
+                        f"{' ' * 2}{DisplayColor.YELLOW}{video_title}"
+                        f"{DisplayColor.RESET}\n{' ' * 4}"
+                        f"{DisplayColor.LINK_COLOR}{video_url}{DisplayColor.RESET}"
+
                 )
 
     @IOHelper.gracefully_terminate_exit
