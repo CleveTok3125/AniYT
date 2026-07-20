@@ -204,6 +204,9 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
 
         user_input_parts = self.user_input.split(":")
         len_user_input_parts = len(user_input_parts)
+        user_int = 0
+        user_option = ""
+        user_action = ""
 
         user_input_upper = (f"{user_input_parts[0]}:").upper()
         has_item_specified = len_user_input_parts >= 2 and (user_int := user_input_parts[1]).isdigit()

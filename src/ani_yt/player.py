@@ -62,7 +62,7 @@ class Player:
             case (provided_args, _):
                 initial_args = provided_args
 
-        mpv_args = PlayerConfig.get("mpv_args")
+        mpv_args = PlayerConfig.get("mpv_args") or []
 
         self.args = mpv_args + initial_args
         self.command = ["mpv"] + self.args + [self.url]
