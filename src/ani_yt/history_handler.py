@@ -26,7 +26,7 @@ class HistoryHandler:
                 if not all(key in result for key in self.required_keys):
                     raise InvalidHistoryFile(self.filename)
                 return result
-            except FileNotFoundError, json.JSONDecodeError, OSError:
+            except (FileNotFoundError, json.JSONDecodeError, OSError):
                 raise InvalidHistoryFile(self.filename)
 
         return helper

@@ -53,7 +53,7 @@ class BookmarkingHandler:
             with open(self.filename, encoding=self.encoding) as f:
                 content = f.read()
                 return cast(BookmarkData, json.loads(content)) if content else cast(BookmarkData, {})
-        except OSError, json.JSONDecodeError:
+        except (OSError, json.JSONDecodeError):
             return self._init_default_data()
 
     def get_category(self, category: str) -> dict[str, str]:
