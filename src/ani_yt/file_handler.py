@@ -45,6 +45,7 @@ class FileSourceHandler:
             "# Each line is the value of the -c/--channel CHANNEL argument.\n"
         )
 
+    @staticmethod
     def safe_load(func):
         def helper(self, *args, **kwargs):
             try:

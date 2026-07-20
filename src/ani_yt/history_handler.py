@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Literal
+from typing import Literal, cast
 
 import ujson as json
 
-from .common import HistoryData, Playlist, Video
+from .common import Current, HistoryData, Playlist, Video
 from .data_processing import DataProcessing
 from .exceptions import InvalidHistoryFile
 from .os_manager import OSManager
@@ -15,6 +15,7 @@ class HistoryHandler:
         self.encoding = "utf-8"
         self.required_keys = {"current", "playlists"}
 
+    @staticmethod
     def safe_history_load(func):
         def helper(self, *args, **kwargs):
             try:
@@ -40,7 +41,7 @@ class HistoryHandler:
 
     def update(
         self,
-        curr: dict | None = None,
+        curr: Current | dict | None = None,
         playlists: list[Playlist] | None = None,
         videos: list[Video] | None = None,
         viewed: bool = False,
@@ -79,7 +80,7 @@ class HistoryHandler:
 
         # Update current playlist info
         if curr:
-            content["current"] = curr
+            content["current"] = cast(Current, curr)
             playlist_url = curr.get("playlist_url")
             if playlist_url:
                 # Find the current playlist in history
@@ -90,14 +91,16 @@ class HistoryHandler:
 
                 if playlist is None:
                     # Playlist does not exist → create new entry
-                    playlist = {
+                    new_playlist: Playlist = {
                         "playlist_title": curr.get("playlist_title", ""),
                         "playlist_url": playlist_url,
                         "videos": videos if videos else [],
-                        "last_updated": now if videos else None,
-                        "last_viewed": now if viewed else None,
                     }
-                    content["playlists"].append(playlist)
+                    if videos:
+                        new_playlist["last_updated"] = now
+                    if viewed:
+                        new_playlist["last_viewed"] = now
+                    content["playlists"].append(new_playlist)
                 else:
                     # Playlist exists → merge videos if provided
                     if videos:
@@ -112,7 +115,7 @@ class HistoryHandler:
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(content, f, indent=4, ensure_ascii=False)
 
-    def search(self, curr_url: str, history: HistoryData) -> (int, int):  # -> (playlist_index, video_index)
+    def search(self, curr_url: str, history: HistoryData) -> tuple[int, int]:  # -> (playlist_index, video_index)
         if not isinstance(history, dict) or "playlists" not in history:
             raise InvalidHistoryFile(self.filename)
 

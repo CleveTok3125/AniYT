@@ -1,4 +1,5 @@
 import functools
+from typing import cast
 
 import ujson as json
 
@@ -19,12 +20,13 @@ class BookmarkingHandler:
 
     def _init_default_data(self) -> BookmarkData:
         # Return default valid structure.
-        default_data = {category: {} for category in self.required_categories}
+        default_data: BookmarkData = cast(BookmarkData, {category: {} for category in self.required_categories})
         self._save_full_data(default_data)
         return default_data
 
+    @staticmethod
     def validate_structure(func):
-        @functools.wraps(func)
+        @functools.wraps(func)  # type: ignore
         def wrapper(self, *args, **kwargs):
             data = func(self, *args, **kwargs)
             required_categories = getattr(self, "required_categories", [])
@@ -50,8 +52,8 @@ class BookmarkingHandler:
         try:
             with open(self.filename, encoding=self.encoding) as f:
                 content = f.read()
-                return json.loads(content) if content else {}
-        except (OSError, json.JSONDecodeError):
+                return cast(BookmarkData, json.loads(content)) if content else cast(BookmarkData, {})
+        except OSError, json.JSONDecodeError:
             return self._init_default_data()
 
     def get_category(self, category: str) -> dict[str, str]:
