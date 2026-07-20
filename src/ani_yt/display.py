@@ -11,6 +11,9 @@ from .exceptions import PauseableException
 from .helper import IOHelper, LegacyCompatibility
 from .os_manager import OSManager
 
+BACK_SENTINEL = ("__BACK__", "")
+BACK_SENTINEL_TITLE = "__BACK__"
+
 
 class Display_Options:
     def __init__(self, items_per_list=12):
@@ -103,6 +106,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             "T_int": {"key": "(T:<id>)", "desc": "View thumbnail"},
             "I_int": {"key": "(I:<id>)", "desc": "Number of items per page"},
             "R": {"key": "(R)", "desc": "Re-render the interface"},
+            "Z": {"key": "(Z)", "desc": "Go back"},
             "Q": {"key": "(Q)", "desc": "Quit"},
         }
 
@@ -369,6 +373,8 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
                 self.render_dynamic_opts()
             case "R":
                 self.render_dynamic_opts()
+            case "Z":
+                return "BACK"
             case "Q":
                 OSManager.exit(0)
             case _:
@@ -388,6 +394,9 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         self.data = playlists
         self.clear_choosed_item = clear_choosed_item
         self.pagination()
+
+        if not self.data:
+            return BACK_SENTINEL
 
         if self.clear_choosed_item or self.choosed_item is False:
             self.choosed_item = self.find_first_unviewed_index()
@@ -412,7 +421,11 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
                 if self.advanced_options():
                     continue
 
-                if self.standard_options():
+                std_result = self.standard_options()
+                if std_result == "BACK":
+                    self.choosed_item = False
+                    return BACK_SENTINEL
+                if std_result:
                     continue
 
                 if ans := self.choose_item_option():

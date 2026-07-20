@@ -56,6 +56,7 @@ class DisplayRendering:
             "T_int",
             "I_int",
             "R",
+            "Z",
             "Q",
             "palette",
         ]
