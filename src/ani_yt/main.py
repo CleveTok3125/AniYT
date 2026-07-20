@@ -329,7 +329,7 @@ class Main:
 
     @IOHelper.gracefully_terminate_exit
     def list(self):
-        playlist_list: list[str, str] = self.load_playlist()  # should be list of [title,url]
+        playlist_list: list[tuple[str, str]] = self.load_playlist()  # should be list of [title,url]
         if not playlist_list:
             print("No cached playlists found.")
             return
@@ -360,7 +360,7 @@ class Main:
             print("Empty search query.")
             OSManager.exit(0)
 
-        query = Query(CASE=case_sensitive)
+        query = Query(case_sensitive=case_sensitive)
         playlist = self.load_playlist()
         if fuzzy:
             playlist = query.fuzzysearch(playlist, inp, score)
