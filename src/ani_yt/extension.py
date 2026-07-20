@@ -30,17 +30,13 @@ class Extension:
         def print_notice(update_info):
             if not update_info[0]:
                 print(
-
-                        f"\n\033[34m[notice]\033[0m A new release of {update_info[1]}"
-                        f" is available: \033[31m{update_info[2]}\033[0m"
-                        f" -> \033[32m{update_info[3]}\033[0m"
-
+                    f"\n\033[34m[notice]\033[0m A new release of {update_info[1]}"
+                    f" is available: \033[31m{update_info[2]}\033[0m"
+                    f" -> \033[32m{update_info[3]}\033[0m"
                 )
                 print(
-
-                        f"\033[34m[notice]\033[0m To update, run:"
-                        f" \033[32mpython -m pip install --upgrade {update_info[1]}\033[0m"
-
+                    f"\033[34m[notice]\033[0m To update, run:"
+                    f" \033[32mpython -m pip install --upgrade {update_info[1]}\033[0m"
                 )
 
     @staticmethod
