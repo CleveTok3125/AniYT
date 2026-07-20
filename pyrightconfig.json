@@ -1,6 +1,6 @@
 {
   "typeCheckingMode": "standard",
-  "pythonVersion": "3.14",
+  "pythonVersion": "3.13",
   "reportMissingTypeStubs": false,
   "useLibraryCodeForTypes": true,
   "exclude": ["tests"]
