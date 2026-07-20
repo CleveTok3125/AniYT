@@ -12,7 +12,7 @@ class ReadChar:
         Blocks until a character is available."""
 
         # read a single wide character from the input
-        return msvcrt.getwch()
+        return msvcrt.getwch()  # type: ignore
 
     @staticmethod
     def readkey() -> str:
@@ -46,5 +46,5 @@ class ReadChar:
 
     @staticmethod
     def flush_input():
-        while msvcrt.kbhit():
-            msvcrt.getwch()
+        while msvcrt.kbhit():  # type: ignore
+            msvcrt.getwch()  # type: ignore

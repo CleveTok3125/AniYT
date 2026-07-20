@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from ..bookmarking_handler import BookmarkingHandler
 from ..command_history import CommandHistory
@@ -12,6 +13,10 @@ from ..yt_dlp_handler import YT_DLP, YT_DLP_Options
 
 
 class HistoryExtension:
+    history_handler: Any
+    data: Any
+    history_map: dict[str, str]
+
     def _init_history(self):
         self.history_map = {}
         self._load_history_map()
@@ -99,6 +104,9 @@ class HistoryExtension:
 
 
 class InputExtension:
+    command_history: Any
+    input_handler: Any
+
     def _init_input_handler(self):
         self.command_history = CommandHistory()
         self.input_handler = InputHandler(self.command_history)
@@ -124,6 +132,11 @@ class InputExtension:
 
 
 class DisplayExtension(HistoryExtension, InputExtension):
+    bookmarking_handler: Any
+    yt_dlp_opts: Any
+    extra_opts: Any
+    user_input: str
+
     def _inject_dependencies(
         self,
     ):  # Only used when you want to declare an instance.

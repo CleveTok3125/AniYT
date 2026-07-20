@@ -1,4 +1,5 @@
 import shutil
+from typing import Any
 
 from wcwidth import wcswidth
 
@@ -6,6 +7,24 @@ from ._display_color import DisplayColor
 
 
 class DisplayRendering:
+    pages_opts: Any
+    no_opts: Any
+    opts: Any
+    bookmark: bool
+    show_link: bool
+    history_map: Any
+    index_item: int
+    len_data: int
+    total_items: int
+    len_data_items: int
+    choosed_item: Any
+    cursor_in_page: int
+    cursor_moved: bool
+    splited_data: Any
+    splited_data_items: Any
+    _get_page_start_index: Any
+    is_item_bookmarked: Any
+
     def _generate_color_palette(self) -> str:
         max_len = max(len(desc) for desc in DisplayColor.COLOR_MAP.values()) + 2
 
