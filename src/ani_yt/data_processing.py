@@ -1,15 +1,16 @@
+from typing import Any
 
 from .common import Video
 
 
 class DataProcessing:
     @staticmethod
-    def omit(data: dict, status: str = "") -> list[Video]:
+    def omit(data: dict | Any, status: str = "") -> list[Video]:
         videos: list[Video] = []
 
         for entry in data.get("entries", []):
             if entry.get("_type") == "url":
-                video_item = {
+                video_item: Video = {
                     "video_title": entry["title"],
                     "video_url": entry["url"],
                     "status": status,
@@ -82,6 +83,7 @@ class DataProcessing:
                 seen.add(arg)
         return result
 
+    @staticmethod
     def dedup_args_keep_last(args: list) -> list:
         seen = set()
         result = []

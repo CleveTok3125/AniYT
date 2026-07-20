@@ -79,7 +79,7 @@ class SubprocessHelper:
 class LegacyCompatibility:
     @staticmethod
     def normalize_playlist(
-        playlist: list[tuple[str, str]] | list[dict[str, str]],
+        playlist: list[tuple[str, str]] | list[dict[str, str]] | list[list[str]],
     ) -> list[dict[str, str]]:
         if not playlist:
             return []
@@ -92,6 +92,7 @@ class LegacyCompatibility:
         if isinstance(playlist[0], dict):
             normalized = []
             for v in playlist:
+                assert isinstance(v, dict)
                 v_copy = dict(v)
                 if "status" not in v_copy:
                     v_copy["status"] = ""

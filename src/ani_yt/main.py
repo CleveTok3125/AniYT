@@ -4,7 +4,7 @@
 import builtins
 
 from .bookmarking_handler import BookmarkingHandler
-from .common import BookmarkData, Current, HistoryData, Playlist, Video
+from .common import BookmarkData, Current, HistoryData, Video
 from .data_processing import DataProcessing
 from .display import BACK_SENTINEL_TITLE, Display_Options, DisplayColor, DisplayMenu
 from .exceptions import MissingChannelUrl, PauseableException
@@ -70,6 +70,10 @@ class Main:
             return
 
         self._update_multiple(sources)
+
+    @IOHelper.gracefully_terminate
+    def update_multiple(self, channel_urls: builtins.list[str]) -> None:
+        self._update_multiple(channel_urls)
 
     @IOHelper.gracefully_terminate
     def source_rebuild(self) -> None:
@@ -192,14 +196,14 @@ class Main:
     @IOHelper.gracefully_terminate_exit
     def load_playlist(self):
         try:
-            playlist: Playlist = self.file_handler.load()
+            playlist = self.file_handler.load()
         except FileNotFoundError:
             self.update()
             playlist = self.file_handler.load()
         return playlist
 
-    def _videos_to_pairs(self, videos: builtins.list[Video]) -> builtins.list[builtins.list[str]]:
-        return [[v.get("video_title", ""), v.get("video_url", "")] for v in videos]
+    def _videos_to_pairs(self, videos: builtins.list[Video]) -> builtins.list[builtins.tuple[str, str]]:
+        return [(v.get("video_title", ""), v.get("video_url", "")) for v in videos]
 
     @IOHelper.gracefully_terminate
     def start_player(self, url: str | None = None) -> None:
@@ -253,7 +257,7 @@ class Main:
                 history: HistoryData = self.history_handler.load()
 
             videos: list[Video] = history["playlists"][p_idx].get("videos", [])
-            menu_items: list[list[str]] = self._videos_to_pairs(videos)
+            menu_items = self._videos_to_pairs(videos)
 
             title, self.url = self.display_menu.choose_menu(menu_items)
             if title == BACK_SENTINEL_TITLE:
@@ -264,7 +268,7 @@ class Main:
             self.display_menu.mark_viewed(self.url)
 
     @IOHelper.gracefully_terminate_exit
-    def menu(self, playlist_list: builtins.list[builtins.list[str]]):
+    def menu(self, playlist_list: builtins.list[builtins.list[str]] | builtins.list[builtins.tuple[str, str]]):
         if not playlist_list:
             print("No playlist provided.")
             return
@@ -320,16 +324,14 @@ class Main:
                 print(f"{DisplayColor.BRIGHT_BLUE}{category.title()}{DisplayColor.RESET}")
             for video_title, video_url in category_items:
                 print(
-
-                        f"{' ' * 2}{DisplayColor.YELLOW}{video_title}"
-                        f"{DisplayColor.RESET}\n{' ' * 4}"
-                        f"{DisplayColor.LINK_COLOR}{video_url}{DisplayColor.RESET}"
-
+                    f"{' ' * 2}{DisplayColor.YELLOW}{video_title}"
+                    f"{DisplayColor.RESET}\n{' ' * 4}"
+                    f"{DisplayColor.LINK_COLOR}{video_url}{DisplayColor.RESET}"
                 )
 
     @IOHelper.gracefully_terminate_exit
     def list(self):
-        playlist_list: list[tuple[str, str]] = self.load_playlist()  # should be list of [title,url]
+        playlist_list = self.load_playlist()  # should be list of [title,url]
         if not playlist_list:
             print("No cached playlists found.")
             return

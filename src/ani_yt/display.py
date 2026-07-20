@@ -39,9 +39,7 @@ class Display:
 class DisplayMenu(Display, DisplayRendering, DisplayExtension):
     def __init__(self, opts: Display_Options, extra_opts={}):
         # Dependencies
-        self._init_extra_opts(
-            extra_opts
-        )
+        self._init_extra_opts(extra_opts)
         # Some features require additional settings, use it to pass in user settings.
         # Related features should be implemented in DisplayExtension.
         self._inject_dependencies()
@@ -50,7 +48,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         # These values are always created new each time the class is called or are always overwritten.
         self.opts = opts
         self.user_input = ""
-        self.data: list[Video] = []
+        self.data: list[Video] | list[dict[str, str]] = []
         self.splited_data = []
         self.len_data = 0
         self.len_last_item = 0
@@ -190,9 +188,9 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         if self.choosed_item is not False:
             self.sync_cursor_with_item()
 
-    def toggle_viewed_processing(self, item_number: int):
+    def toggle_viewed_processing(self, item_number: int | str):
         """Gets item number, finds the URL, and calls the toggle handler."""
-        index = item_number - 1
+        index = int(item_number) - 1
         if 0 <= index < len(self.data):
             video_url = self.data[index]["video_url"]
             self.toggle_viewed_status(video_url)
@@ -231,6 +229,8 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
 
         if not any([is_cursor_option, has_item_specified]):
             return False
+
+        user_int = int(user_int)
 
         match (user_input_upper, is_cursor_option):
             case ("B:", _):
@@ -297,7 +297,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             else:
                 raise ValueError()
 
-            ans: Video = self.data[self.choosed_item]
+            ans = self.data[self.choosed_item]
             # self.mark_viewed(ans["video_url"])
             # To avoid hidden actions, should not be used internally in functions.
             # Functions should only have display handling functions.
@@ -380,10 +380,10 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
 
     def choose_menu(
         self,
-        playlists: list[tuple[str, str]] | list[dict[str, str]],
+        playlists: list[tuple[str, str]] | list[dict[str, str]] | list[list[str]],
         clear_choosed_item=False,
     ):
-        playlists: list[dict[str, str]] = LegacyCompatibility.normalize_playlist(playlists)
+        playlists = LegacyCompatibility.normalize_playlist(playlists)
 
         self.data = playlists
         self.clear_choosed_item = clear_choosed_item
