@@ -16,10 +16,8 @@ class Query:
         return score
         """
         raise DeprecationWarning(
-
-                f"{Query.calculate_match_score.__name__} is deprecated,"
-                f" please use {_query.calculate_match_score.__name__} instead."
-
+            f"{Query.calculate_match_score.__name__} is deprecated,"
+            f" please use {_query.calculate_match_score.__name__} instead."
         )
 
     def search(self, data, query):

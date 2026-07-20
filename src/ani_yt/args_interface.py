@@ -378,7 +378,7 @@ class ArgsHandler:
 
         if self.args.show_mpv_args:
             current_args = active_player_config.get("mpv_args")
-            if current_args:
+            if isinstance(current_args, list):
                 print(f"Current default MPV args: {' '.join(current_args)}")
             else:
                 print("No default MPV args configured.")
@@ -456,7 +456,9 @@ class ArgsHandler:
     @IOHelper.gracefully_terminate_exit
     def run_main(self, action):
         try:
-            return self.actions.get(action)()
+            action_func = self.actions.get(action)
+            if action_func:
+                return action_func()
         except TypeError as e:
             # print(e)
             raise TypeError(e)
