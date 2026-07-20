@@ -17,11 +17,7 @@ class HistoryExtension:
         self._load_history_map()
 
     def _load_history_map(self):
-        if (
-            not hasattr(self, "history_handler")
-            or not self.history_handler
-            or not self.history_handler.is_history()
-        ):
+        if not hasattr(self, "history_handler") or not self.history_handler or not self.history_handler.is_history():
             return
 
         try:
@@ -49,9 +45,7 @@ class HistoryExtension:
             history["playlists"][p_idx]["videos"][v_idx]["last_viewed"] = now
 
             # persist
-            self.history_handler.update(
-                curr=history.get("current"), playlists=history.get("playlists")
-            )
+            self.history_handler.update(curr=history.get("current"), playlists=history.get("playlists"))
             # update local map
             self.history_map[url] = "viewed"
 
@@ -68,9 +62,7 @@ class HistoryExtension:
             if "last_viewed" in video:
                 del video["last_viewed"]
 
-            self.history_handler.update(
-                curr=history.get("current"), playlists=history.get("playlists")
-            )
+            self.history_handler.update(curr=history.get("current"), playlists=history.get("playlists"))
             self.history_map[url] = ""
 
     def toggle_viewed_status(self, url: str):
@@ -97,17 +89,11 @@ class HistoryExtension:
         if not self.data:
             return 0
         for idx in range(start_idx, len(self.data)):
-            if (
-                self.history_map.get(self.data[idx]["video_url"], "").lower()
-                != "viewed"
-            ):
+            if self.history_map.get(self.data[idx]["video_url"], "").lower() != "viewed":
                 return idx
 
         for idx in range(0, start_idx):
-            if (
-                self.history_map.get(self.data[idx]["video_url"], "").lower()
-                != "viewed"
-            ):
+            if self.history_map.get(self.data[idx]["video_url"], "").lower() != "viewed":
                 return idx
         return 0
 
@@ -140,7 +126,8 @@ class InputExtension:
 class DisplayExtension(HistoryExtension, InputExtension):
     def _inject_dependencies(
         self,
-    ):  # Only used when you want to declare an instance, other values ​​like str, int, list, etc can be taken directly from extra_opts
+    ):  # Only used when you want to declare an instance.
+        # Other values like str, int, list, etc can be taken directly from extra_opts.
         self.bookmarking_handler = self._get_dependencies(
             "bookmark",
             BookmarkingHandler,
@@ -163,29 +150,21 @@ class DisplayExtension(HistoryExtension, InputExtension):
         self.extra_opts = extra_opts
 
         if not isinstance(extra_opts, dict):
-            raise TypeError(
-                f"The parameter passed should be a dictionary, but got {type(extra_opts)}"
-            )
+            raise TypeError(f"The parameter passed should be a dictionary, but got {type(extra_opts)}")
 
-    def _get_dependencies(
-        self, requirement: object, requirement_suggestion: type, fallback_factory=None
-    ):
+    def _get_dependencies(self, requirement: object, requirement_suggestion: type, fallback_factory=None):
         dependency = self.extra_opts.get(requirement)
 
         if dependency is None:
             raise ValueError(f"Missing required dependency: {requirement}")
         if not isinstance(dependency, requirement_suggestion):
-            raise TypeError(
-                f"Dependency '{requirement}' must be an instance of {requirement_suggestion}"
-            )
+            raise TypeError(f"Dependency '{requirement}' must be an instance of {requirement_suggestion}")
 
         return dependency
 
     def _update_bookmark(self, item, category, create_new=False):
         try:
-            self.bookmarking_handler.update_item(
-                item, category=category, create_new=create_new
-            )
+            self.bookmarking_handler.update_item(item, category=category, create_new=create_new)
         except CategoryNotExist:
             pass
 
@@ -199,13 +178,9 @@ class DisplayExtension(HistoryExtension, InputExtension):
             else:
                 self._update_bookmark(item, category=category, create_new=create_new)
         except ValueError:
-            PauseableException(
-                "ValueError: only non-negative integers are accepted.", delay=-1
-            )
+            PauseableException("ValueError: only non-negative integers are accepted.", delay=-1)
         except IndexError:
-            PauseableException(
-                "IndexError: The requested item is not listed.", delay=-1
-            )
+            PauseableException("IndexError: The requested item is not listed.", delay=-1)
 
     def is_item_bookmarked(self, item_url, category):
         return self.bookmarking_handler.is_item_exist(item_url, category=category)
@@ -218,9 +193,7 @@ class DisplayExtension(HistoryExtension, InputExtension):
             item: Video = self.data[user_int - 1]
             url = item["video_url"]
 
-            thumbnail_url = YT_DLP.standalone_get_thumbnail(
-                url, self.yt_dlp_opts.ydl_opts
-            )
+            thumbnail_url = YT_DLP.standalone_get_thumbnail(url, self.yt_dlp_opts.ydl_opts)
             self.open_image_with_mpv(thumbnail_url)
         except IndexError as e:
             PauseableException(f"IndexError: {e}", delay=-1)

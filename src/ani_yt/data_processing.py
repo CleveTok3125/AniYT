@@ -1,12 +1,11 @@
-from typing import List
 
 from .common import Video
 
 
 class DataProcessing:
     @staticmethod
-    def omit(data: dict, status: str = "") -> List[Video]:
-        videos: List[Video] = []
+    def omit(data: dict, status: str = "") -> list[Video]:
+        videos: list[Video] = []
 
         for entry in data.get("entries", []):
             if entry.get("_type") == "url":
@@ -29,9 +28,7 @@ class DataProcessing:
         return sorted(lst, key=key, reverse=reverse)
 
     @staticmethod
-    def merge_list(
-        old_videos: List[Video], new_videos: List[Video], truncate: bool = True
-    ) -> List[Video]:
+    def merge_list(old_videos: list[Video], new_videos: list[Video], truncate: bool = True) -> list[Video]:
         new_urls = {v["video_url"] for v in new_videos}
 
         if truncate:

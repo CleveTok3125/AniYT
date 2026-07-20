@@ -36,10 +36,7 @@ class OSManager:
         return (
             True
             if os.name == "posix"
-            and (
-                "android" in os.uname().release.lower()
-                or "com.termux" in os.environ.get("PREFIX", "")
-            )
+            and ("android" in os.uname().release.lower() or "com.termux" in os.environ.get("PREFIX", ""))
             else False
         )
 

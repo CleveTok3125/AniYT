@@ -1,6 +1,5 @@
 import os
 import sys
-from typing import Dict, List, Tuple, Union
 
 from ._internal._display_color import DisplayColor
 from ._internal._display_extension import DisplayExtension
@@ -49,7 +48,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         # These values are always created new each time the class is called or are always overwritten.
         self.opts = opts
         self.user_input = ""
-        self.data: List[Video] = []
+        self.data: list[Video] = []
         self.splited_data = []
         self.len_data = 0
         self.len_last_item = 0
@@ -151,16 +150,12 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
 
         self.cursor_in_page = self.choosed_item - self._get_page_start_index()
 
-        self.cursor_in_page = max(
-            0, min(self.cursor_in_page, len(self.splited_data[self.index_item]) - 1)
-        )
+        self.cursor_in_page = max(0, min(self.cursor_in_page, len(self.splited_data[self.index_item]) - 1))
 
     def pagination(self):
         self.valid_index_item()
 
-        self.splited_data = DataProcessing.split_list(
-            self.data, self.opts.items_per_list
-        )
+        self.splited_data = DataProcessing.split_list(self.data, self.opts.items_per_list)
         self.len_data = len(self.splited_data)
 
         # Fallback
@@ -177,9 +172,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             self.index_item = 0
 
         self.len_last_item = len(self.splited_data[self.len_data - 1])
-        self.total_items = (
-            self.opts.items_per_list * (self.len_data - 1)
-        ) + self.len_last_item
+        self.total_items = (self.opts.items_per_list * (self.len_data - 1)) + self.len_last_item
         self.splited_data_items = self.splited_data[self.index_item]
 
         # Make sure the cursor doesn't stray when changing items_per_list
@@ -202,9 +195,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
         len_user_input_parts = len(user_input_parts)
 
         user_input_upper = (f"{user_input_parts[0]}:").upper()
-        has_item_specified = (
-            len_user_input_parts >= 2 and (user_int := user_input_parts[1]).isdigit()
-        )
+        has_item_specified = len_user_input_parts >= 2 and (user_int := user_input_parts[1]).isdigit()
         is_cursor_option = len_user_input_parts >= 2 and user_input_parts[1] == ""
         is_user_option = len_user_input_parts >= 3 and user_input_parts[2] != ""
         is_user_action = len_user_input_parts >= 4 and user_input_parts[3] != ""
@@ -241,15 +232,11 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
                 self.valid_index_item()
 
                 # Automatically jump to and sync cursor when jumping to specific page
-                self.choosed_item = self.find_next_unviewed_index(
-                    self._get_page_start_index()
-                )
+                self.choosed_item = self.find_next_unviewed_index(self._get_page_start_index())
                 self.sync_cursor_with_item()
             case ("I:", False):
                 self.opts.items_per_list = (
-                    user_int
-                    if user_int > 0
-                    else self.total_items if user_int > self.total_items else 1
+                    user_int if user_int > 0 else self.total_items if user_int > self.total_items else 1
                 )
                 self.pagination()
 
@@ -276,10 +263,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
                 if (
                     hasattr(self, "_last_played")
                     and self._last_played == self.choosed_item
-                    and any(
-                        self.history_map.get(v["video_url"], "").lower() == "viewed"
-                        for v in self.data
-                    )
+                    and any(self.history_map.get(v["video_url"], "").lower() == "viewed" for v in self.data)
                 ):
                     if self._last_played != 0:
                         self.choosed_item += 1
@@ -290,7 +274,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
             raise IndexError()
         self.choosed_item = idx
 
-    def choose_item_option(self) -> Union[Tuple[str, str], None]:
+    def choose_item_option(self) -> tuple[str, str] | None:
         try:
             if self.user_input == "":
                 self._handle_enter_input()
@@ -301,9 +285,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
 
             ans: Video = self.data[self.choosed_item]
             # self.mark_viewed(ans["video_url"]) # To avoid hidden actions, should not be used internally in functions should only have display handling functions
-            self._last_played = (
-                self.choosed_item
-            )  # save the episode just played to enter next time auto next
+            self._last_played = self.choosed_item  # save the episode just played to enter next time auto next
 
             self.choosed_item = self.find_next_unviewed_index(self.choosed_item + 1)
             self.valid_index_item()
@@ -319,9 +301,7 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
                 delay=-1,
             )
         except IndexError:
-            PauseableException(
-                "IndexError: The requested item is not listed.", delay=-1
-            )
+            PauseableException("IndexError: The requested item is not listed.", delay=-1)
         return
 
     def standard_options(self) -> bool:
@@ -384,12 +364,10 @@ class DisplayMenu(Display, DisplayRendering, DisplayExtension):
 
     def choose_menu(
         self,
-        playlists: Union[List[Tuple[str, str]], List[Dict[str, str]]],
+        playlists: list[tuple[str, str]] | list[dict[str, str]],
         clear_choosed_item=False,
     ):
-        playlists: List[Dict[str, str]] = LegacyCompatibility.normalize_playlist(
-            playlists
-        )
+        playlists: list[dict[str, str]] = LegacyCompatibility.normalize_playlist(playlists)
 
         self.data = playlists
         self.clear_choosed_item = clear_choosed_item

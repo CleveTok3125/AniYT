@@ -9,9 +9,7 @@ class TrackerWrapper:
     @staticmethod
     def get_tracker_bin() -> Path:
         exe = "ani-tracker.exe" if sys.platform == "win32" else "ani-tracker"
-        return (
-            Path(sys.prefix) / ("Scripts" if sys.platform == "win32" else "bin") / exe
-        )
+        return Path(sys.prefix) / ("Scripts" if sys.platform == "win32" else "bin") / exe
 
     @staticmethod
     def print_help():

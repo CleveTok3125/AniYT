@@ -29,7 +29,7 @@ class FileHandler:
             json.dump(video_list, f, indent=4, ensure_ascii=False)
 
     def load(self):
-        with open(self.filename, "r", encoding=self.encoding) as f:
+        with open(self.filename, encoding=self.encoding) as f:
             return json.load(f)
 
     def clear_cache(self):
@@ -40,7 +40,10 @@ class FileSourceHandler:
     def __init__(self):
         self.source_filename = "./data/channel_sources.txt"
         self.encoding = "utf-8"
-        self.notation = "# This is a list of channel sources used for multiple source updates.\n# Each line is the value of the -c/--channel CHANNEL argument.\n"
+        self.notation = (
+            "# This is a list of channel sources used for multiple source updates.\n"
+            "# Each line is the value of the -c/--channel CHANNEL argument.\n"
+        )
 
     def safe_load(func):
         def helper(self, *args, **kwargs):
@@ -58,12 +61,8 @@ class FileSourceHandler:
 
     @safe_load
     def load(self):
-        with open(self.source_filename, "r", encoding=self.encoding) as f:
-            return [
-                line.strip()
-                for line in f
-                if line.strip() and not line.strip().startswith("#")
-            ]
+        with open(self.source_filename, encoding=self.encoding) as f:
+            return [line.strip() for line in f if line.strip() and not line.strip().startswith("#")]
 
     def save(self, sources):
         with open(self.source_filename, "w", encoding=self.encoding) as f:

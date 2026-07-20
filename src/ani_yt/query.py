@@ -16,7 +16,10 @@ class Query:
         return score
         """
         raise DeprecationWarning(
-            f"{Query.calculate_match_score.__name__} is deprecated, please use {_query.calculate_match_score.__name__} instead."
+
+                f"{Query.calculate_match_score.__name__} is deprecated,"
+                f" please use {_query.calculate_match_score.__name__} instead."
+
         )
 
     def search(self, data, query):
@@ -50,17 +53,12 @@ class Query:
                 (
                     item
                     for item in data
-                    if (item[0] if self.case else item[0].lower()) == matched_name
-                    and matched_score > score
+                    if (item[0] if self.case else item[0].lower()) == matched_name and matched_score > score
                 ),
                 None,
             )
 
             if matched_item:
-                results_with_data.append(
-                    (matched_item[0], matched_item[1], matched_score)
-                )
-        results_with_data = DataProcessing.sort(
-            results_with_data, key=lambda x: x[2], reverse=True
-        )
+                results_with_data.append((matched_item[0], matched_item[1], matched_score))
+        results_with_data = DataProcessing.sort(results_with_data, key=lambda x: x[2], reverse=True)
         return [(title, url) for title, url, _ in results_with_data]

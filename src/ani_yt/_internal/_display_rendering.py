@@ -12,9 +12,7 @@ class DisplayRendering:
         lines = ["( ) Color Palette"]
         for color, description in DisplayColor.COLOR_MAP.items():
             formatted_desc = f"{description}:".ljust(max_len)
-            lines.append(
-                f"    {formatted_desc}{color}{DisplayColor.BLOCK}{DisplayColor.RESET}"
-            )
+            lines.append(f"    {formatted_desc}{color}{DisplayColor.BLOCK}{DisplayColor.RESET}")
         return "\n".join(lines)
 
     def render_dynamic_opts(self):
@@ -33,9 +31,7 @@ class DisplayRendering:
             "active_color": DisplayColor.LINK_COLOR,
         }
         self.combined_opts["O_toggle"] = (
-            self.no_opts["option_toggle"]["show"]
-            if not self.opts.show_opts
-            else self.no_opts["option_toggle"]["hide"]
+            self.no_opts["option_toggle"]["show"] if not self.opts.show_opts else self.no_opts["option_toggle"]["hide"]
         )
         self.combined_opts["palette"] = self._generate_color_palette()
 
@@ -81,11 +77,7 @@ class DisplayRendering:
                     continue
 
                 # Defines alternating background colors
-                bg_color = (
-                    DisplayColor.ALT_BG_1
-                    if line_idx % 2 == 0
-                    else DisplayColor.ALT_BG_2
-                )
+                bg_color = DisplayColor.ALT_BG_1 if line_idx % 2 == 0 else DisplayColor.ALT_BG_2
 
                 key = opt.get("key", "")
                 desc = opt.get("desc", "")
@@ -97,17 +89,9 @@ class DisplayRendering:
 
                 # Handle extended key lines (indented, same background color as main line)
                 if opt.get("is_multiline_ext"):
-                    prev_bg_color = (
-                        DisplayColor.ALT_BG_1
-                        if (line_idx - 1) % 2 == 0
-                        else DisplayColor.ALT_BG_2
-                    )
-                    line_content = f"{DisplayColor.CONTINUATION_SYMBOL}{key}".ljust(
-                        term_width
-                    )
-                    output_lines.append(
-                        f"{prev_bg_color}{fg_color}{line_content}{DisplayColor.RESET}"
-                    )
+                    prev_bg_color = DisplayColor.ALT_BG_1 if (line_idx - 1) % 2 == 0 else DisplayColor.ALT_BG_2
+                    line_content = f"{DisplayColor.CONTINUATION_SYMBOL}{key}".ljust(term_width)
+                    output_lines.append(f"{prev_bg_color}{fg_color}{line_content}{DisplayColor.RESET}")
                     continue  # Do not increment line_idx for sub-lines
 
                 left_part = key.ljust(max_key_len)
@@ -115,9 +99,7 @@ class DisplayRendering:
 
                 full_line = full_line.ljust(term_width)
 
-                output_lines.append(
-                    f"{bg_color}{fg_color}{full_line}{DisplayColor.RESET}"
-                )
+                output_lines.append(f"{bg_color}{fg_color}{full_line}{DisplayColor.RESET}")
                 line_idx += 1
 
         self.page_opts_display = "\n".join(output_lines)
@@ -135,15 +117,15 @@ class DisplayRendering:
 
     def print_page_indicator(self):
         showed_item = self.len_data_items + self._get_page_start_index()
-        page_colored = (
-            f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Page:{DisplayColor.RESET}"
+        page_colored = f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}Page:{DisplayColor.RESET}"
+        page_indicator_colored = (
+            f"{self.index_item + 1}/{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{self.len_data}{DisplayColor.RESET}"
         )
-        page_indicator_colored = f"{self.index_item + 1}/{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{self.len_data}{DisplayColor.RESET}"
-        total_item_colored = f"({showed_item}/{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{self.total_items}{DisplayColor.RESET})"
+        total_item_colored = (
+            f"({showed_item}/{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{self.total_items}{DisplayColor.RESET})"
+        )
 
-        print_page_indicator_buffer = [
-            f"{page_colored} {page_indicator_colored} {total_item_colored}\n"
-        ]
+        print_page_indicator_buffer = [f"{page_colored} {page_indicator_colored} {total_item_colored}\n"]
         return print_page_indicator_buffer
 
     def text_wrap(self, text: str, width: int, indent: int = 0) -> str:
@@ -187,11 +169,7 @@ class DisplayRendering:
 
             item_number = self._get_page_start_index() + index + 1
 
-            color_viewed = (
-                DisplayColor.LIGHT_GRAY
-                if self.history_map.get(item_url, "").lower() == "viewed"
-                else ""
-            )
+            color_viewed = DisplayColor.LIGHT_GRAY if self.history_map.get(item_url, "").lower() == "viewed" else ""
 
             color_bookmarked = ""
             if getattr(self, "bookmark", True):
@@ -200,18 +178,12 @@ class DisplayRendering:
                 elif self.is_item_bookmarked(item_url, "completed"):
                     color_bookmarked = DisplayColor.GREEN
 
-            link_colored = (
-                f"\n\t{DisplayColor.LINK_COLOR}{item_url}{DisplayColor.RESET}"
-                if self.show_link
-                else ""
-            )
+            link_colored = f"\n\t{DisplayColor.LINK_COLOR}{item_url}{DisplayColor.RESET}" if self.show_link else ""
 
             indicate_item_len = 3
             indicate_item = " " * indicate_item_len
             is_unviewed_indicator = (
-                item_number - 1 == self.choosed_item
-                and self.choosed_item is not False
-                and not self.cursor_moved
+                item_number - 1 == self.choosed_item and self.choosed_item is not False and not self.cursor_moved
             )
             is_cursor_in_page = index == self.cursor_in_page and self.cursor_moved
             if is_unviewed_indicator:
@@ -219,22 +191,18 @@ class DisplayRendering:
             if is_cursor_in_page:
                 indicate_item = cursor_in_page
 
-            selected_bg = (
-                DisplayColor.SELECTED_BG_COLOR
-                if is_cursor_in_page or is_unviewed_indicator
-                else ""
-            )
+            selected_bg = DisplayColor.SELECTED_BG_COLOR if is_cursor_in_page or is_unviewed_indicator else ""
 
-            colored_item_number = f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}{selected_bg}{color_viewed}{color_bookmarked}{item_number} {DisplayColor.RESET}"
+            colored_item_number = (
+                f"{DisplayColor.BRIGHT_BLUE}{DisplayColor.BOLD}"
+                f"{selected_bg}{color_viewed}{color_bookmarked}"
+                f"{item_number} {DisplayColor.RESET}"
+            )
             spaces_num = len(str(self.total_items)) - len(str(item_number))
-            spaces_fill = f"{DisplayColor.LIGHT_GRAY}{selected_bg}{"0" * spaces_num}{DisplayColor.RESET}"
+            spaces_fill = f"{DisplayColor.LIGHT_GRAY}{selected_bg}{'0' * spaces_num}{DisplayColor.RESET}"
 
-            prefix = (
-                f"{DisplayColor.RESET}{indicate_item}{spaces_fill}{colored_item_number}"
-            )
-            visible_prefix_len = (
-                indicate_item_len + spaces_num + len(str(item_number)) + 1
-            )
+            prefix = f"{DisplayColor.RESET}{indicate_item}{spaces_fill}{colored_item_number}"
+            visible_prefix_len = indicate_item_len + spaces_num + len(str(item_number)) + 1
 
             wrapped_item_title = wrapped_item_title = self.text_wrap(
                 text=item_title,
@@ -242,7 +210,11 @@ class DisplayRendering:
                 indent=visible_prefix_len,
             )
             padding = (term_width - visible_prefix_len - wcswidth(item_title)) * " "
-            colored_item = f"{selected_bg}{color_viewed}{color_bookmarked}{wrapped_item_title}{padding}{link_colored}{DisplayColor.RESET}"
+            colored_item = (
+                f"{selected_bg}{color_viewed}{color_bookmarked}"
+                f"{wrapped_item_title}{padding}{link_colored}"
+                f"{DisplayColor.RESET}"
+            )
 
             print_menu_buffer.append(f"{prefix}{colored_item}{DisplayColor.RESET}")
         print_menu_buffer.append("")

@@ -17,9 +17,7 @@ class ReadChar:
         old_settings = termios.tcgetattr(fd)
         term = termios.tcgetattr(fd)
         try:
-            term[3] &= ~(
-                termios.ICANON | termios.ECHO | termios.IGNBRK | termios.BRKINT
-            )
+            term[3] &= ~(termios.ICANON | termios.ECHO | termios.IGNBRK | termios.BRKINT)
             termios.tcsetattr(fd, termios.TCSAFLUSH, term)
 
             ch = sys.stdin.read(1)

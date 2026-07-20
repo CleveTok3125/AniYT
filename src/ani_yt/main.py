@@ -1,7 +1,7 @@
 # `main` contains the main logic to run the program, but not the interface.
 # To use, import as a module and implement the interface or use the available *_interface
 
-from typing import List, Optional
+import builtins
 
 from .bookmarking_handler import BookmarkingHandler
 from .common import BookmarkData, Current, HistoryData, Playlist, Video
@@ -54,7 +54,7 @@ class Main:
         FileSourceHandler().placeholder()
         print("\nSource Manager: Template created.\n")
 
-    def _source_load_helper(self) -> Optional[List[str]]:
+    def _source_load_helper(self) -> builtins.list[str] | None:
         fsh = FileSourceHandler()
         sources = fsh.load()
         if not sources:
@@ -95,9 +95,7 @@ class Main:
                 OSManager.exit(404)
             print("Saving...")
             playlist_videos = self.dp.omit(playlist_data)
-            playlist_list = [
-                [v["video_title"], v["video_url"]] for v in playlist_videos
-            ]
+            playlist_list = [[v["video_title"], v["video_url"]] for v in playlist_videos]
             self.file_handler.dump(playlist_list)
             print("Done!")
         except MissingChannelUrl:
@@ -130,13 +128,9 @@ class Main:
         print("Done!")
         return
 
-    def _update_multiple(
-        self, channel_urls: List[str], no_update_history: bool = False
-    ) -> None:
+    def _update_multiple(self, channel_urls: builtins.list[str], no_update_history: bool = False) -> None:
         print("Getting playlist from multiple channels...")
-        merged_playlist_lists: List[str, str] = (
-            []
-        )  # list of [title, url] for file_handler cache
+        merged_playlist_lists: list[str, str] = []  # list of [title, url] for file_handler cache
 
         for ch_url in channel_urls:
             try:
@@ -147,12 +141,8 @@ class Main:
                 playlist_videos = self.dp.omit(playlist_data)  # List[Video]
 
                 # For cache, operate on list-of-lists: map playlist_videos -> [[title,url],...]
-                playlist_list = [
-                    [v["video_title"], v["video_url"]] for v in playlist_videos
-                ]
-                merged_playlist_lists = self.dp.merge_list_preserve_order(
-                    merged_playlist_lists, playlist_list
-                )
+                playlist_list = [[v["video_title"], v["video_url"]] for v in playlist_videos]
+                merged_playlist_lists = self.dp.merge_list_preserve_order(merged_playlist_lists, playlist_list)
             except MissingChannelUrl:
                 print(f"Channel not found: {ch_url}")
                 continue
@@ -174,9 +164,7 @@ class Main:
             return
 
         # get fresh videos for current history playlist
-        new_playlist_data = YT_DLP.standalone_get_video(
-            curr_playlist_url, self.ydl_options.ydl_opts
-        )
+        new_playlist_data = YT_DLP.standalone_get_video(curr_playlist_url, self.ydl_options.ydl_opts)
         print("Saving...")
         new_videos = self.dp.omit(new_playlist_data)
 
@@ -208,7 +196,7 @@ class Main:
             playlist = self.file_handler.load()
         return playlist
 
-    def _videos_to_pairs(self, videos: List[Video]) -> List[List[str]]:
+    def _videos_to_pairs(self, videos: builtins.list[Video]) -> builtins.list[builtins.list[str]]:
         return [[v.get("video_title", ""), v.get("video_url", "")] for v in videos]
 
     @IOHelper.gracefully_terminate
@@ -233,11 +221,7 @@ class Main:
                 return
 
             p_idx = next(
-                (
-                    i
-                    for i, p in enumerate(history.get("playlists", []))
-                    if p.get("playlist_url") == curr_playlist_url
-                ),
+                (i for i, p in enumerate(history.get("playlists", [])) if p.get("playlist_url") == curr_playlist_url),
                 None,
             )
             if p_idx is None:
@@ -267,7 +251,7 @@ class Main:
                 history: HistoryData = self.history_handler.load()
 
             videos: Video = history["playlists"][p_idx].get("videos", [])
-            menu_items: List[List[str]] = self._videos_to_pairs(videos)
+            menu_items: list[list[str]] = self._videos_to_pairs(videos)
 
             title, self.url = self.display_menu.choose_menu(menu_items)
             if title == BACK_SENTINEL_TITLE:
@@ -278,15 +262,13 @@ class Main:
             self.display_menu.mark_viewed(self.url)
 
     @IOHelper.gracefully_terminate_exit
-    def menu(self, playlist_list: List[List[str]]):
+    def menu(self, playlist_list: builtins.list[builtins.list[str]]):
         if not playlist_list:
             print("No playlist provided.")
             return
 
         while True:
-            playlist_title, playlist_url = self.display_menu.choose_menu(
-                playlist_list, clear_choosed_item=True
-            )
+            playlist_title, playlist_url = self.display_menu.choose_menu(playlist_list, clear_choosed_item=True)
             if playlist_title == BACK_SENTINEL_TITLE:
                 return
 
@@ -298,7 +280,7 @@ class Main:
             if video_data is None:
                 continue
 
-            videos: List[Video] = self.dp.omit(video_data)
+            videos: list[Video] = self.dp.omit(video_data)
             videos = self.dp.sort(videos, key=lambda x: x["video_title"])
             menu_items = self._videos_to_pairs(videos)
 
@@ -310,9 +292,7 @@ class Main:
                 continue
 
             while True:
-                title, self.url = self.display_menu.choose_menu(
-                    menu_items, clear_choosed_item=True
-                )
+                title, self.url = self.display_menu.choose_menu(menu_items, clear_choosed_item=True)
                 if title == BACK_SENTINEL_TITLE:
                     break
 
@@ -335,19 +315,15 @@ class Main:
         for category in bms.keys():
             category_items = bms[category].items()
             if category_items:
-                print(
-                    f"{DisplayColor.BRIGHT_BLUE}{category.title()}{DisplayColor.RESET}"
-                )
+                print(f"{DisplayColor.BRIGHT_BLUE}{category.title()}{DisplayColor.RESET}")
             for video_title, video_url in category_items:
                 print(
-                    f"{" " * 2}{DisplayColor.YELLOW}{video_title}{DisplayColor.RESET}\n{" " * 4}{DisplayColor.LINK_COLOR}{video_url}{DisplayColor.RESET}"
+                    f"{' ' * 2}{DisplayColor.YELLOW}{video_title}{DisplayColor.RESET}\n{' ' * 4}{DisplayColor.LINK_COLOR}{video_url}{DisplayColor.RESET}"
                 )
 
     @IOHelper.gracefully_terminate_exit
     def list(self):
-        playlist_list: List[str, str] = (
-            self.load_playlist()
-        )  # should be list of [title,url]
+        playlist_list: list[str, str] = self.load_playlist()  # should be list of [title,url]
         if not playlist_list:
             print("No cached playlists found.")
             return
@@ -395,7 +371,7 @@ class Main:
         video_data = self.dlp.get_video(url)
         if video_data is None:
             return
-        videos: List[Video] = self.dp.omit(video_data)
+        videos: list[Video] = self.dp.omit(video_data)
         videos = self.dp.sort(videos, key=lambda x: x["video_title"])
         menu_items = self._videos_to_pairs(videos)
         if not menu_items:
@@ -418,9 +394,7 @@ class Main:
         elif not result and not capture_output:
             pass
         else:
-            print(
-                "No data returned. There was an error downloading the video or it was already downloaded."
-            )
+            print("No data returned. There was an error downloading the video or it was already downloaded.")
 
     @IOHelper.gracefully_terminate
     def open_with_mpv(self, url: str):

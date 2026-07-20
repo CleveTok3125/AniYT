@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 
 class Current(TypedDict):
@@ -19,16 +19,16 @@ class Video(TypedDict):
 class Playlist(TypedDict):
     playlist_title: str
     playlist_url: str
-    videos: List[Video]
+    videos: list[Video]
     last_viewed: NotRequired[datetime]
     last_updated: NotRequired[datetime]
 
 
 class HistoryData(TypedDict):
     current: Current
-    playlists: List[Playlist]
+    playlists: list[Playlist]
 
 
 class BookmarkData(TypedDict):
-    bookmark: Dict[str, str]
-    completed: Dict[str, str]
+    bookmark: dict[str, str]
+    completed: dict[str, str]

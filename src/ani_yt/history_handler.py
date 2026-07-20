@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 import ujson as json
 
@@ -25,7 +25,7 @@ class HistoryHandler:
                 if not all(key in result for key in self.required_keys):
                     raise InvalidHistoryFile(self.filename)
                 return result
-            except (FileNotFoundError, json.JSONDecodeError, OSError):
+            except FileNotFoundError, json.JSONDecodeError, OSError:
                 raise InvalidHistoryFile(self.filename)
 
         return helper
@@ -35,14 +35,14 @@ class HistoryHandler:
 
     @safe_history_load
     def load(self) -> HistoryData:
-        with open(self.filename, "r", encoding=self.encoding) as f:
+        with open(self.filename, encoding=self.encoding) as f:
             return json.load(f)
 
     def update(
         self,
-        curr: Optional[Dict] = None,
-        playlists: Optional[List[Playlist]] = None,
-        videos: Optional[List[Video]] = None,
+        curr: dict | None = None,
+        playlists: list[Playlist] | None = None,
+        videos: list[Video] | None = None,
         viewed: bool = False,
         truncate: bool = True,
     ) -> None:
@@ -84,11 +84,7 @@ class HistoryHandler:
             if playlist_url:
                 # Find the current playlist in history
                 playlist = next(
-                    (
-                        p
-                        for p in content["playlists"]
-                        if p.get("playlist_url") == playlist_url
-                    ),
+                    (p for p in content["playlists"] if p.get("playlist_url") == playlist_url),
                     None,
                 )
 
@@ -106,12 +102,8 @@ class HistoryHandler:
                     # Playlist exists → merge videos if provided
                     if videos:
                         old_videos = playlist.get("videos", [])
-                        playlist["videos"] = DataProcessing.merge_list(
-                            old_videos, videos, truncate=truncate
-                        )
-                        playlist["last_updated"] = (
-                            now  # always update when videos are merged
-                        )
+                        playlist["videos"] = DataProcessing.merge_list(old_videos, videos, truncate=truncate)
+                        playlist["last_updated"] = now  # always update when videos are merged
 
                     # Update last_viewed if user is currently watching
                     if viewed:
@@ -120,9 +112,7 @@ class HistoryHandler:
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(content, f, indent=4, ensure_ascii=False)
 
-    def search(
-        self, curr_url: str, history: HistoryData
-    ) -> (int, int):  # -> (playlist_index, video_index)
+    def search(self, curr_url: str, history: HistoryData) -> (int, int):  # -> (playlist_index, video_index)
         if not isinstance(history, dict) or "playlists" not in history:
             raise InvalidHistoryFile(self.filename)
 
@@ -194,6 +184,4 @@ class HistoryHandler:
         with open(self.filename, "w", encoding=self.encoding) as f:
             json.dump(content, f, indent=4, ensure_ascii=False)
 
-        print(
-            f"History cleared. Mode: {mode}\nKept {keep_recent} most recent playlists."
-        )
+        print(f"History cleared. Mode: {mode}\nKept {keep_recent} most recent playlists.")

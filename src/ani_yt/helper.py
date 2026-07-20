@@ -3,7 +3,6 @@ import os.path
 import shutil
 import subprocess
 import sys
-from typing import Dict, List, Tuple, Union
 
 import ujson as json
 
@@ -41,9 +40,7 @@ class SubprocessHelper:
     @staticmethod
     @IOHelper.gracefully_terminate
     def require_app(commands, app_name=None, *, check_only=False, note=""):
-        if not SubprocessHelper.app_subprocess_help(
-            commands, app_name, check_only=check_only, note=note
-        ):
+        if not SubprocessHelper.app_subprocess_help(commands, app_name, check_only=check_only, note=note):
             sys.exit(127)
 
     @staticmethod
@@ -55,18 +52,14 @@ class SubprocessHelper:
             cmd_name = commands
             cmd_list = [commands]
         else:
-            print(
-                f"Expected list, tuple or str, but received {type(commands).__name__}"
-            )
+            print(f"Expected list, tuple or str, but received {type(commands).__name__}")
             return False
 
         if app_name is None:
             app_name = cmd_name
 
         if shutil.which(cmd_name) is None:
-            print(
-                f"{app_name} is not installed. Please install before running.{' ' if note else ''}{note}"
-            )
+            print(f"{app_name} is not installed. Please install before running.{' ' if note else ''}{note}")
             return False
 
         if check_only:
@@ -76,9 +69,7 @@ class SubprocessHelper:
             subprocess.run(cmd_list, check=True)
             return True
         except FileNotFoundError:
-            print(
-                f"Error: {cmd_name} could not be found when running.{' ' if note else ''}{note}"
-            )
+            print(f"Error: {cmd_name} could not be found when running.{' ' if note else ''}{note}")
             return False
         except subprocess.CalledProcessError as e:
             print(f"Error running {app_name}: {e}")
@@ -88,16 +79,14 @@ class SubprocessHelper:
 class LegacyCompatibility:
     @staticmethod
     def normalize_playlist(
-        playlist: Union[List[Tuple[str, str]], List[Dict[str, str]]],
-    ) -> List[Dict[str, str]]:
+        playlist: list[tuple[str, str]] | list[dict[str, str]],
+    ) -> list[dict[str, str]]:
         if not playlist:
             return []
 
         # Legacy: list[tuple[str, str]]
         if isinstance(playlist[0], (tuple, list)):
-            return [
-                {"video_title": t, "video_url": u, "status": ""} for t, u in playlist
-            ]
+            return [{"video_title": t, "video_url": u, "status": ""} for t, u in playlist]
 
         # New: list[dict]
         if isinstance(playlist[0], dict):

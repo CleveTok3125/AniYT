@@ -1,5 +1,4 @@
 import functools
-from typing import Dict, Union
 
 import ujson as json
 
@@ -31,20 +30,14 @@ class BookmarkingHandler:
             required_categories = getattr(self, "required_categories", [])
 
             if not isinstance(data, dict):
-                raise InvalidBookmarkFile(
-                    "Data structure must be a dictionary", self.filename
-                )
+                raise InvalidBookmarkFile("Data structure must be a dictionary", self.filename)
 
             for category in required_categories:
                 if category not in data:
-                    raise InvalidBookmarkFile(
-                        f"Missing required category '{category}'", self.filename
-                    )
+                    raise InvalidBookmarkFile(f"Missing required category '{category}'", self.filename)
 
                 if not isinstance(data[category], dict):
-                    raise InvalidBookmarkFile(
-                        f"Category '{category}' must be a dictionary", self.filename
-                    )
+                    raise InvalidBookmarkFile(f"Category '{category}' must be a dictionary", self.filename)
 
             return data
 
@@ -55,19 +48,17 @@ class BookmarkingHandler:
         if not OSManager.exists(self.filename):
             return self._init_default_data()
         try:
-            with open(self.filename, "r", encoding=self.encoding) as f:
+            with open(self.filename, encoding=self.encoding) as f:
                 content = f.read()
                 return json.loads(content) if content else {}
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return self._init_default_data()
 
-    def get_category(self, category: str) -> Dict[str, str]:
+    def get_category(self, category: str) -> dict[str, str]:
         full_data: BookmarkData = self.load_full_data()
         return full_data.get(category, {})
 
-    def update_item(
-        self, data: Union[Video, list], category: str, create_new: bool = False
-    ) -> None:
+    def update_item(self, data: Video | list, category: str, create_new: bool = False) -> None:
         full_data: BookmarkData = self.load_full_data()
 
         if category not in full_data:
@@ -79,7 +70,7 @@ class BookmarkingHandler:
                     delay=-1,
                 )
 
-        bookmarks: Dict[str, str] = full_data[category]
+        bookmarks: dict[str, str] = full_data[category]
 
         if isinstance(data, dict):
             key, value = data.get("video_title"), data.get("video_url")
@@ -93,7 +84,7 @@ class BookmarkingHandler:
         self._save_full_data(full_data)
 
     def is_item_exist(self, url: str, category: str) -> bool:
-        items: Dict[str, str] = self.get_category(category)
+        items: dict[str, str] = self.get_category(category)
         return url in items.values()
 
     def remove_item(self, url: str, category: str) -> None:
@@ -102,7 +93,7 @@ class BookmarkingHandler:
         if category not in full_data:
             return
 
-        items: Dict[str, str] = full_data[category]
+        items: dict[str, str] = full_data[category]
 
         key_to_delete = None
         for key, value in items.items():

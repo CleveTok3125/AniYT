@@ -26,9 +26,7 @@ class ArgsHandler:
             help="show extended help for all commands and subcommands.",
         )
 
-        self.parser.add_argument(
-            "--version", action="store_true", help="show version and exit"
-        )
+        self.parser.add_argument("--version", action="store_true", help="show version and exit")
 
         self.group_env = self.parser.add_argument_group("Environment Options")
         self.group_env.add_argument(
@@ -68,9 +66,7 @@ class ArgsHandler:
             help="Quick update command for `source rebuild`",
         )
 
-        self.group_playlist = self.parser.add_argument_group(
-            "Playlist and Channel Options"
-        )
+        self.group_playlist = self.parser.add_argument_group("Playlist and Channel Options")
         self.group_playlist.add_argument(
             "-c",
             "--channel",
@@ -109,7 +105,7 @@ class ArgsHandler:
             "--monitor",
             type=int,
             default=TermuxPlayerConfig.get("monitor"),
-            help=f"X server monitor number (default: {TermuxPlayerConfig.get("monitor")})",
+            help=f"X server monitor number (default: {TermuxPlayerConfig.get('monitor')})",
         )
 
         self.termux_x11_options.add_argument(
@@ -117,7 +113,7 @@ class ArgsHandler:
             dest="open_app",
             action="store_true",
             default=TermuxPlayerConfig.get("open_app"),
-            help=f"Enable auto-opening Termux-X11 app (default: {TermuxPlayerConfig.get("open_app")})",
+            help=f"Enable auto-opening Termux-X11 app (default: {TermuxPlayerConfig.get('open_app')})",
         )
         self.termux_x11_options.add_argument(
             "--no-open-app",
@@ -131,7 +127,7 @@ class ArgsHandler:
             dest="return_app",
             action="store_true",
             default=TermuxPlayerConfig.get("return_app"),
-            help=f"Enable auto-return Termux after playback (default: {TermuxPlayerConfig.get("return_app")})",
+            help=f"Enable auto-return Termux after playback (default: {TermuxPlayerConfig.get('return_app')})",
         )
         self.termux_x11_options.add_argument(
             "--no-return-app",
@@ -145,7 +141,7 @@ class ArgsHandler:
             dest="fullscreen",
             action="store_true",
             default=TermuxPlayerConfig.get("mpv_fullscreen_playback"),
-            help=f"Enable fullscreen playback (default: {TermuxPlayerConfig.get("mpv_fullscreen_playback")})",
+            help=f"Enable fullscreen playback (default: {TermuxPlayerConfig.get('mpv_fullscreen_playback')})",
         )
         self.termux_x11_options.add_argument(
             "--no-fullscreen",
@@ -159,7 +155,7 @@ class ArgsHandler:
             dest="gestures",
             action="store_true",
             default=TermuxPlayerConfig.get("touch_mouse_gestures"),
-            help=f"Enable MPV touch/mouse gestures (default: {TermuxPlayerConfig.get("touch_mouse_gestures")})",
+            help=f"Enable MPV touch/mouse gestures (default: {TermuxPlayerConfig.get('touch_mouse_gestures')})",
         )
         self.termux_x11_options.add_argument(
             "--no-gestures",
@@ -191,7 +187,11 @@ class ArgsHandler:
             "--clear-history",
             type=str,
             choices=["playlist", "videos", "unwatched"],
-            help="Clear history: 'playlist' to remove old playlists, 'videos' to clear videos in old playlists, 'unwatched' to remove only unwatched videos.",
+            help=(
+                "Clear history: 'playlist' to remove old playlists,"
+                " 'videos' to clear videos in old playlists,"
+                " 'unwatched' to remove only unwatched videos."
+            ),
         )
         self.group_cache.add_argument(
             "--keep-recent",
@@ -248,30 +248,18 @@ class ArgsHandler:
             help="Note: To avoid incorrect handling, positional arguments should be placed after all options.",
         )
 
-        self.sources_parsers = self.subparsers.add_parser(
-            "source", help="Manage channel source list."
-        )
-        self.sources_subparsers = self.sources_parsers.add_subparsers(
-            dest="source_command"
-        )
+        self.sources_parsers = self.subparsers.add_parser("source", help="Manage channel source list.")
+        self.sources_subparsers = self.sources_parsers.add_subparsers(dest="source_command")
 
         add_parser = self.sources_subparsers.add_parser("add")
-        add_parser.add_argument(
-            "urls", nargs="+", help="One or more channel URLs or IDs to add"
-        )
+        add_parser.add_argument("urls", nargs="+", help="One or more channel URLs or IDs to add")
 
         remove_parser = self.sources_subparsers.add_parser("remove")
-        remove_parser.add_argument(
-            "urls", nargs="+", help="One or more channel URLs or IDs to remove"
-        )
+        remove_parser.add_argument("urls", nargs="+", help="One or more channel URLs or IDs to remove")
 
-        self.sources_subparsers.add_parser(
-            "template", help="Create placeholder source file."
-        )
+        self.sources_subparsers.add_parser("template", help="Create placeholder source file.")
 
-        self.sources_subparsers.add_parser(
-            "update", help="Update playlist from all saved sources."
-        )
+        self.sources_subparsers.add_parser("update", help="Update playlist from all saved sources.")
 
         self.sources_subparsers.add_parser(
             "rebuild",
@@ -304,16 +292,10 @@ class ArgsHandler:
             help="Video url or file path.",
         )
 
-        self.search_parsers = self.subparsers.add_parser(
-            "search", help="Search for a playlist."
-        )
+        self.search_parsers = self.subparsers.add_parser("search", help="Search for a playlist.")
         self.search_parsers.add_argument("query", type=str, help="Search content.")
-        self.search_parsers.add_argument(
-            "-C", "--case-sensitive", action="store_true", help="Case sensitive."
-        )
-        self.search_parsers.add_argument(
-            "-fs", "--fuzzysearch", action="store_true", help="Fuzzy search."
-        )
+        self.search_parsers.add_argument("-C", "--case-sensitive", action="store_true", help="Case sensitive.")
+        self.search_parsers.add_argument("-fs", "--fuzzysearch", action="store_true", help="Fuzzy search.")
         self.search_parsers.add_argument(
             "-s",
             "--score",
@@ -322,9 +304,7 @@ class ArgsHandler:
             help="The accuracy of fuzzy search (0-100).",
         )
 
-        self.playlist_parsers = self.subparsers.add_parser(
-            "playlist", help="Open playlist from URL"
-        )
+        self.playlist_parsers = self.subparsers.add_parser("playlist", help="Open playlist from URL")
 
         self.playlist_parsers.add_argument("url", type=str)
 
@@ -371,9 +351,7 @@ class ArgsHandler:
             self.print_full_help()
 
         if self.args.temp and self.args.directory:
-            print(
-                "Error: Cannot use both -t/--temp and -dir/--directory at the same time."
-            )
+            print("Error: Cannot use both -t/--temp and -dir/--directory at the same time.")
             OSManager.exit(1)
 
         if self.args.temp:
@@ -383,9 +361,7 @@ class ArgsHandler:
         if self.args.directory:
             directory, abs_path = OSManager.working_directory(self.args.directory)
             if abs_path:
-                print(
-                    f"[Custom Directory] Working directory set to: {directory} ({abs_path})"
-                )
+                print(f"[Custom Directory] Working directory set to: {directory} ({abs_path})")
             else:
                 print("The specified path is not a directory or does not exist.")
                 OSManager.exit(404)
@@ -395,9 +371,7 @@ class ArgsHandler:
         if self.args.no_extension_update:
             Extension.check_update_enabled = False
 
-        active_player_config = (
-            TermuxPlayerConfig if self.args.mpv_player == "termux-x11" else PlayerConfig
-        )
+        active_player_config = TermuxPlayerConfig if self.args.mpv_player == "termux-x11" else PlayerConfig
 
         if self.args.mpv_args:
             active_player_config.update(mpv_args=self.args.mpv_args)
@@ -454,9 +428,7 @@ class ArgsHandler:
             self.main.update_multiple(self.args.merge_channels)
 
         if self.args.clear_history:
-            self.main.clear_history(
-                mode=self.args.clear_history, keep_recent=self.args.keep_recent
-            )
+            self.main.clear_history(mode=self.args.clear_history, keep_recent=self.args.keep_recent)
 
         self.actions = {
             "clear_cache": self.main.clear_cache,
@@ -474,8 +446,9 @@ class ArgsHandler:
         # Notes
         if self.args.viewed_mode:
             print(
-                "[WARNING] Using --viewed-mode will load directly from cache, if cache is modified it may cause the application to malfunction.",
-                "[INFO] Use --viewed-refresh to avoid this, it also updates the latest video list in the playlist.",
+                "[WARNING] Using --viewed-mode will load directly from cache."
+                " if cache is modified it may cause the application to malfunction.",
+                "[INFO] Use --viewed-refresh to avoid this. It also updates the latest video list in the playlist.",
                 sep="\n",
             )
             PauseableException(delay=-1)
@@ -491,9 +464,7 @@ class ArgsHandler:
 
     @IOHelper.gracefully_terminate_exit
     def listener(self):
-        action_lst = [
-            getattr(self.args, item, None) for item in list(self.actions.keys())
-        ]
+        action_lst = [getattr(self.args, item, None) for item in list(self.actions.keys())]
 
         if len(sys.argv) == 1:
             self.parser.print_help()
