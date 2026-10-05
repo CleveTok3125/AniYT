@@ -18,9 +18,9 @@ requests==2.33.0
     # via AniYT (pyproject.toml)
 ujson==5.13.0
     # via AniYT (pyproject.toml)
-urllib3==2.7.0
+urllib3==2.8.0
     # via requests
 wcwidth==0.2.14
     # via AniYT (pyproject.toml)
-yt-dlp==2026.6.9
+yt-dlp==2026.7.4
     # via AniYT (pyproject.toml)
