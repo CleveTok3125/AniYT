@@ -1,0 +1,170 @@
+Usage: ani-tracker --working-dir=STRING [flags]
+
+ani-tracker CLI
+
+Flags:
+  -h, --help                     Show context-sensitive help.
+  -d, --working-dir=STRING       Working directory
+      --confirm                  Confirm running commands
+      --kill                     Force stop other running processes
+      --no-daemon                Do not daemonize
+  -s, --silent                   Run in silent mode (for automation)
+  -i, --interval=1h              Interval duration
+      --attempt=3                Number of retries before exiting completely
+      --backoff-multiplier=1s    Retry time of cronjobs = Attempt *
+                                 BackoffMultiplier
+  -m, --marked                   Only track marked playlists in history
+      --diff                     View contents of exported diff file
+      --log-file="ani-tracker.log"
+                                 Log file path
+      --lock-file="ani-tracker.lock"
+                                 Lock file path
+usage: ani-yt [-h] [--full-help] [--version] [-t] [-dir DIRECTORY] [-neu]
+              [-su] [-sr] [-c CHANNEL]
+              [-mc MERGE_CHANNELS [MERGE_CHANNELS ...]]
+              [--mpv-player {auto,default,android,ssh,termux-x11}]
+              [--mpv-args ...] [--show-mpv-args] [--monitor MONITOR]
+              [--open-app] [--no-open-app] [--return-app] [--no-return-app]
+              [--fullscreen] [--no-fullscreen] [--gestures] [--no-gestures]
+              [--termux-configs] [--clear-cache] [--delete-history]
+              [--clear-history {playlist,videos,unwatched}]
+              [--keep-recent KEEP_RECENT] [--delete-bookmark] [-b] [-l] [-v]
+              [-vr] [-r]
+              {source,download,mpv,search,playlist} ...
+
+Note: Options, if provided, will be processed sequentially in the order they
+are listed below.
+
+positional arguments:
+  {source,download,mpv,search,playlist}
+                        Note: To avoid incorrect handling, positional
+                        arguments should be placed after all options.
+    source              Manage channel source list.
+    download            Download video and skip sponsors using SponsorBlock.
+    mpv                 Open with MPV.
+    search              Search for a playlist.
+    playlist            Open playlist from URL
+
+options:
+  -h, --help            show this help message and exit
+  --full-help           show extended help for all commands and subcommands.
+  --version             show version and exit
+
+Environment Options:
+  -t, --temp            Use temporary folder (incompatible with
+                        -dir/--directory).
+  -dir, --directory DIRECTORY
+                        Specify working directory (incompatible with
+                        -t/--temp).
+  -neu, --no-extension-update
+                        Disable extension update.
+
+Source Update Options:
+  -su, --source-update  Quick update command for `source update`
+  -sr, --source-rebuild
+                        Quick update command for `source rebuild`
+
+Playlist and Channel Options:
+  -c, --channel CHANNEL
+                        Create or Update Playlist Data from Link, Channel ID,
+                        or Channel Handle.
+  -mc, --merge-channels MERGE_CHANNELS [MERGE_CHANNELS ...]
+                        Merge playlists from multiple channels (URL, Channel
+                        ID, or handle).
+
+MPV Player Options:
+  --mpv-player {auto,default,android,ssh,termux-x11}
+                        MPV player mode.
+  --mpv-args ...        Pass args to MPV, or show current default args if none
+                        are provided. Must be the LAST option.
+  --show-mpv-args       Show the current MPV arguments.
+
+Termux-X11 options:
+  --monitor MONITOR     X server monitor number (default: 1)
+  --open-app            Enable auto-opening Termux-X11 app (default: True)
+  --no-open-app         Disable auto-opening Termux-X11 app.
+  --return-app          Enable auto-return Termux after playback (default:
+                        True)
+  --no-return-app       Disable auto-return Termux after playback.
+  --fullscreen          Enable fullscreen playback (default: True)
+  --no-fullscreen       Disable fullscreen playback.
+  --gestures            Enable MPV touch/mouse gestures (default: True)
+  --no-gestures         Disable MPV touch/mouse gestures.
+  --termux-configs      Show current termux-x11 player configs.
+
+Cache and History Options:
+  --clear-cache         Clear cache.
+  --delete-history      Delete history.
+  --clear-history {playlist,videos,unwatched}
+                        Clear history: 'playlist' to remove old playlists,
+                        'videos' to clear videos in old playlists, 'unwatched'
+                        to remove only unwatched videos.
+  --keep-recent KEEP_RECENT
+                        Number of recent playlists to keep when clearing
+                        history.
+  --delete-bookmark     Delete bookmark.
+
+Browse and View Options:
+  -b, --bookmark        Show bookmark.
+  -l, --list            Browse all cached playlists.
+  -v, --viewed-mode     Browse all videos in cached playlist.
+  -vr, --viewed-refresh
+                        Browse all videos in cached playlist and refresh it
+                        once.
+  -r, --resume          View last viewed video.
+
+Subcommand: source
+usage: ani-yt source [-h] {add,remove,template,update,rebuild} ...
+
+positional arguments:
+  {add,remove,template,update,rebuild}
+    template            Create placeholder source file.
+    update              Update playlist from all saved sources.
+    rebuild             Rebuild playlist from all saved sources (clear then
+                        update).
+
+options:
+  -h, --help            show this help message and exit
+
+Subcommand: download
+usage: ani-yt download [-h] [-cat CATEGORY] [-m] url
+
+positional arguments:
+  url                   Video url.
+
+options:
+  -h, --help            show this help message and exit
+  -cat, --category CATEGORY
+                        See https://wiki.sponsor.ajay.app/w/Types#Category.
+  -m, --mpv             Open downloaded video with MPV. Download progress will
+                        not be displayed.
+
+Subcommand: mpv
+usage: ani-yt mpv [-h] input
+
+positional arguments:
+  input       Video url or file path.
+
+options:
+  -h, --help  show this help message and exit
+
+Subcommand: search
+usage: ani-yt search [-h] [-C] [-fs] [-s SCORE] query
+
+positional arguments:
+  query                 Search content.
+
+options:
+  -h, --help            show this help message and exit
+  -C, --case-sensitive  Case sensitive.
+  -fs, --fuzzysearch    Fuzzy search.
+  -s, --score SCORE     The accuracy of fuzzy search (0-100).
+
+Subcommand: playlist
+usage: ani-yt playlist [-h] url
+
+positional arguments:
+  url
+
+options:
+  -h, --help  show this help message and exit
